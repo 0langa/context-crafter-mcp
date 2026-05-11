@@ -1,0 +1,54 @@
+[project]
+name = "repo-docs-mcp"
+version = "0.2.0"
+description = "Universal stdio MCP server for generating repository documentation and architecture maps."
+requires-python = ">=3.11"
+authors = [
+    {name = "repo-docs-mcp contributors"},
+]
+license = {text = "MIT"}
+readme = "README.md"
+keywords = ["mcp", "documentation", "repository", "static-analysis"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "mcp[cli]",
+    "langgraph",
+    "pydantic",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "mypy",
+]
+
+[project.scripts]
+repo-docs-mcp-self-test = "repo_docs_mcp.server:cli_self_test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/repo_docs_mcp"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_ignores = true
+strict = false
