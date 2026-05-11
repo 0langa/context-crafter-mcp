@@ -24,6 +24,7 @@ dependencies = [
     "mcp[cli]",
     "langgraph",
     "pydantic",
+    "uuid-utils<0.15",
 ]
 
 [project.optional-dependencies]
