@@ -221,7 +221,3 @@ repos:
 - `renderers/` — Markdown, Mermaid, and optional HTML output generation.
 - `models.py` — shared typed dataclasses.
 - `state.py` — LangGraph state definition.
-
-## License
-
-MIT
