@@ -10,6 +10,7 @@ from pathlib import Path
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
+from mcp.types import TextContent, Tool
 
 from repo_docs_mcp.graph import (
     run_detect,
@@ -48,10 +49,10 @@ async def call_tool(name: str, arguments: dict) -> list:
     if name == "detect_project":
         detect = run_detect(repo_path)
         return [
-            {
-                "type": "text",
-                "text": json.dumps(detect.to_dict(), indent=2),
-            }
+            TextContent(
+                type="text",
+                text=json.dumps(detect.to_dict(), indent=2),
+            )
         ]
 
     if name == "generate_project_overview":
@@ -71,37 +72,37 @@ async def call_tool(name: str, arguments: dict) -> list:
                 if html_result.ok:
                     written.extend(html_result.written)
         return [
-            {
-                "type": "text",
-                "text": json.dumps({**overview_result.to_dict(), "written": written}, indent=2),
-            }
+            TextContent(
+                type="text",
+                text=json.dumps({**overview_result.to_dict(), "written": written}, indent=2),
+            )
         ]
 
     if name == "generate_repo_map":
         map_result = run_generate_repo_map(repo_path, output_dir, scan_config)
         return [
-            {
-                "type": "text",
-                "text": json.dumps(map_result.to_dict(), indent=2),
-            }
+            TextContent(
+                type="text",
+                text=json.dumps(map_result.to_dict(), indent=2),
+            )
         ]
 
     if name == "generate_dependency_graph":
         graph_result = run_generate_dependency_graph(repo_path, output_dir, scan_config)
         return [
-            {
-                "type": "text",
-                "text": json.dumps(graph_result.to_dict(), indent=2),
-            }
+            TextContent(
+                type="text",
+                text=json.dumps(graph_result.to_dict(), indent=2),
+            )
         ]
 
     if name == "generate_architecture_summary":
         arch_result = run_generate_architecture_summary(repo_path, output_dir, scan_config)
         return [
-            {
-                "type": "text",
-                "text": json.dumps(arch_result.to_dict(), indent=2),
-            }
+            TextContent(
+                type="text",
+                text=json.dumps(arch_result.to_dict(), indent=2),
+            )
         ]
 
     if name == "generate_all":
@@ -112,10 +113,10 @@ async def call_tool(name: str, arguments: dict) -> list:
             if html_result.ok:
                 result["written"] = list(result.get("written", [])) + list(html_result.written)
         return [
-            {
-                "type": "text",
-                "text": json.dumps(result, indent=2),
-            }
+            TextContent(
+                type="text",
+                text=json.dumps(result, indent=2),
+            )
         ]
 
     raise ValueError(f"Unknown tool: {name}")
@@ -151,62 +152,62 @@ async def list_tools() -> list:
         },
     }
     return [
-        {
-            "name": "detect_project",
-            "description": "Detect project types for a repository path.",
-            "inputSchema": {
+        Tool(
+            name="detect_project",
+            description="Detect project types for a repository path.",
+            inputSchema={
                 "type": "object",
                 "properties": {
                     "repo_path": common_props["repo_path"],
                 },
                 "required": ["repo_path"],
             },
-        },
-        {
-            "name": "generate_project_overview",
-            "description": "Generate a Markdown project overview.",
-            "inputSchema": {
+        ),
+        Tool(
+            name="generate_project_overview",
+            description="Generate a Markdown project overview.",
+            inputSchema={
                 "type": "object",
                 "properties": {k: v for k, v in common_props.items() if k != "repo_path" or True},
                 "required": ["repo_path"],
             },
-        },
-        {
-            "name": "generate_repo_map",
-            "description": "Generate a compact repository map.",
-            "inputSchema": {
+        ),
+        Tool(
+            name="generate_repo_map",
+            description="Generate a compact repository map.",
+            inputSchema={
                 "type": "object",
                 "properties": {k: v for k, v in common_props.items() if k != "html" or True},
                 "required": ["repo_path"],
             },
-        },
-        {
-            "name": "generate_dependency_graph",
-            "description": "Generate Mermaid dependency graph files.",
-            "inputSchema": {
+        ),
+        Tool(
+            name="generate_dependency_graph",
+            description="Generate Mermaid dependency graph files.",
+            inputSchema={
                 "type": "object",
                 "properties": {k: v for k, v in common_props.items() if k != "html" or True},
                 "required": ["repo_path"],
             },
-        },
-        {
-            "name": "generate_architecture_summary",
-            "description": "Generate an architecture summary.",
-            "inputSchema": {
+        ),
+        Tool(
+            name="generate_architecture_summary",
+            description="Generate an architecture summary.",
+            inputSchema={
                 "type": "object",
                 "properties": {k: v for k, v in common_props.items() if k != "html" or True},
                 "required": ["repo_path"],
             },
-        },
-        {
-            "name": "generate_all",
-            "description": "Run all generators.",
-            "inputSchema": {
+        ),
+        Tool(
+            name="generate_all",
+            description="Run all generators.",
+            inputSchema={
                 "type": "object",
                 "properties": common_props,
                 "required": ["repo_path"],
             },
-        },
+        ),
     ]
 
 
