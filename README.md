@@ -2,6 +2,82 @@
 
 A universal, global, stdio-based MCP server that generates repository documentation and lightweight visual architecture artifacts for any project path passed to it.
 
+## Quick Start
+
+Follow these steps to get the server running on your machine.
+
+### 1. Clone the repository
+
+```sh
+git clone https://github.com/0langa/repo-docs-mcp.git
+cd repo-docs-mcp
+```
+
+### 2. Install dependencies
+
+This project uses [`uv`](https://docs.astral.sh/uv/) for dependency management. If you don't have `uv` installed, install it first:
+
+```sh
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Then sync the project dependencies:
+
+```sh
+uv sync --extra dev
+```
+
+### 3. Run a smoke test
+
+Make sure everything works by analyzing the current directory:
+
+```sh
+uv run python -m repo_docs_mcp.server --self-test .
+```
+
+You should see generated files appear in `docs/generated/`.
+
+### 4. Connect to your MCP client
+
+Add the server to your MCP client config (e.g., Kimi CLI, Claude Desktop, Cline, etc.):
+
+```json
+{
+  "mcpServers": {
+    "repo-docs": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/absolute/path/to/repo-docs-mcp",
+        "run",
+        "python",
+        "-m",
+        "repo_docs_mcp.server"
+      ]
+    }
+  }
+}
+```
+
+Replace `/absolute/path/to/repo-docs-mcp` with the actual path where you cloned the repository.
+
+### 5. Use the tools
+
+Once connected, your MCP client can call tools like:
+
+- `detect_project` — identify what kind of project a repo is
+- `generate_all` — generate the full documentation suite
+- `generate_project_overview` — create just the project overview
+- `generate_repo_map` — create just the repository map
+- `generate_dependency_graph` — create Mermaid dependency graphs
+- `generate_architecture_summary` — create the architecture summary
+
+---
+
 ## What it does
 
 `repo-docs-mcp` analyzes a target repository using only static inspection (no execution, no network calls) and produces:
