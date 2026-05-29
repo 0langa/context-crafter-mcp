@@ -1,25 +1,30 @@
 # Limitations
 
-## Analysis Depth
+## Analysis depth
 
-- **Static only**: No runtime behavior, dynamic imports, or conditional architecture.
-- **Python**: AST-based via stdlib `ast` (best depth).
-- **Java**: AST-based via `javalang` (full AST parsing).
-- **Node/TypeScript**: AST-based via `tree-sitter-javascript` / `tree-sitter-typescript`.
-- **Go**: AST-based via `tree-sitter-go`.
-- **Rust**: AST-based via `tree-sitter-rust`.
-- **.NET**: AST-based via `tree-sitter-c-sharp` for `.cs` files; XML for `.csproj`.
-- **Generic**: Directory and filename heuristics only.
+- Static only: no runtime behavior, dynamic imports, or conditional architecture.
+- Python: stdlib `ast`.
+- Java: `javalang`.
+- Node/TypeScript: `tree-sitter-javascript` / `tree-sitter-typescript` with regex fallback.
+- Go: `tree-sitter-go` with regex fallback.
+- Rust: `tree-sitter-rust` with regex fallback.
+- .NET: `tree-sitter-c-sharp` for `.cs` plus XML parsing for project files, with regex fallback where needed.
+- Generic: directory and filename heuristics only.
 
-## Fallback Behavior
+## Fallback behavior
 
-All non-Python analyzers gracefully fall back to regex-based parsing if the AST parser is unavailable or fails. This ensures the tool works even when optional native parser wheels cannot be installed.
+Non-Python analyzers are intended to degrade gracefully when parser support is unavailable or parsing fails. Result quality can drop from AST-backed evidence to regex/heuristic evidence without becoming a hard crash.
 
-## Known Gaps
+## Known gaps
 
-- No secret redaction; review output before sharing.
-- HTML rendering uses the `markdown` library when available, stdlib fallback otherwise.
+- No secret redaction; review generated output before sharing.
+- No deep semantic call graph construction.
+- No runtime dependency resolution.
+- HTML rendering uses the `markdown` package when available, with stdlib fallback otherwise.
 - Fixture/example directories are excluded from primary project detection.
-- Nested `.gitignore` files are supported via `pathspec` with "deepest matching wins" semantics.
-- Profile differences on small repositories: compact always omits optional sections (Evidence, Generic Notes, Architecture subsections) regardless of repo size.
-- Source-reference validation covers `src/`, `tests/`, `docs/`, `scripts/`, `examples/` (with extensions), and common config files; bare paths without backticks are not validated.
+- Source-reference validation is conservative and backtick-oriented; bare prose paths are not validated.
+- Compact profile intentionally omits optional sections even when a small repo could technically fit more detail.
+
+## Release-scope note
+
+Before `1.0.0`, real-world smoke coverage is focused on Python, Node/TypeScript, Go, and Rust. Java and .NET remain primarily fixture-backed until the release sprint or until a blocker appears.

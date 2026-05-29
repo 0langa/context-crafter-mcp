@@ -10,6 +10,7 @@ import pytest
 
 from mcp.types import CallToolRequest, ListResourcesRequest, ListToolsRequest, ReadResourceRequest
 
+from context_crafter_mcp import __version__
 from context_crafter_mcp.server import _REGISTERED_RESOURCES, app
 
 
@@ -30,6 +31,13 @@ async def test_list_tools() -> None:
     assert "generate_context" in names
     assert "validate_generated_context" in names
     assert "explain_capabilities" in names
+    assert "generate_all" not in names
+
+    repo_map_tool = next(t for t in result.tools if t.name == "generate_repo_map")
+    assert "html" not in repo_map_tool.inputSchema["properties"]
+
+    validate_tool = next(t for t in result.tools if t.name == "validate_generated_context")
+    assert "repo_path" in validate_tool.inputSchema["properties"]
 
 
 @pytest.mark.anyio
@@ -62,7 +70,26 @@ async def test_generate_context_tool() -> None:
         result = server_result.root
         assert len(result.content) == 1
         assert result.content[0].type == "text"
-        assert "ok" in result.content[0].text
+        data = json.loads(result.content[0].text)
+        assert data["ok"] is True
+        assert data["resolved_output_dir"] == str((Path(td) / "out").resolve())
+
+
+@pytest.mark.anyio
+async def test_generate_context_confines_reported_output_dir() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        Path(td, "main.py").write_text("print(1)\n")
+        req = CallToolRequest(
+            method="tools/call",
+            params={
+                "name": "generate_context",
+                "arguments": {"repo_path": td, "output_dir": "../escape"},
+            },
+        )
+        server_result = await app.request_handlers[CallToolRequest](req)
+        data = json.loads(server_result.root.content[0].text)
+        assert data["ok"] is True
+        assert data["resolved_output_dir"] == str((Path(td) / "docs" / "generated").resolve())
 
 
 @pytest.mark.anyio
@@ -176,3 +203,7 @@ async def test_explain_capabilities_includes_analyzers() -> None:
     text = result.content[0].text
     assert "analyzers" in text
     assert "python" in text
+
+
+def test_server_uses_package_version() -> None:
+    assert app.version == __version__

@@ -47,9 +47,11 @@ def test_graph_pipeline_invalid_repo() -> None:
 def test_repo_state_to_tool_result() -> None:
     state = RepoState(repo_path=".", output_dir="out")
     state.written = ["a.md", "b.md"]
+    state.resolved_output_dir = "C:/tmp/out"
     result = state.to_tool_result()
     assert result["ok"] is True
     assert result["written"] == ["a.md", "b.md"]
+    assert result["resolved_output_dir"] == "C:/tmp/out"
     assert "summary" in result
     assert "errors" in result
 

@@ -19,15 +19,13 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: "latest"
+        uses: astral-sh/setup-uv@v8
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -52,11 +50,71 @@ jobs:
       - name: Build package
         run: uv build
 
+      - name: Validate committed example outputs
+        run: uv run context-crafter-mcp validate examples/outputs --repo examples/demo-repo --json
+
       - name: CLI smoke tests
+        shell: pwsh
         run: |
+          $before = git status --short --untracked-files=normal
           uv run context-crafter-mcp --help
           uv run context-crafter-mcp doctor
           uv run context-crafter-mcp self-test .
           uv run context-crafter-mcp detect . --json
           uv run context-crafter-mcp generate . --output .tmp/generated --profile compact --json
-          uv run context-crafter-mcp validate .tmp/generated --json
+          uv run context-crafter-mcp validate docs/generated --repo . --json
+          $after = git status --short --untracked-files=normal
+          if ($before -ne $after) {
+            Write-Host "Repository state changed unexpectedly during CLI smoke tests."
+            Write-Host "Before:"
+            Write-Host $before
+            Write-Host "After:"
+            Write-Host $after
+            exit 1
+          }
+
+  artifact-smoke:
+    name: Installed artifact smoke
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Sync dependencies
+        run: uv sync --extra dev
+
+      - name: Build package
+        run: uv build
+
+      - name: Smoke installed wheel and sdist
+        shell: pwsh
+        run: |
+          $wheel = (Get-ChildItem dist/*.whl | Select-Object -First 1).FullName
+          $sdist = (Get-ChildItem dist/*.tar.gz | Select-Object -First 1).FullName
+
+          function Invoke-Smoke($label, $artifact) {
+            $venv = ".venv-$label"
+            python -m venv $venv
+            $python = if ($IsWindows) { "$venv\Scripts\python.exe" } else { "$venv/bin/python" }
+            $cli = if ($IsWindows) { "$venv\Scripts\context-crafter-mcp.exe" } else { "$venv/bin/context-crafter-mcp" }
+
+            & $python -m pip install --upgrade pip
+            & $python -m pip install $artifact
+            & $cli --help
+            & $cli doctor
+            & $cli detect . --json
+            & $cli generate . --output .tmp/generated --profile compact --json
+            & $cli validate docs/generated --repo . --json
+          }
+
+          Invoke-Smoke "wheel" $wheel
+          Invoke-Smoke "sdist" $sdist

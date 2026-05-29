@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `resolved_output_dir` in generation-style JSON results for CLI and MCP calls.
+- Package metadata URLs for homepage, repository, issues, and changelog.
+- Dependabot config for Python dependencies and GitHub Actions.
+- CodeQL workflow for Python.
+- Public real-repo smoke matrix document for pre-`1.0.0` confidence tracking.
+
+### Changed
+
+- MCP server now reports the package version in server metadata.
+- MCP tool schemas now match actual supported arguments more closely.
+- CI now validates committed example outputs, checks CLI smoke commands for unexpected repo dirtiness, and smoke-tests installed wheel and sdist artifacts.
+- Roadmap rewritten around broad pre-`1.0.0` phases with a `0.9.5` release sprint and `1.0.0` as the first public release.
+- README, output contract, limitations, MCP client docs, security policy, and manual steps updated to reflect current release policy and output confinement behavior.
+
 ## [0.4.0] - 2026-05-29
 
 ### Added

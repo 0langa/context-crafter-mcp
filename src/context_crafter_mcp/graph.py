@@ -24,13 +24,15 @@ from context_crafter_mcp.state import RepoState
 
 def node_validate_repo(state: RepoState) -> dict[str, object]:
     """Validate repo_path exists."""
-    from context_crafter_mcp.filesystem import validate_repo_path
+    from context_crafter_mcp.filesystem import safe_output_path, validate_repo_path
 
     path = validate_repo_path(state.repo_path)
     if path is None:
         state.ok = False
         state.errors.append(f"Invalid repo_path: {state.repo_path}")
-    return {"ok": state.ok}
+        return {"ok": state.ok}
+    state.resolved_output_dir = str(safe_output_path(path, state.output_dir))
+    return {"ok": state.ok, "resolved_output_dir": state.resolved_output_dir}
 
 
 def node_detect_project(state: RepoState) -> dict[str, object]:

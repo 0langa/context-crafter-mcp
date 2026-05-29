@@ -7,6 +7,7 @@
 Primary threats we design against:
 
 - **Directory traversal via output_dir** — mitigated by resolving output path and enforcing it stays within the repository root.
+- **Confused-deputy writes to surprising paths** — mitigated by reporting `resolved_output_dir` in generation results so automation can verify the actual write location.
 - **Symlink traversal / infinite loops** — mitigated by not following symlinks during scanning.
 - **Arbitrary code execution in target repo** — mitigated by static analysis only; no execution of target code.
 - **Exfiltration via generated docs** — mitigated by local-only operation; no network calls during generation.
@@ -19,6 +20,7 @@ Primary threats we design against:
 - Scan depth and file count are **bounded**.
 - Binary and oversized files are **skipped**.
 - Output is **confined** to the repository root.
+- Generation results report the **resolved output directory** after confinement.
 - No stdout logging in **MCP stdio mode**.
 - MCP resource reads are **session-scoped**; arbitrary local paths and traversal are blocked.
 
