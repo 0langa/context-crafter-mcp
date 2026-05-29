@@ -87,6 +87,7 @@ def render_project_overview(
         "",
         f"- **Path**: `{repo_path}`",
         f"- **Detected types**: {', '.join(detect.project_types)}",
+        f"- **Evidence**: {', '.join(f'{k} ({v})' for k, v in detect.evidence.items())}",
         f"- **Generated**: {datetime.now(timezone.utc).isoformat()}",
         "",
     ]
@@ -794,6 +795,7 @@ def render_validation_report(
     out.mkdir(parents=True, exist_ok=True)
     path = out / "VALIDATION_REPORT.md"
 
+    # Validate the other 7 output files (VALIDATION_REPORT.md is implicitly present)
     required = [
         "AI_CONTEXT_INDEX.md",
         "PROJECT_OVERVIEW.md",
@@ -801,7 +803,6 @@ def render_validation_report(
         "DEPENDENCY_GRAPH.md",
         "ARCHITECTURE_SUMMARY.md",
         "AGENT_BRIEF.md",
-        "VALIDATION_REPORT.md",
         "SCAN_REPORT.md",
     ]
     found: list[str] = []

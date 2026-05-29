@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from context_crafter_mcp.analyzers import register_analyzer
+from context_crafter_mcp.detectors import _is_fixture_path
 from context_crafter_mcp.filesystem import safe_read_text, safe_scan, validate_repo_path
 from context_crafter_mcp.models import AnalysisResult, PythonModule, ScanConfig
 
@@ -86,7 +87,13 @@ def _discover_package_roots(modules: list[PythonModule], repo_path: Path) -> set
     # Direct top-level directories that contain Python files
     for item in repo_path.iterdir():
         if item.is_dir() and not item.name.startswith("."):
-            has_py = any(f.suffix == ".py" for f in item.rglob("*") if f.is_file())
+            if _is_fixture_path(item.relative_to(repo_path).as_posix()):
+                continue
+            has_py = any(
+                f.suffix == ".py"
+                for f in item.rglob("*")
+                if f.is_file() and not _is_fixture_path(f.relative_to(repo_path).as_posix())
+            )
             if has_py:
                 roots.add(item.name)
 
@@ -96,7 +103,13 @@ def _discover_package_roots(modules: list[PythonModule], repo_path: Path) -> set
         if src_dir.is_dir():
             for item in src_dir.iterdir():
                 if item.is_dir() and not item.name.startswith("."):
-                    has_py = any(f.suffix == ".py" for f in item.rglob("*") if f.is_file())
+                    if _is_fixture_path(item.relative_to(repo_path).as_posix()):
+                        continue
+                    has_py = any(
+                        f.suffix == ".py"
+                        for f in item.rglob("*")
+                        if f.is_file() and not _is_fixture_path(f.relative_to(repo_path).as_posix())
+                    )
                     if has_py:
                         roots.add(item.name)
 
@@ -236,6 +249,8 @@ def analyze_python(
 
     for fi in safe_scan(path, max_depth=cfg.max_depth + 2, max_files_per_dir=cfg.max_files_per_dir):
         if fi.is_dir:
+            continue
+        if _is_fixture_path(fi.rel_path):
             continue
         if fi.path.name.endswith(".py"):
             count += 1

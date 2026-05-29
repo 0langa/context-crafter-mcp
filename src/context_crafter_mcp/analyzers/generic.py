@@ -11,6 +11,7 @@ from context_crafter_mcp.filesystem import (
     list_root_files,
     validate_repo_path,
 )
+from context_crafter_mcp.detectors import _is_fixture_path
 from context_crafter_mcp.models import AnalysisResult, ScanConfig
 from context_crafter_mcp.scanner import Scanner, ScannerOptions
 
@@ -97,6 +98,8 @@ def analyze_generic(
     docs_dirs: set[str] = set()
 
     for sd in snapshot.directories:
+        if _is_fixture_path(sd.rel_path):
+            continue
         name = Path(sd.rel_path).name.lower()
         if name in TEST_DIR_HINTS:
             test_dirs.add(sd.rel_path)
@@ -106,6 +109,8 @@ def analyze_generic(
             docs_dirs.add(sd.rel_path)
 
     for sf in snapshot.files:
+        if _is_fixture_path(sf.rel_path):
+            continue
         name = Path(sf.rel_path).name
         rel = sf.rel_path
 

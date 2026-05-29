@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Iterator
 
@@ -88,52 +87,33 @@ def safe_scan(
     max_files_per_dir: int = MAX_FILES_PER_DIR,
     include_dirs: bool = False,
 ) -> Iterator[FileInfo]:
-    """Yield FileInfo entries under repo_path, skipping ignored dirs and symlinks."""
-    seen: set[Path] = set()
-    for root, dirs, files in os.walk(repo_path, topdown=True):
-        root_path = Path(root)
-        try:
-            root_path.resolve()
-        except (OSError, ValueError):
-            dirs[:] = []
-            continue
+    """Yield FileInfo entries under repo_path, skipping ignored dirs and symlinks.
 
-        # Skip symlinks to avoid loops
-        if root_path.resolve() in seen:
-            dirs[:] = []
-            continue
-        seen.add(root_path.resolve())
+    Thin compatibility wrapper around Scanner.scan().
+    """
+    from context_crafter_mcp.scanner import Scanner, ScannerOptions
 
-        # Skip ignored dirs
-        dirs[:] = [d for d in dirs if d not in IGNORED_DIRS and not (root_path / d).is_symlink()]
+    scanner = Scanner()
+    snapshot = scanner.scan(
+        repo_path,
+        ScannerOptions(
+            max_depth=max_depth,
+            max_files=max_files_per_dir * 10,
+        ),
+    )
 
-        depth = len(root_path.relative_to(repo_path).parts)
-        if depth > max_depth:
-            dirs[:] = []
-            continue
+    if include_dirs:
+        for sd in snapshot.directories:
+            rel = sd.rel_path if sd.rel_path != "." else ""
+            yield FileInfo(path=repo_path / rel, rel_path=rel, is_dir=True)
 
-        if include_dirs:
-            rel = root_path.relative_to(repo_path).as_posix()
-            if rel == ".":
-                rel = ""
-            yield FileInfo(path=root_path, rel_path=rel, is_dir=True)
-
-        for i, name in enumerate(files):
-            if i >= max_files_per_dir:
-                break
-            file_path = root_path / name
-            if file_path.is_symlink():
-                continue
-            try:
-                rel = file_path.relative_to(repo_path).as_posix()
-            except (OSError, ValueError):
-                continue
-            size = 0
-            try:
-                size = file_path.stat().st_size
-            except (OSError, ValueError):
-                pass
-            yield FileInfo(path=file_path, rel_path=rel, is_dir=False, size=size)
+    for sf in snapshot.files:
+        yield FileInfo(
+            path=repo_path / sf.rel_path,
+            rel_path=sf.rel_path,
+            is_dir=False,
+            size=sf.size,
+        )
 
 
 def safe_read_text(path: Path, max_bytes: int = 5_000_000) -> str | None:

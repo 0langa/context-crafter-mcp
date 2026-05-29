@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.3.0] - 2025-05-29
+## [0.3.0] - 2026-05-29
 
 ### Added
 
@@ -49,6 +49,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Package description aligned with product statement.
 - `ScanConfig` extended with `profile` and `max_file_bytes`.
 - `detectors.py` and `analyzers/generic.py` migrated to consume `RepoSnapshot`.
+
+### Fixed
+
+- **MCP resource safety**: `read_resource()` now uses a whitelist populated only by generation. Arbitrary paths are blocked.
+- **Detection pollution**: Fixture/example directories (`tests/fixtures/`, `examples/`, `docs/generated/`) are excluded from primary project detection and analysis.
+- **Validation report**: No longer lists itself as missing during generation.
+- **Scanner architecture**: `safe_scan()` is now a thin wrapper around `Scanner.scan()`.
+- **Evidence model**: Added `observed/inferred/unknown` evidence levels to `DetectResult` and generated docs.
+- **Repo cleanliness**: Removed 72 accidentally committed generated files from fixture directories.
 
 ## [0.2.0] - 2025-05-29
 

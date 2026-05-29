@@ -32,6 +32,7 @@ class DetectResult:
     project_types: list[str] = field(default_factory=list)
     markers: dict[str, list[str]] = field(default_factory=dict)
     error: str | None = None
+    evidence: dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -40,6 +41,7 @@ class DetectResult:
             "project_types": self.project_types,
             "markers": self.markers,
             "error": self.error,
+            "evidence": self.evidence,
         }
 
 
