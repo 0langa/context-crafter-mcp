@@ -3,8 +3,140 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Any
+
+
+class EvidenceKind(str, Enum):
+    """Kind of evidence supporting a claim."""
+
+    OBSERVED = "observed"
+    INFERRED = "inferred"
+    UNKNOWN = "unknown"
+    UNSUPPORTED = "unsupported"
+    ERROR = "error"
+
+
+class Confidence(str, Enum):
+    """Confidence level for an evidence claim."""
+
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+# Map evidence kind to default confidence
+_KIND_CONFIDENCE: dict[EvidenceKind, Confidence] = {
+    EvidenceKind.OBSERVED: Confidence.HIGH,
+    EvidenceKind.INFERRED: Confidence.MEDIUM,
+    EvidenceKind.UNKNOWN: Confidence.LOW,
+    EvidenceKind.UNSUPPORTED: Confidence.LOW,
+    EvidenceKind.ERROR: Confidence.HIGH,
+}
+
+
+@dataclass
+class Evidence:
+    """A single evidence item supporting or qualifying a claim."""
+
+    kind: EvidenceKind
+    message: str
+    source_path: str | None = None
+    analyzer: str | None = None
+    confidence: Confidence = Confidence.MEDIUM
+
+    def __post_init__(self) -> None:
+        if isinstance(self.confidence, str):
+            self.confidence = Confidence(self.confidence)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "kind": self.kind.value,
+            "message": self.message,
+            "source_path": self.source_path,
+            "analyzer": self.analyzer,
+            "confidence": self.confidence.value,
+        }
+
+
+@dataclass
+class EvidenceSet:
+    """Collection of evidence items with query helpers."""
+
+    items: list[Evidence] = field(default_factory=list)
+
+    def add(
+        self,
+        kind: EvidenceKind | str,
+        message: str,
+        source_path: str | None = None,
+        analyzer: str | None = None,
+        confidence: Confidence | str | None = None,
+    ) -> None:
+        if isinstance(kind, str):
+            kind = EvidenceKind(kind)
+        if confidence is None:
+            confidence = _KIND_CONFIDENCE.get(kind, Confidence.MEDIUM)
+        if isinstance(confidence, str):
+            confidence = Confidence(confidence)
+        self.items.append(
+            Evidence(kind=kind, message=message, source_path=source_path, analyzer=analyzer, confidence=confidence)
+        )
+
+    def by_kind(self, kind: EvidenceKind | str) -> list[Evidence]:
+        if isinstance(kind, str):
+            kind = EvidenceKind(kind)
+        return [e for e in self.items if e.kind == kind]
+
+    def by_analyzer(self, analyzer: str) -> list[Evidence]:
+        return [e for e in self.items if e.analyzer == analyzer]
+
+    def by_confidence(self, confidence: Confidence | str) -> list[Evidence]:
+        if isinstance(confidence, str):
+            confidence = Confidence(confidence)
+        return [e for e in self.items if e.confidence == confidence]
+
+    def warnings(self) -> list[Evidence]:
+        return [e for e in self.items if e.kind in (EvidenceKind.UNKNOWN, EvidenceKind.UNSUPPORTED, EvidenceKind.ERROR)]
+
+    def verify(self, repo_path: str | Path) -> list[Evidence]:
+        """Return evidence items whose source_path does not exist in the repository."""
+        root = Path(repo_path)
+        missing: list[Evidence] = []
+        for e in self.items:
+            if e.source_path and not (root / e.source_path).exists():
+                missing.append(e)
+        return missing
+
+    def to_dicts(self) -> list[dict[str, Any]]:
+        return [e.to_dict() for e in self.items]
+
+    def __bool__(self) -> bool:
+        return bool(self.items)
+
+
+@dataclass
+class AnalyzerSpec:
+    """Metadata describing an analyzer's capabilities and limitations."""
+
+    project_type: str
+    display_name: str
+    support_level: str  # metadata | syntax | ast | mixed | generic
+    parser: str  # stdlib_ast | regex | toml | xml | metadata | none
+    detects: list[str] = field(default_factory=list)
+    limitations: list[str] = field(default_factory=list)
+    analyzer: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "project_type": self.project_type,
+            "display_name": self.display_name,
+            "support_level": self.support_level,
+            "parser": self.parser,
+            "detects": self.detects,
+            "limitations": self.limitations,
+        }
 
 
 @dataclass
@@ -33,8 +165,10 @@ class DetectResult:
     markers: dict[str, list[str]] = field(default_factory=dict)
     error: str | None = None
     evidence: dict[str, str] = field(default_factory=dict)
+    evidence_set: EvidenceSet = field(default_factory=EvidenceSet)
 
     def to_dict(self) -> dict[str, Any]:
+        warnings = self.evidence_set.warnings()
         return {
             "ok": self.exists,
             "summary": f"Detected types: {', '.join(self.project_types)}"
@@ -46,7 +180,8 @@ class DetectResult:
             "markers": self.markers,
             "error": self.error,
             "evidence": self.evidence,
-            "warnings": [],
+            "evidence_details": self.evidence_set.to_dicts(),
+            "warnings": [e.message for e in warnings],
             "errors": [self.error] if self.error else [],
         }
 
@@ -175,6 +310,7 @@ class AnalysisResult:
     python_dependencies: list[str] = field(default_factory=list)
     python_dev_dependencies: list[str] = field(default_factory=list)
     profile: str = "standard"
+    evidence_set: EvidenceSet = field(default_factory=EvidenceSet)
 
 
 @dataclass

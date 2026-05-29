@@ -4,19 +4,26 @@ from __future__ import annotations
 
 from typing import Callable
 
-from context_crafter_mcp.models import AnalysisResult, ScanConfig
+from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, ScanConfig
 
-# Registry of analyzers keyed by project type name.
-# Each analyzer must accept (repo_path: str, analysis: AnalysisResult | None, config: ScanConfig) -> AnalysisResult
+# Registry of analyzer functions keyed by project type.
 AnalyzerFn = Callable[[str, AnalysisResult | None, ScanConfig], AnalysisResult]
 
 ANALYZER_REGISTRY: dict[str, AnalyzerFn] = {}
+
+# Registry of analyzer metadata specs keyed by project type.
+ANALYZER_SPECS: dict[str, AnalyzerSpec] = {}
 
 
 def register_analyzer(project_type: str, fn: AnalyzerFn) -> AnalyzerFn:
     """Register an analyzer for a project type."""
     ANALYZER_REGISTRY[project_type] = fn
     return fn
+
+
+def register_analyzer_spec(spec: AnalyzerSpec) -> None:
+    """Register an AnalyzerSpec for a project type."""
+    ANALYZER_SPECS[spec.project_type] = spec
 
 
 def analyze_for_type(
@@ -37,6 +44,7 @@ def analyze_for_type(
 # These imports must stay at the bottom to avoid circular import issues.
 from context_crafter_mcp.analyzers import (  # noqa: E402,F401
     dotnet,
+    generic,
     go,
     java,
     node,

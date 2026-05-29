@@ -49,7 +49,7 @@ CAPABILITIES_TEXT = (
     "no symlinks, output confined to repo root.\n"
     "Profiles: compact, standard, deep.\n"
     "Limitations: static analysis only; no runtime behavior; "
-    "non-Python parsing is regex/XML/TOML-based."
+    "deep semantic call graphs not implemented."
 )
 
 
@@ -159,6 +159,9 @@ async def call_tool(name: str, arguments: dict) -> list:
         ]
 
     if name == "explain_capabilities":
+        from context_crafter_mcp.analyzers import ANALYZER_SPECS
+
+        specs = [s.to_dict() for s in ANALYZER_SPECS.values()]
         return [
             TextContent(
                 type="text",
@@ -167,6 +170,7 @@ async def call_tool(name: str, arguments: dict) -> list:
                         "ok": True,
                         "summary": "Context Crafter MCP capabilities overview.",
                         "capabilities": CAPABILITIES_TEXT,
+                        "analyzers": specs,
                         "warnings": [],
                         "errors": [],
                     },

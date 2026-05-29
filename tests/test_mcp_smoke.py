@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import tempfile
 from pathlib import Path
 
@@ -144,3 +145,34 @@ async def test_list_resources_empty_before_generation() -> None:
     list_req = ListResourcesRequest(method="resources/list", params=None)
     list_result = await app.request_handlers[ListResourcesRequest](list_req)
     assert list_result.root.resources == []
+
+
+@pytest.mark.anyio
+async def test_detect_project_invalid_path_structured_error() -> None:
+    req = CallToolRequest(
+        method="tools/call",
+        params={"name": "detect_project", "arguments": {"repo_path": "/nonexistent/path/12345"}},
+    )
+    server_result = await app.request_handlers[CallToolRequest](req)
+    result = server_result.root
+    assert len(result.content) == 1
+    assert result.content[0].type == "text"
+    data = json.loads(result.content[0].text)
+    assert data["ok"] is False
+    assert data["exists"] is False
+    assert "errors" in data
+    assert any("nonexistent" in e for e in data["errors"])
+
+
+@pytest.mark.anyio
+async def test_explain_capabilities_includes_analyzers() -> None:
+    req = CallToolRequest(
+        method="tools/call",
+        params={"name": "explain_capabilities", "arguments": {}},
+    )
+    server_result = await app.request_handlers[CallToolRequest](req)
+    result = server_result.root
+    assert len(result.content) == 1
+    text = result.content[0].text
+    assert "analyzers" in text
+    assert "python" in text

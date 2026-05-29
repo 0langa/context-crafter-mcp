@@ -1,39 +1,32 @@
-"""Optional HTML renderer wrapping Markdown output."""
+"""HTML renderer using markdown library with stdlib fallback."""
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 from context_crafter_mcp.filesystem import safe_output_path
 from context_crafter_mcp.models import AnalysisResult, DetectResult, RenderResult
 
 
-_MD_BOLD_RE = re.compile(r"\*\*(.+?)\*\*|__(.+?)__")
-_MD_ITALIC_RE = re.compile(r"\*(.+?)\*|_(.+?)_")
-_MD_CODE_RE = re.compile(r"`(.+?)`")
-_MD_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
-
-
-def _escape_html(text: str) -> str:
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-
-
-def _inline_md_to_html(text: str) -> str:
-    """Convert inline Markdown formatting to HTML."""
-    # Code first so bold/italic inside backticks don't get converted
-    text = _MD_CODE_RE.sub(lambda m: f"<code>{_escape_html(m.group(1))}</code>", text)
-    # Bold
-    text = _MD_BOLD_RE.sub(lambda m: f"<strong>{_escape_html(m.group(1) or m.group(2))}</strong>", text)
-    # Italic (but not already processed bold markers)
-    text = _MD_ITALIC_RE.sub(lambda m: f"<em>{_escape_html(m.group(1) or m.group(2))}</em>", text)
-    # Links
-    text = _MD_LINK_RE.sub(lambda m: f'<a href="{_escape_html(m.group(2))}">{_escape_html(m.group(1))}</a>', text)
-    return text
-
-
 def _markdown_to_html(markdown_text: str) -> str:
+    """Convert markdown to HTML using the `markdown` library, with stdlib fallback."""
+    try:
+        import markdown  # type: ignore[import-untyped]
+
+        return str(
+            markdown.markdown(
+                markdown_text,
+                extensions=["tables", "fenced_code", "toc"],
+            )
+        )
+    except Exception:
+        return _stdlib_markdown_to_html(markdown_text)
+
+
+def _stdlib_markdown_to_html(markdown_text: str) -> str:
     """Lightweight markdown-to-html conversion using stdlib only."""
+    import re
+
     lines = markdown_text.splitlines()
     html_lines: list[str] = []
     in_code = False
@@ -41,6 +34,21 @@ def _markdown_to_html(markdown_text: str) -> str:
     in_ul = False
     in_ol = False
     in_paragraph = False
+
+    _MD_BOLD_RE = re.compile(r"\*\*(.+?)\*\*|__(.+?)__")
+    _MD_ITALIC_RE = re.compile(r"\*(.+?)\*|_(.+?)_")
+    _MD_CODE_RE = re.compile(r"`(.+?)`")
+    _MD_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+
+    def _escape_html(text: str) -> str:
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    def _inline_md_to_html(text: str) -> str:
+        text = _MD_CODE_RE.sub(lambda m: f"<code>{_escape_html(m.group(1))}</code>", text)
+        text = _MD_BOLD_RE.sub(lambda m: f"<strong>{_escape_html(m.group(1) or m.group(2))}</strong>", text)
+        text = _MD_ITALIC_RE.sub(lambda m: f"<em>{_escape_html(m.group(1) or m.group(2))}</em>", text)
+        text = _MD_LINK_RE.sub(lambda m: f'<a href="{_escape_html(m.group(2))}">{_escape_html(m.group(1))}</a>', text)
+        return text
 
     def _close_lists() -> None:
         nonlocal in_ul, in_ol
@@ -60,7 +68,6 @@ def _markdown_to_html(markdown_text: str) -> str:
     for line in lines:
         stripped = line.strip()
 
-        # Code blocks
         if stripped.startswith("```"):
             _close_lists()
             _close_paragraph()
@@ -76,19 +83,16 @@ def _markdown_to_html(markdown_text: str) -> str:
             code_lines.append(line)
             continue
 
-        # HTML comments pass through
         if stripped.startswith("<!--") and stripped.endswith("-->"):
             html_lines.append(stripped)
             continue
 
-        # Horizontal rules
         if stripped in ("---", "***", "___"):
             _close_lists()
             _close_paragraph()
             html_lines.append("<hr/>")
             continue
 
-        # Headings
         if stripped.startswith("# "):
             _close_lists()
             _close_paragraph()
@@ -110,14 +114,12 @@ def _markdown_to_html(markdown_text: str) -> str:
             html_lines.append(f"<h4>{_inline_md_to_html(_escape_html(stripped[5:]))}</h4>")
             continue
 
-        # Blockquotes
         if stripped.startswith("> "):
             _close_lists()
             _close_paragraph()
             html_lines.append(f"<blockquote>{_inline_md_to_html(_escape_html(stripped[2:]))}</blockquote>")
             continue
 
-        # Bullet lists
         if stripped.startswith("- "):
             _close_paragraph()
             if not in_ul:
@@ -129,7 +131,6 @@ def _markdown_to_html(markdown_text: str) -> str:
             html_lines.append(f"<li>{_inline_md_to_html(_escape_html(stripped[2:]))}</li>")
             continue
 
-        # Numbered lists
         num_match = re.match(r"^(\d+)\.\s+(.*)$", stripped)
         if num_match:
             _close_paragraph()
@@ -142,13 +143,11 @@ def _markdown_to_html(markdown_text: str) -> str:
             html_lines.append(f"<li>{_inline_md_to_html(_escape_html(num_match.group(2)))}</li>")
             continue
 
-        # Empty line
         if not stripped:
             _close_lists()
             _close_paragraph()
             continue
 
-        # Plain text (collect into paragraphs)
         _close_lists()
         if not in_paragraph:
             html_lines.append("<p>")
@@ -195,6 +194,9 @@ blockquote {{ border-left: 3px solid #ccc; margin: 0; padding-left: 1rem; color:
 hr {{ border: none; border-top: 1px solid #ddd; margin: 1rem 0; }}
 code {{ background: #f4f4f4; padding: 0.15rem 0.3rem; border-radius: 3px; font-size: 0.9em; }}
 a {{ color: #0366d6; }}
+table {{ border-collapse: collapse; width: 100%; margin: 1rem 0; }}
+th, td {{ border: 1px solid #ddd; padding: 0.5rem; text-align: left; }}
+th {{ background: #f4f4f4; }}
 </style>
 </head>
 <body>

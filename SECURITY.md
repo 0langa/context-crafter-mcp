@@ -30,7 +30,7 @@ The tool does not attempt to redact secrets from source files. Generated documen
 
 - Static analysis cannot detect runtime behavior, dynamic imports, or conditional architecture.
 - Generated docs reflect the state of the repo at scan time.
-- HTML rendering uses stdlib-only conversion; complex Markdown may not render perfectly.
+- HTML rendering uses the `markdown` library with stdlib fallback; most common Markdown constructs render correctly.
 
 ## Reporting Process
 

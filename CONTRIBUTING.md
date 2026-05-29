@@ -22,7 +22,7 @@ uv run context-crafter-mcp self-test .
 
 1. Create a module under `src/context_crafter_mcp/analyzers/`.
 2. Implement the analyzer function signature.
-3. Register it in `src/context_crafter_mcp/analyzers/__init__.py`.
+3. Call `register_analyzer(project_type, fn)` and `register_analyzer_spec(AnalyzerSpec(...))` at module bottom.
 4. Add detection markers in `src/context_crafter_mcp/detectors.py`.
 5. Add tests with a fixture repo under `tests/fixtures/`.
 
