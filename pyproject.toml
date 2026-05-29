@@ -25,7 +25,7 @@ dependencies = [
     "mcp[cli]",
     "langgraph",
     "pydantic",
-    "uuid-utils<0.15",
+    "uuid-utils<0.17",
     "pathspec",
     "javalang",
     "markdown",
