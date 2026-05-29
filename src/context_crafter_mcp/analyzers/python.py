@@ -141,11 +141,135 @@ def read_console_scripts(repo_path: Path) -> list[str]:
     return list(scripts.keys())
 
 
-def extract_python_dependencies(repo_path: Path) -> tuple[list[str], list[str]]:
-    """Extract runtime and dev dependencies from pyproject.toml."""
+def _read_requirements_txt(repo_path: Path) -> list[str]:
+    """Read requirements.txt and return package names."""
+    path = repo_path / "requirements.txt"
+    text = safe_read_text(path)
+    if text is None:
+        return []
+    deps: list[str] = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        # Skip pip options and references
+        if line.startswith("-"):
+            continue
+        # Strip inline comments
+        if " #" in line:
+            line = line.split(" #")[0].strip()
+        # Extract package name (first token before version specs, extras, markers)
+        name = line.split(";")[0].strip()
+        name = name.split("[")[0].strip()
+        # Split on common version operators
+        for op in ("==", ">=", "<=", ">", "<", "!=", "~=", "===", "@"):
+            if op in name:
+                name = name.split(op)[0].strip()
+                break
+        if name and not name.startswith("-"):
+            deps.append(name)
+    return deps
+
+
+def _read_setup_py(repo_path: Path) -> tuple[list[str], list[str], str | None]:
+    """Read setup.py and extract install_requires and extras_require.
+
+    Returns (runtime_deps, dev_deps, error_message).
+    File read is capped at 500 KB to avoid regex hangs on huge files.
+    """
+    path = repo_path / "setup.py"
+    text = safe_read_text(path, max_bytes=500_000)
+    if text is None:
+        return [], [], None
+    deps: list[str] = []
+    dev_deps: list[str] = []
+
+    # install_requires=["pkg>=1.0", "pkg2", ...]
+    import re as _re
+
+    try:
+        install_match = _re.search(
+            r"install_requires\s*=\s*(?:\(|\[)(.*?)(?:\)|\])",
+            text,
+            _re.DOTALL,
+        )
+        if install_match:
+            block = install_match.group(1)
+            for m in _re.finditer(r'["\']([^"\']+)["\']', block):
+                dep = m.group(1).split(";")[0].split("[")[0].strip()
+                for op in ("==", ">=", "<=", ">", "<", "!=", "~=", "===", "@"):
+                    if op in dep:
+                        dep = dep.split(op)[0].strip()
+                        break
+                if dep:
+                    deps.append(dep)
+
+        # extras_require={"dev": ["pkg>=1.0", ...], ...}
+        extras_match = _re.search(
+            r"extras_require\s*=\s*\{(.*?)\}",
+            text,
+            _re.DOTALL,
+        )
+        if extras_match:
+            block = extras_match.group(1)
+            # Extract each list inside the dict
+            for list_match in _re.finditer(r'["\'](\w+)["\']\s*:\s*(?:\(|\[)(.*?)(?:\)|\])', block, _re.DOTALL):
+                group_name = list_match.group(1).lower()
+                list_block = list_match.group(2)
+                is_dev = group_name in ("dev", "test", "lint", "docs", "typing")
+                for m in _re.finditer(r'["\']([^"\']+)["\']', list_block):
+                    dep = m.group(1).split(";")[0].split("[")[0].strip()
+                    for op in ("==", ">=", "<=", ">", "<", "!=", "~=", "===", "@"):
+                        if op in dep:
+                            dep = dep.split(op)[0].strip()
+                            break
+                    if dep:
+                        if is_dev:
+                            dev_deps.append(dep)
+                        else:
+                            deps.append(dep)
+    except Exception as exc:
+        return [], [], f"setup.py regex extraction failed: {exc}"
+
+    return deps, dev_deps, None
+
+
+def _read_pipfile(repo_path: Path) -> tuple[list[str], list[str], str | None]:
+    """Read Pipfile and return runtime and dev package names.
+
+    Returns (runtime_deps, dev_deps, error_message).
+    """
+    path = repo_path / "Pipfile"
+    text = safe_read_text(path)
+    if text is None:
+        return [], [], None
+    try:
+        data = tomllib.loads(text)
+    except Exception as exc:
+        return [], [], f"Pipfile parse error: {exc}"
+    deps: list[str] = []
+    dev_deps: list[str] = []
+    packages = data.get("packages", {})
+    dev_packages = data.get("dev-packages", {})
+    for pkg in packages:
+        if isinstance(pkg, str):
+            deps.append(pkg)
+    for pkg in dev_packages:
+        if isinstance(pkg, str):
+            dev_deps.append(pkg)
+    return deps, dev_deps, None
+
+
+def extract_python_dependencies(repo_path: Path) -> tuple[list[str], list[str], list[str], list[str]]:
+    """Extract runtime and dev dependencies from pyproject.toml, requirements.txt, setup.py, and Pipfile.
+
+    Returns (runtime_deps, dev_deps, sources, errors).
+    """
     data = _read_pyproject(repo_path)
     deps: list[str] = []
     dev_deps: list[str] = []
+    sources: list[str] = []
+    errors: list[str] = []
 
     # PEP 621 standard dependencies
     project = data.get("project", {})
@@ -192,7 +316,34 @@ def extract_python_dependencies(repo_path: Path) -> tuple[list[str], list[str]]:
             elif isinstance(dep, dict) and "include-group" in dep:
                 pass  # skip include-group references for now
 
-    return sorted(set(deps)), sorted(set(dev_deps))
+    if deps or dev_deps:
+        sources.append("pyproject.toml")
+
+    # requirements.txt
+    req_deps = _read_requirements_txt(repo_path)
+    if req_deps:
+        deps.extend(req_deps)
+        sources.append("requirements.txt")
+
+    # setup.py
+    setup_deps, setup_dev_deps, setup_err = _read_setup_py(repo_path)
+    if setup_err:
+        errors.append(setup_err)
+    if setup_deps or setup_dev_deps:
+        deps.extend(setup_deps)
+        dev_deps.extend(setup_dev_deps)
+        sources.append("setup.py")
+
+    # Pipfile
+    pip_deps, pip_dev_deps, pip_err = _read_pipfile(repo_path)
+    if pip_err:
+        errors.append(pip_err)
+    if pip_deps or pip_dev_deps:
+        deps.extend(pip_deps)
+        dev_deps.extend(pip_dev_deps)
+        sources.append("Pipfile")
+
+    return sorted(set(deps)), sorted(set(dev_deps)), sources, errors
 
 
 def extract_project_metadata(repo_path: Path) -> dict[str, Any]:
@@ -321,21 +472,32 @@ def analyze_python(
                     analyzer="python",
                 )
 
-    deps, dev_deps = extract_python_dependencies(path)
+    deps, dev_deps, dep_sources, dep_errors = extract_python_dependencies(path)
     result.python_dependencies = deps
     result.python_dev_dependencies = dev_deps
     for dep in deps:
         ev.add(
             EvidenceKind.OBSERVED,
-            f"Python runtime dependency `{dep}` from `pyproject.toml`",
-            source_path="pyproject.toml",
+            f"Python runtime dependency `{dep}`",
             analyzer="python",
         )
     for dep in dev_deps:
         ev.add(
             EvidenceKind.OBSERVED,
-            f"Python dev dependency `{dep}` from `pyproject.toml`",
-            source_path="pyproject.toml",
+            f"Python dev dependency `{dep}`",
+            analyzer="python",
+        )
+    for src in dep_sources:
+        ev.add(
+            EvidenceKind.OBSERVED,
+            f"Python dependency source `{src}` detected",
+            source_path=src,
+            analyzer="python",
+        )
+    for err in dep_errors:
+        ev.add(
+            EvidenceKind.ERROR,
+            err,
             analyzer="python",
         )
 
