@@ -150,7 +150,7 @@ async def call_tool(name: str, arguments: dict) -> list:
     if name == "validate_generated_context":
         from context_crafter_mcp.validation import validate_output_dir
 
-        val_result = validate_output_dir(output_dir)
+        val_result = validate_output_dir(output_dir, repo_path=repo_path if repo_path else None)
         return [
             TextContent(
                 type="text",
@@ -162,7 +162,16 @@ async def call_tool(name: str, arguments: dict) -> list:
         return [
             TextContent(
                 type="text",
-                text=CAPABILITIES_TEXT,
+                text=json.dumps(
+                    {
+                        "ok": True,
+                        "summary": "Context Crafter MCP capabilities overview.",
+                        "capabilities": CAPABILITIES_TEXT,
+                        "warnings": [],
+                        "errors": [],
+                    },
+                    indent=2,
+                ),
             )
         ]
 

@@ -12,7 +12,7 @@ from context_crafter_mcp.filesystem import (
     validate_repo_path,
 )
 from context_crafter_mcp.detectors import _is_fixture_path
-from context_crafter_mcp.models import AnalysisResult, ScanConfig
+from context_crafter_mcp.models import AnalysisResult, ScanConfig, get_profile_limit
 from context_crafter_mcp.scanner import Scanner, ScannerOptions
 
 
@@ -73,18 +73,25 @@ def analyze_generic(
     cfg = config or ScanConfig()
     result = base_result or AnalysisResult(repo_path=str(path))
 
+    # Adjust tree depth by profile
+    tree_depth = cfg.max_depth
+    if cfg.profile == "compact":
+        tree_depth = max(2, cfg.max_depth - 1)
+    elif cfg.profile == "deep":
+        tree_depth = cfg.max_depth + 2
+
     # Root files
     all_root = list_root_files(path)
     result.root_files = [f for f in all_root if f in INTERESTING_ROOT_FILES or f.endswith(tuple(CONFIG_HINTS))]
 
     # Directory tree
-    result.directory_tree = list_directory_tree(path, max_depth=cfg.max_depth, max_files_per_dir=cfg.max_files_per_dir)
+    result.directory_tree = list_directory_tree(path, max_depth=tree_depth, max_files_per_dir=cfg.max_files_per_dir)
 
     scanner = Scanner()
     snapshot = scanner.scan(
         path,
         ScannerOptions(
-            max_depth=cfg.max_depth + 1,
+            max_depth=tree_depth + 1,
             max_files=cfg.max_files_per_dir * 10,
             max_file_bytes=cfg.max_file_bytes,
         ),
@@ -121,12 +128,13 @@ def analyze_generic(
         if name in ENTRY_POINT_HINTS:
             likely_entry_points.append(rel)
 
+    result.profile = cfg.profile
     result.files_scanned = len(snapshot.files)
-    result.docs_files = sorted(set(docs_files))[:50]
-    result.config_files = sorted(set(config_files))[:50]
-    result.likely_entry_points = sorted(set(likely_entry_points))[:20]
-    result.test_directories = sorted(test_dirs)[:20]
-    result.source_directories = sorted(source_dirs)[:20]
+    result.docs_files = sorted(set(docs_files))[: get_profile_limit(cfg.profile, "docs_files")]
+    result.config_files = sorted(set(config_files))[: get_profile_limit(cfg.profile, "config_files")]
+    result.likely_entry_points = sorted(set(likely_entry_points))[: get_profile_limit(cfg.profile, "entry_points")]
+    result.test_directories = sorted(test_dirs)[: get_profile_limit(cfg.profile, "test_dirs")]
+    result.source_directories = sorted(source_dirs)[: get_profile_limit(cfg.profile, "source_dirs")]
 
     return result
 

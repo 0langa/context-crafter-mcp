@@ -3,7 +3,7 @@
 # Agent Brief: demo-repo
 
 - **Path**: `examples/demo-repo`
-- **Generated**: 2026-05-29T04:34:23.319722+00:00
+- **Generated**: 2026-05-29T10:48:30.327213+00:00
 - **Types**: generic, python
 
 ## What this is

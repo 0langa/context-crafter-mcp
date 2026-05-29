@@ -3,7 +3,7 @@
 # Architecture Summary: demo-repo
 
 - **Path**: `examples/demo-repo`
-- **Generated**: 2026-05-29T04:34:23.317712+00:00
+- **Generated**: 2026-05-29T10:48:30.327213+00:00
 
 ## Table of Contents
 

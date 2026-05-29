@@ -3,7 +3,7 @@
 # Validation Report: demo-repo
 
 - **Path**: `examples/demo-repo`
-- **Generated**: 2026-05-29T04:34:23.324518+00:00
+- **Generated**: 2026-05-29T10:48:30.327213+00:00
 
 ## Output Files
 
@@ -25,7 +25,7 @@ _None._
 
 ## Analysis Health
 
-- Files scanned: 28
+- Files scanned: 10
 - Errors: 0
 - Project types: generic, python
 

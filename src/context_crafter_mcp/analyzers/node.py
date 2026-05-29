@@ -11,10 +11,19 @@ from context_crafter_mcp.detectors import _is_fixture_path
 from context_crafter_mcp.filesystem import safe_read_text, safe_scan, validate_repo_path
 from context_crafter_mcp.models import AnalysisResult, NodePackage, ScanConfig
 
-IMPORT_RE = re.compile(
-    r"(?:^|\s)import\s+(?:.*?\s+from\s+)?['\"]([^'\"]+)['\"]|require\(['\"]([^'\"]+)['\"]\)",
-    re.MULTILINE,
+_IMPORT_PATTERNS = [
+    r"(?:^|\s)import\s+(?:.*?\s+from\s+)?['\"]([^'\"]+)['\"]",
+    r"require\(['\"]([^'\"]+)['\"]\)",
+    r"export\s+(?:\*|\{[^}]*\})\s+from\s+['\"]([^'\"]+)['\"]",
+    r"import\(['\"]([^'\"]+)['\"]\)",
+]
+IMPORT_RE = re.compile("|".join(_IMPORT_PATTERNS), re.MULTILINE)
+
+NODE_EXPORT_RE = re.compile(
+    r"^\s*export\s+(?:default\s+)?(?:const|let|var|function|class|interface|type)?\s*(\w+)", re.MULTILINE
 )
+NODE_CLASS_RE = re.compile(r"^\s*(?:export\s+)?class\s+(\w+)", re.MULTILINE)
+NODE_FUNC_RE = re.compile(r"^\s*(?:export\s+(?:default\s+)?)?(?:async\s+)?function\s+(\w+)", re.MULTILINE)
 
 
 def analyze_node(
@@ -62,12 +71,21 @@ def analyze_node(
             text = safe_read_text(fi.path, max_bytes=1_000_000)
             if text:
                 for m in IMPORT_RE.finditer(text):
-                    target = m.group(1) or m.group(2)
+                    target = m.group(1) or m.group(2) or m.group(3) or m.group(4)
                     if target:
                         edges.append((fi.rel_path, target))
+                for m in NODE_EXPORT_RE.finditer(text):
+                    pkg.exports.append(f"{fi.rel_path}:{m.group(1)}")
+                for m in NODE_CLASS_RE.finditer(text):
+                    pkg.classes.append(f"{fi.rel_path}:{m.group(1)}")
+                for m in NODE_FUNC_RE.finditer(text):
+                    pkg.functions.append(f"{fi.rel_path}:{m.group(1)}")
 
     pkg.files = files
     pkg.import_edges = edges
+    pkg.exports = sorted(set(pkg.exports))
+    pkg.classes = sorted(set(pkg.classes))
+    pkg.functions = sorted(set(pkg.functions))
     result.node_packages = [pkg]
     result.files_scanned += count
 

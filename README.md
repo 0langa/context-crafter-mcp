@@ -30,7 +30,7 @@ uv sync --extra dev
 uv run context-crafter-mcp --help
 ```
 
-Run a self-test against the current directory:
+Run a self-test against the current directory (uses a temp directory by default):
 
 ```sh
 uv run context-crafter-mcp self-test .
@@ -47,6 +47,14 @@ Validate the generated output:
 ```sh
 uv run context-crafter-mcp validate docs/generated
 ```
+
+## Profiles
+
+| Profile | Use case |
+|---------|----------|
+| compact | Quick AI context; shorter trees, fewer symbols, concise briefs |
+| standard | Default balanced detail |
+| deep | Maximum detail for manual review or large repos |
 
 ## Use with MCP clients
 
@@ -79,9 +87,24 @@ Test the server with the [MCP Inspector](https://github.com/modelcontextprotocol
 npx @modelcontextprotocol/inspector uv run context-crafter-mcp serve
 ```
 
+### MCP tools
+
+- `detect_project` — detect stacks for a repo path
+- `generate_context` — generate the full 8-file suite
+- `generate_project_overview`
+- `generate_repo_map`
+- `generate_dependency_graph`
+- `generate_architecture_summary`
+- `validate_generated_context`
+- `explain_capabilities`
+
+### MCP resources
+
+After `generate_context`, generated files are exposed as `context-crafter://latest/<filename>` resources. Only files from the current session are readable; arbitrary local paths are denied.
+
 ## Example output
 
-See [`examples/outputs/`](examples/outputs/) for real generated files from this repository.
+See [`examples/outputs/`](examples/outputs/) for real generated files from the demo repository.
 
 Quick preview of `AGENT_BRIEF.md`:
 
@@ -118,6 +141,7 @@ See [`SECURITY.md`](SECURITY.md) for the full threat model and reporting process
 - **Python product layer** — MCP server, CLI, analyzers, and renderers are Python. A lower-level scanner (Rust/Go) is only considered if benchmarks prove Python traversal is the bottleneck.
 - **LangGraph pipeline** — `validate_repo -> detect -> scan -> analyze -> render`.
 - **Analyzer registry** — Language analyzers are registered and run based on detected project types.
+- **Enriched snapshot** — `SnapshotFile` carries `extension`, `language_hint`, and `is_text` for richer analysis.
 
 See [`docs/adr/0001-python-product-layer-replaceable-scanner.md`](docs/adr/0001-python-product-layer-replaceable-scanner.md).
 
@@ -141,6 +165,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - HTML rendering is stdlib-only and may not handle complex Markdown perfectly.
 - Secret redaction is not implemented; review generated output before sharing.
 - Tree-sitter integration is experimental and not required for core installation.
+- Nested `.gitignore` files are supported via `pathspec` with deepest-matching-wins semantics.
 
 ## License
 

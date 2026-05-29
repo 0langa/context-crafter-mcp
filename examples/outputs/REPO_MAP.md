@@ -3,38 +3,17 @@
 # Repository Map: demo-repo
 
 - **Path**: `examples/demo-repo`
-- **Generated**: 2026-05-29T04:34:23.278316+00:00
+- **Generated**: 2026-05-29T10:48:30.311576+00:00
 
 ## Directory Tree
 
 ```
 demo-repo/
   docs/
-    generated/
-  examples/
-    outputs/
   src/
     greeter/
   tests/
 README.md
-    AGENT_BRIEF.md
-    AI_CONTEXT_INDEX.md
-    ARCHITECTURE_SUMMARY.md
-    DEPENDENCY_GRAPH.md
-    DEPENDENCY_GRAPH.mmd
-    PROJECT_OVERVIEW.md
-    REPO_MAP.md
-    SCAN_REPORT.md
-    VALIDATION_REPORT.md
-    AGENT_BRIEF.md
-    AI_CONTEXT_INDEX.md
-    ARCHITECTURE_SUMMARY.md
-    DEPENDENCY_GRAPH.md
-    DEPENDENCY_GRAPH.mmd
-    PROJECT_OVERVIEW.md
-    REPO_MAP.md
-    SCAN_REPORT.md
-    VALIDATION_REPORT.md
 pyproject.toml
     __init__.py
     cli.py

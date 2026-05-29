@@ -91,6 +91,72 @@ class TestScannerSafety:
             text = snapshot.read_text("bad.txt")
             assert text is not None
 
+    def test_gitignore_wildcard_pattern(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            Path(td, ".gitignore").write_text("*.log\n")
+            Path(td, "app.py").write_text("x")
+            Path(td, "debug.log").write_text("x")
+            scanner = Scanner()
+            snapshot = scanner.scan(td, ScannerOptions())
+            rels = [f.rel_path for f in snapshot.files]
+            assert "app.py" in rels
+            assert "debug.log" not in rels
+
+    def test_gitignore_dir_pattern(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            Path(td, ".gitignore").write_text("build/\n")
+            build = Path(td, "build")
+            build.mkdir()
+            Path(build, "out.js").write_text("x")
+            src = Path(td, "src")
+            src.mkdir()
+            Path(src, "main.py").write_text("x")
+            scanner = Scanner()
+            snapshot = scanner.scan(td, ScannerOptions())
+            rels = [f.rel_path for f in snapshot.files]
+            assert "build/out.js" not in rels
+            assert "src/main.py" in rels
+
+    def test_gitignore_double_star_pattern(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            Path(td, ".gitignore").write_text("foo/**\n")
+            deep = Path(td, "foo", "bar", "baz")
+            deep.mkdir(parents=True)
+            Path(deep, "file.txt").write_text("x")
+            Path(td, "other.txt").write_text("x")
+            scanner = Scanner()
+            snapshot = scanner.scan(td, ScannerOptions())
+            rels = [f.rel_path for f in snapshot.files]
+            assert "foo/bar/baz/file.txt" not in rels
+            assert "other.txt" in rels
+
+    def test_gitignore_negation_pattern(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            Path(td, ".gitignore").write_text("*.log\n!keep.log\n")
+            Path(td, "debug.log").write_text("x")
+            Path(td, "keep.log").write_text("x")
+            scanner = Scanner()
+            snapshot = scanner.scan(td, ScannerOptions())
+            rels = [f.rel_path for f in snapshot.files]
+            assert "debug.log" not in rels
+            assert "keep.log" in rels
+
+    def test_nested_gitignore_pattern(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            Path(td, ".gitignore").write_text("*.log\n")
+            sub = Path(td, "sub")
+            sub.mkdir()
+            Path(sub, ".gitignore").write_text("!keep.log\n")
+            Path(sub, "debug.log").write_text("x")
+            Path(sub, "keep.log").write_text("x")
+            Path(td, "root.log").write_text("x")
+            scanner = Scanner()
+            snapshot = scanner.scan(td, ScannerOptions())
+            rels = [f.rel_path for f in snapshot.files]
+            assert "root.log" not in rels
+            assert "sub/debug.log" not in rels
+            assert "sub/keep.log" in rels
+
 
 class TestOutputConfinement:
     """Output directory must stay inside repo root."""

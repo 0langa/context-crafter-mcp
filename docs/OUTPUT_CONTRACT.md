@@ -24,11 +24,26 @@ Every generated file includes:
 
 ## Profiles
 
-| Profile | Use |
-|---------|-----|
-| compact | Small context for coding agents |
-| standard | Default useful docs |
-| deep | More detail for manual review |
+| Profile | Effect |
+|---------|--------|
+| compact | Shorter directory tree, fewer entry points, fewer dependency details, no long symbol lists, concise agent brief |
+| standard | Default balanced detail |
+| deep | More tree depth/list counts, more symbols/imports, more analyzer details, more warnings/unknowns, more graph edges |
+
+Profiles measurably change output size on repositories with enough content. On tiny repos the difference may be small.
+
+## Validation Codes
+
+Validation can report the following machine-readable codes:
+
+- `missing_required_file`
+- `broken_markdown_link`
+- `missing_mermaid_block`
+- `empty_mermaid_block`
+- `referenced_source_missing`
+- `fixture_path_primary_claim`
+- `oversized_section`
+- `validation_internal_error`
 
 ## Rules
 

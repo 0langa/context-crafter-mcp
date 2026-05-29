@@ -1,6 +1,6 @@
 [project]
 name = "context-crafter-mcp"
-version = "0.3.1"
+version = "0.3.2"
 description = "Local-first MCP server that turns source repositories into compact AI-agent context: project overviews, repo maps, dependency graphs, architecture notes, and validation reports."
 requires-python = ">=3.11"
 authors = [
@@ -10,7 +10,7 @@ license = {text = "MIT"}
 readme = "README.md"
 keywords = ["mcp", "documentation", "repository", "static-analysis"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -25,6 +25,7 @@ dependencies = [
     "langgraph",
     "pydantic",
     "uuid-utils<0.15",
+    "pathspec",
 ]
 
 [project.optional-dependencies]

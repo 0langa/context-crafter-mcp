@@ -12,6 +12,10 @@ from context_crafter_mcp.models import AnalysisResult, GoModule, ScanConfig
 
 GO_MOD_MODULE_RE = re.compile(r"^module\s+(\S+)", re.MULTILINE)
 GO_MOD_REQUIRE_RE = re.compile(r"^require\s+\(?\s*(\S+)", re.MULTILINE)
+GO_IMPORT_RE = re.compile(r'^\s*import\s+(?:\(\s*([^)]*)\s*\)|"([^"]+)")', re.MULTILINE)
+GO_FUNC_RE = re.compile(r"^func\s+(?:\([^)]*\)\s+)?(\w+)\s*\(", re.MULTILINE)
+GO_STRUCT_RE = re.compile(r"^type\s+(\w+)\s+struct\b", re.MULTILINE)
+GO_INTERFACE_RE = re.compile(r"^type\s+(\w+)\s+interface\b", re.MULTILINE)
 
 
 def analyze_go(
@@ -54,10 +58,29 @@ def analyze_go(
                 pkg_dir = ""
             packages.add(pkg_dir or "main")
             src = safe_read_text(fi.path, max_bytes=500_000)
-            if src and "package main" in src:
-                mod.entry_points.append(fi.rel_path)
+            if src:
+                if "package main" in src:
+                    mod.entry_points.append(fi.rel_path)
+                for m in GO_IMPORT_RE.finditer(src):
+                    block = m.group(1)
+                    single = m.group(2)
+                    if single:
+                        mod.dependencies.append(single)
+                    elif block:
+                        for line in block.splitlines():
+                            line = line.strip().strip('"')
+                            if line and not line.startswith("."):
+                                mod.dependencies.append(line)
+                for m in GO_FUNC_RE.finditer(src):
+                    mod.packages.append(f"{pkg_dir or 'main'}.{m.group(1)}")
+                for m in GO_STRUCT_RE.finditer(src):
+                    mod.structs.append(f"{pkg_dir or 'main'}.{m.group(1)}")
+                for m in GO_INTERFACE_RE.finditer(src):
+                    mod.interfaces.append(f"{pkg_dir or 'main'}.{m.group(1)}")
 
-    mod.packages = sorted(packages)
+    mod.packages = sorted(set(mod.packages) | packages)
+    mod.structs = sorted(set(mod.structs))
+    mod.interfaces = sorted(set(mod.interfaces))
     result.go_modules = [mod]
     result.files_scanned += count
     return result

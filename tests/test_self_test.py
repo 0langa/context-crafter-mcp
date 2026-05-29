@@ -5,6 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
+from context_crafter_mcp.cli import build_parser, cmd_self_test
 from context_crafter_mcp.graph import run_generate_all
 
 
@@ -24,3 +25,14 @@ def test_self_test_smoke() -> None:
         assert "AGENT_BRIEF.md" in names
         assert "VALIDATION_REPORT.md" in names
         assert "SCAN_REPORT.md" in names
+
+
+def test_self_test_default_does_not_persist() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        Path(td, "main.py").write_text("print(1)\n")
+        parser = build_parser()
+        args = parser.parse_args(["self-test", td])
+        ret = cmd_self_test(args)
+        assert ret == 0
+        # Default behavior must not write docs/generated inside the repo
+        assert not (Path(td) / "docs" / "generated").exists()

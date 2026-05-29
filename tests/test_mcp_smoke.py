@@ -124,3 +124,23 @@ async def test_read_resource_allows_registered_generated_files() -> None:
         )
         bad_result = await app.request_handlers[ReadResourceRequest](bad_req)
         assert "Access denied" in bad_result.root.contents[0].text
+
+
+@pytest.mark.anyio
+async def test_read_resource_blocks_traversal() -> None:
+    req = ReadResourceRequest(
+        method="resources/read",
+        params={"uri": "context-crafter://latest/../SECRET.md"},
+    )
+    server_result = await app.request_handlers[ReadResourceRequest](req)
+    result = server_result.root
+    assert len(result.contents) == 1
+    assert "Access denied" in result.contents[0].text
+
+
+@pytest.mark.anyio
+async def test_list_resources_empty_before_generation() -> None:
+    _REGISTERED_RESOURCES.clear()
+    list_req = ListResourcesRequest(method="resources/list", params=None)
+    list_result = await app.request_handlers[ListResourcesRequest](list_req)
+    assert list_result.root.resources == []
