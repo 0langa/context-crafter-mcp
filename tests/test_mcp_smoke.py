@@ -7,9 +7,16 @@ from pathlib import Path
 
 import pytest
 
-from mcp.types import CallToolRequest, ListToolsRequest, ReadResourceRequest
+from mcp.types import CallToolRequest, ListResourcesRequest, ListToolsRequest, ReadResourceRequest
 
-from context_crafter_mcp.server import app
+from context_crafter_mcp.server import _REGISTERED_RESOURCES, app
+
+
+@pytest.fixture(autouse=True)
+def _clear_registered_resources():
+    _REGISTERED_RESOURCES.clear()
+    yield
+    _REGISTERED_RESOURCES.clear()
 
 
 @pytest.mark.anyio
@@ -79,3 +86,41 @@ async def test_read_resource_blocks_arbitrary_paths() -> None:
     result = server_result.root
     assert len(result.contents) == 1
     assert "Access denied" in result.contents[0].text
+
+
+@pytest.mark.anyio
+async def test_read_resource_allows_registered_generated_files() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        Path(td, "main.py").write_text("print(1)\n")
+        gen_req = CallToolRequest(
+            method="tools/call",
+            params={
+                "name": "generate_context",
+                "arguments": {"repo_path": td, "output_dir": "out"},
+            },
+        )
+        await app.request_handlers[CallToolRequest](gen_req)
+
+        # Should be listed
+        list_req = ListResourcesRequest(method="resources/list", params=None)
+        list_result = await app.request_handlers[ListResourcesRequest](list_req)
+        uris = [str(r.uri) for r in list_result.root.resources]
+        assert any("AI_CONTEXT_INDEX.md" in u for u in uris)
+
+        # Should be readable
+        uri = "context-crafter://latest/AI_CONTEXT_INDEX.md"
+        read_req = ReadResourceRequest(
+            method="resources/read",
+            params={"uri": uri},
+        )
+        read_result = await app.request_handlers[ReadResourceRequest](read_req)
+        assert len(read_result.root.contents) == 1
+        assert "AI Context Index" in read_result.root.contents[0].text
+
+        # Unknown file should be denied
+        bad_req = ReadResourceRequest(
+            method="resources/read",
+            params={"uri": "context-crafter://latest/SECRET.md"},
+        )
+        bad_result = await app.request_handlers[ReadResourceRequest](bad_req)
+        assert "Access denied" in bad_result.root.contents[0].text

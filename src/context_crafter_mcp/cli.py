@@ -107,25 +107,64 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     try:
         import mcp
 
-        print(f"mcp SDK: {getattr(mcp, '__version__', 'unknown')}")
+        ver = getattr(mcp, "__version__", None)
+        print(f"mcp SDK: installed{' (' + ver + ')' if ver else ''}")
     except Exception as exc:
         print(f"mcp SDK: MISSING ({exc})")
+        issues.append(f"mcp SDK missing: {exc}")
         ok = False
 
     try:
         import pydantic
 
-        print(f"pydantic: {getattr(pydantic, '__version__', 'unknown')}")
+        ver = getattr(pydantic, "__version__", None)
+        print(f"pydantic: installed{' (' + ver + ')' if ver else ''}")
     except Exception as exc:
         print(f"pydantic: MISSING ({exc})")
+        issues.append(f"pydantic missing: {exc}")
         ok = False
 
     try:
         import langgraph
 
-        print(f"langgraph: {getattr(langgraph, '__version__', 'unknown')}")
+        ver = getattr(langgraph, "__version__", None)
+        print(f"langgraph: installed{' (' + ver + ')' if ver else ''}")
     except Exception as exc:
         print(f"langgraph: MISSING ({exc})")
+        issues.append(f"langgraph missing: {exc}")
+        ok = False
+
+    # CLI entrypoint check
+    try:
+        import subprocess
+
+        result = subprocess.run(
+            [sys.executable, "-m", "context_crafter_mcp.cli", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode == 0 and __version__ in result.stdout:
+            print("CLI entrypoint: ok")
+        else:
+            print("CLI entrypoint: unexpected output")
+            issues.append("CLI entrypoint check failed")
+    except Exception as exc:
+        print(f"CLI entrypoint: error ({exc})")
+        issues.append(f"CLI entrypoint error: {exc}")
+
+    # Temp output write check
+    try:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as td:
+            test_path = Path(td) / "write_test.txt"
+            test_path.write_text("ok", encoding="utf-8")
+            assert test_path.read_text(encoding="utf-8") == "ok"
+        print("Temp output write: ok")
+    except Exception as exc:
+        print(f"Temp output write: error ({exc})")
+        issues.append(f"Temp output write error: {exc}")
         ok = False
 
     if ok:
@@ -175,43 +214,29 @@ def cmd_generate(args: argparse.Namespace) -> int:
 
 
 def cmd_validate(args: argparse.Namespace) -> int:
-    output_dir = Path(args.output_dir)
-    required = [
-        "AI_CONTEXT_INDEX.md",
-        "PROJECT_OVERVIEW.md",
-        "REPO_MAP.md",
-        "DEPENDENCY_GRAPH.md",
-        "ARCHITECTURE_SUMMARY.md",
-        "AGENT_BRIEF.md",
-        "VALIDATION_REPORT.md",
-        "SCAN_REPORT.md",
-    ]
-    found: list[str] = []
-    missing: list[str] = []
-    for name in required:
-        if (output_dir / name).exists():
-            found.append(name)
-        else:
-            missing.append(name)
-    ok = len(missing) == 0
-    result = {
-        "ok": ok,
-        "output_dir": str(output_dir),
-        "found": found,
-        "missing": missing,
-        "count": len(found),
-        "expected": len(required),
-    }
+    from context_crafter_mcp.validation import validate_output_dir
+
+    result = validate_output_dir(args.output_dir)
     if args.json:
-        print(json.dumps(result, indent=2))
+        print(json.dumps(result.to_dict(), indent=2))
     else:
-        print(f"Validate: {output_dir}")
-        print(f"Found: {len(found)}/{len(required)}")
-        if missing:
+        print(f"Validate: {result.output_dir}")
+        print(f"Found: {len(result.found)}/{result.to_dict()['expected']}")
+        if result.missing:
             print("Missing:")
-            for m in missing:
+            for m in result.missing:
                 print(f"  - {m}")
-    return 0 if ok else 1
+        warnings = [c for c in result.checks if c.level == "warning"]
+        errors = [c for c in result.checks if c.level == "error"]
+        if warnings:
+            print("Warnings:")
+            for w in warnings:
+                print(f"  [{w.code}] {w.file}: {w.message}")
+        if errors:
+            print("Errors:")
+            for e in errors:
+                print(f"  [{e.code}] {e.file}: {e.message}")
+    return 0 if result.ok else 1
 
 
 def cmd_self_test(args: argparse.Namespace) -> int:

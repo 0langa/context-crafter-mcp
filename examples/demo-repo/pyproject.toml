@@ -1,0 +1,13 @@
+[project]
+name = "demo-greeter"
+version = "0.1.0"
+description = "A tiny demo Python project for context-crafter-mcp."
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+[project.scripts]
+greet = "greeter.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
