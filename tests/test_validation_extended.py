@@ -150,3 +150,27 @@ def test_referenced_source_with_line_number() -> None:
         result = validate_output_dir(out, repo_path=repo)
         codes = [c.code for c in result.checks]
         assert "referenced_source_missing" not in codes
+
+
+def test_validate_output_dir_resolves_relative_to_repo_path() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        repo = Path(td, "repo")
+        repo.mkdir()
+        # Create output dir inside repo
+        out = repo / "docs" / "generated"
+        out.mkdir(parents=True)
+        for name in [
+            "AI_CONTEXT_INDEX.md",
+            "PROJECT_OVERVIEW.md",
+            "REPO_MAP.md",
+            "DEPENDENCY_GRAPH.md",
+            "ARCHITECTURE_SUMMARY.md",
+            "AGENT_BRIEF.md",
+            "SCAN_REPORT.md",
+            "VALIDATION_REPORT.md",
+        ]:
+            Path(out, name).write_text("ok\n")
+        # Pass relative output_dir with repo_path — should resolve inside repo
+        result = validate_output_dir("docs/generated", repo_path=repo)
+        assert len(result.found) == 8
+        assert len(result.missing) == 0
