@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from mcp.types import CallToolRequest, ListToolsRequest
+from mcp.types import CallToolRequest, ListToolsRequest, ReadResourceRequest
 
 from context_crafter_mcp.server import app
 
@@ -67,3 +67,15 @@ async def test_explain_capabilities_tool() -> None:
     result = server_result.root
     assert len(result.content) == 1
     assert "Context Crafter MCP" in result.content[0].text
+
+
+@pytest.mark.anyio
+async def test_read_resource_blocks_arbitrary_paths() -> None:
+    req = ReadResourceRequest(
+        method="resources/read",
+        params={"uri": "file:///etc/passwd"},
+    )
+    server_result = await app.request_handlers[ReadResourceRequest](req)
+    result = server_result.root
+    assert len(result.contents) == 1
+    assert "Access denied" in result.contents[0].text

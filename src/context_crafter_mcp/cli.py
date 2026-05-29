@@ -239,6 +239,24 @@ def cmd_mcp_config(args: argparse.Namespace) -> int:
         print(f"Supported: {', '.join(sorted(MCP_CONFIG_TEMPLATES))}")
         return 1
     config = MCP_CONFIG_TEMPLATES[client]
+    repo_path = getattr(args, "repo", None)
+    if repo_path:
+        # Local development config using uv run
+        abs_path = str(Path(repo_path).resolve())
+        config = {
+            "mcpServers": {
+                "context-crafter": {
+                    "command": "uv",
+                    "args": [
+                        "--directory",
+                        abs_path,
+                        "run",
+                        "context-crafter-mcp",
+                        "serve",
+                    ],
+                }
+            }
+        }
     print(json.dumps(config, indent=2))
     return 0
 
@@ -295,6 +313,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_config = sub.add_parser("mcp-config", help="Emit MCP client config snippet.")
     p_config.add_argument("--client", required=True)
+    p_config.add_argument(
+        "--repo", default=None, help="Local repo path for development config (uses uv run instead of uvx)."
+    )
     p_config.set_defaults(func=cmd_mcp_config)
 
     p_serve = sub.add_parser("serve", help="Start MCP stdio server.")

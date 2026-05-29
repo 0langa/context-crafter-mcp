@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from context_crafter_mcp.analyzers import register_analyzer
+from context_crafter_mcp.detectors import _is_fixture_path
 from context_crafter_mcp.filesystem import safe_read_text, safe_scan, validate_repo_path
 from context_crafter_mcp.models import AnalysisResult, DotNetProject, DotNetSolution, ScanConfig
 
@@ -82,6 +83,8 @@ def analyze_dotnet(
 
     for fi in safe_scan(path, max_depth=cfg.max_depth + 1, max_files_per_dir=cfg.max_files_per_dir):
         if fi.is_dir:
+            continue
+        if _is_fixture_path(fi.rel_path):
             continue
         name = fi.path.name
         if name.endswith(".sln"):

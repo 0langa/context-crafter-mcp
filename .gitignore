@@ -26,3 +26,9 @@ htmlcov/
 
 # Temporary outputs
 .tmp/
+
+# Fixture-generated artifacts (created during tests)
+tests/fixtures/**/docs/generated/
+
+# Development roadmap (private)
+DEVELOPMENT_ROADMAP for context-crafter-mcp.txt
