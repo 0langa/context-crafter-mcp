@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from repo_docs_mcp.detectors import detect_project
+from context_crafter_mcp.detectors import detect_project
 
 
 def test_detect_missing_path() -> None:

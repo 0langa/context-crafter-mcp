@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from repo_docs_mcp.analyzers.python import analyze_python
+from context_crafter_mcp.analyzers.python import analyze_python
 
 
 def test_python_basic() -> None:

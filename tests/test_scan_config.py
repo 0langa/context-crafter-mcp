@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from repo_docs_mcp.models import ScanConfig
+from context_crafter_mcp.models import ScanConfig
 
 
 def test_scan_config_defaults() -> None:

@@ -1,0 +1,605 @@
+# Development Roadmap: `context-crafter-mcp` to Pin-Worthy Standard
+
+This roadmap is the implementation specification for turning the current early repo-docs MCP project into a polished local-first MCP server and CLI.
+
+Target project name: `context-crafter-mcp`
+
+Recommended public identity:
+
+| Surface | Name |
+|---|---|
+| GitHub repository | `context-crafter-mcp` |
+| Python distribution package | `context-crafter-mcp` |
+| Python import package | `context_crafter_mcp` |
+| CLI command | `context-crafter-mcp` |
+| MCP server display name | `context-crafter` |
+| Optional future scanner binary | `context-crafter-scan` |
+
+Current local roadmap path:
+
+    C:\Users\juliu\source\repos\context-crafter-mcp\DEVELOPMENT_ROADMAP for context-crafter-mcp.txt
+
+## 1. Final Product Shape
+
+The final project is both:
+
+| Surface | Purpose |
+|---|---|
+| MCP server | Main product surface for coding clients and AI agents |
+| CLI app | Human/admin/debug surface for setup, diagnostics, manual generation, and config snippets |
+
+Product statement:
+
+> Context Crafter MCP turns source repositories into compact, source-grounded AI-agent context through a local-first MCP server and CLI.
+
+The v1 server is stdio-first. Docker and HTTP service modes are optional future work, not default v1 requirements.
+
+Required CLI surface:
+
+    context-crafter-mcp --help
+    context-crafter-mcp version
+    context-crafter-mcp doctor
+    context-crafter-mcp detect <repo_path> [--json]
+    context-crafter-mcp generate <repo_path> --output <output_dir> [--profile compact|standard|deep] [--json]
+    context-crafter-mcp validate <output_dir> [--json]
+    context-crafter-mcp self-test [repo_path]
+    context-crafter-mcp mcp-config --client <client> [--repo <path>]
+    context-crafter-mcp serve
+
+Required MCP server style:
+
+    {
+      "mcpServers": {
+        "context-crafter": {
+          "command": "uvx",
+          "args": ["context-crafter-mcp", "serve"]
+        }
+      }
+    }
+
+## 2. Architecture Decision
+
+Final decision:
+
+> Keep Python for the MCP server, CLI, analyzer registry, renderers, validation reports, and package workflow. Design the filesystem scanner as a strict replaceable boundary. Add Tree-sitter for deeper parsing before considering a lower-level scanner. Only add Rust/Go after benchmarks prove Python traversal is the bottleneck.
+
+Rationale:
+
+| Component | Decision | Rationale |
+|---|---|---|
+| MCP server | Python | Python is a first-class MCP SDK path and fits tool/resource/prompt servers |
+| CLI | Python | Text generation, JSON output, config generation, and Windows support are straightforward |
+| Analyzer registry | Python | Registry logic depends on contracts, models, fixtures, and tests more than raw speed |
+| Markdown/HTML rendering | Python | Rendering and validation are not performance-critical |
+| Safe filesystem scanner | Python first, replaceable later | Lower-level may help later, but only after benchmarks prove it |
+| Deep parsing | Tree-sitter first | Better correctness upgrade than rewriting the whole project |
+| Future scanner engine | Optional Rust/Go helper | Only if benchmark thresholds are crossed |
+
+Required ADR:
+
+    docs/adr/0001-python-product-layer-replaceable-scanner.md
+
+Required scanner boundary:
+
+    Scanner.scan(root, options) -> RepoSnapshot
+
+Everything above the scanner must consume `RepoSnapshot`, not raw ad-hoc filesystem traversal.
+
+## 3. Current State Assessment
+
+The project already has a useful core idea and should stay public if active, but it needs productization and proof before being a strong GitHub pin.
+
+Current strengths:
+
+| Area | Current state | Why it matters |
+|---|---|---|
+| Product idea | Local-first MCP server that generates repo docs/context | Strong CV signal for AI tooling and developer automation |
+| Structure | Python package, tests, workflow, `pyproject.toml`, lockfile | Already beyond a throwaway script |
+| Supported stacks | Python, Node/JS, .NET, Rust, Go, Java, generic | Good breadth if proven by fixtures |
+| Safety story | Static-only, bounded scan, no target execution | Excellent if backed by tests |
+| Tool surface | Detection and doc generation tools | Good base, but needs cleaner contracts |
+| Weak point | Early-stage public polish | Needs examples, install path, tests, docs, release story |
+
+Main gaps:
+
+| Gap | Fix |
+|---|---|
+| Name/branding still transitioning | Standardize local package/repo/docs around `context-crafter-mcp` |
+| Python choice could look accidental | Add ADR and scanner boundary |
+| README not product-grade enough | Rewrite for quick understanding and proof |
+| No visible generated examples | Commit `examples/demo-repo` and `examples/outputs` |
+| Broad language claims need proof | Add fixture repos and golden tests |
+| MCP behavior needs proof | Add Inspector docs and JSON-RPC/SDK smoke tests |
+| Safety claims need proof | Add adversarial scanner/generation tests |
+| Output contract needs stabilization | Define generated files and metadata |
+| Release/install flow needs polish | Add console scripts, `uvx`/`pipx` docs, build checks |
+
+## 4. Non-Goals
+
+| Non-goal | Reason |
+|---|---|
+| Full documentation website generator | Dilutes MCP/context focus |
+| API-key/LLM generation | Weakens deterministic local-first story |
+| Executing target project code | Unsafe and unnecessary for static analysis |
+| Rust/Go rewrite | Premature unless benchmark gates fail |
+| Docker-first deployment | Unnecessary friction for v1 coding-client use |
+| Remote daemon/service mode | Not needed for local stdio MCP v1 |
+| Automatic publishing | Requires maintainer review |
+| Automatic remote repo rename | Manual GitHub action |
+
+## 5. Pin-Worthy Standard
+
+The repo is pin-ready when:
+
+| Requirement | Bar |
+|---|---|
+| Understandable | Recruiter/dev can understand the project in 30 seconds |
+| Runnable | Clean clone can run CLI in 2 minutes |
+| MCP-valid | Inspector or a real coding client can list/call tools |
+| Safe | Filesystem/security model is tested |
+| Proven | CI passes and verifies core flows |
+| Honest | README limitations match implementation |
+| Useful | Generated docs are actually helpful for an agent |
+| Maintained | Changelog, license, contributing, security, release notes exist |
+
+## 6. Roadmap Phases
+
+### v0.2.0 — Rename, Scope, and Repo Hygiene
+
+Goal: make the project identity intentional.
+
+| Task | Acceptance criteria |
+|---|---|
+| Standardize name to `context-crafter-mcp` | README, pyproject, docs, CLI, package metadata align |
+| Rename import package to `context_crafter_mcp` | Imports/tests work |
+| Keep optional `repo_docs_mcp` compatibility shim | Old imports do not immediately break if needed |
+| Add polished GitHub description | One-sentence value proposition ready |
+| Add topics list to docs/manual steps | Manual GitHub action documented |
+| Add license | Root `LICENSE` exists |
+| Add `CHANGELOG.md` | Contains unreleased section |
+| Add `SECURITY.md` | Threat model and safe defaults described |
+| Add `CONTRIBUTING.md` | Short practical contribution/dev guide |
+| Add issue templates | Bug and feature templates exist |
+| Add ADR | Python/scanner decision documented |
+| Add `MANUAL_STEPS.md` | Remote rename/publish/screenshot steps documented |
+
+GitHub description:
+
+> Local-first MCP server that turns source repositories into compact AI-agent context: project overviews, repo maps, dependency graphs, architecture notes, and validation reports.
+
+### v0.3.0 — CLI and Packaging
+
+Goal: make the tool usable outside source checkout internals.
+
+| Task | Acceptance criteria |
+|---|---|
+| Add console script | `uv run context-crafter-mcp --help` works |
+| Add `detect` | Returns human and JSON output |
+| Add `generate` | Writes generated context docs |
+| Add `validate` | Checks generated output |
+| Add `doctor` | Checks environment and package health |
+| Add `self-test` | Runs a small end-to-end local test |
+| Add `mcp-config` | Emits client config snippets |
+| Add `serve` | Starts MCP stdio server |
+| Add package build check | `uv build` works |
+| Add Windows examples | README uses correct quoted Windows paths |
+
+Supported config targets:
+
+    claude-desktop
+    claude-code
+    kimi
+    cline
+    roo
+    vscode
+    codex
+    generic-stdio
+
+### v0.4.0 — MCP Protocol Quality
+
+Goal: make the MCP layer clean and agent-friendly.
+
+Required MCP tools:
+
+| Tool | Purpose |
+|---|---|
+| `detect_project` | Fast detection and stack summary |
+| `generate_context` | Main one-shot context generation |
+| `generate_project_overview` | Targeted overview |
+| `generate_repo_map` | Targeted repo map |
+| `generate_dependency_graph` | Targeted Mermaid dependency graph |
+| `generate_architecture_summary` | Targeted architecture/risk summary |
+| `validate_generated_context` | Validate generated outputs |
+| `explain_capabilities` | Explain languages, outputs, limits, safety model |
+
+Additional MCP features:
+
+| Feature | Acceptance criteria |
+|---|---|
+| Resources | Generated docs can be exposed/read as MCP resources |
+| Prompts | Prompt templates exist if SDK integration is clean |
+| Structured return objects | Tool results are predictable and machine-readable |
+| Inspector docs | README gives tested Inspector command |
+| MCP smoke tests | tools/list and key tool calls tested |
+| stdout safety | no protocol-corrupting logs in stdio mode |
+
+### v0.4.5 — Scanner Boundary and `RepoSnapshot`
+
+Goal: make scanning safe, deterministic, and replaceable.
+
+Required models:
+
+    ScannerOptions
+    RepoSnapshot
+    SnapshotFile
+    SnapshotDirectory
+    SkippedEntry
+    ScanError
+    ScanStats
+    GitMetadata
+
+Required defaults:
+
+| Option | Default |
+|---|---|
+| `follow_symlinks` | false |
+| `respect_gitignore` | true if feasible |
+| `include_hidden` | false |
+| `include_tests` | true |
+| `max_files` | bounded |
+| `max_depth` | bounded |
+| `max_file_bytes` | bounded |
+
+Required skipped dirs:
+
+    .git
+    .hg
+    .svn
+    .venv
+    venv
+    env
+    __pycache__
+    .pytest_cache
+    .mypy_cache
+    .ruff_cache
+    node_modules
+    dist
+    build
+    out
+    target
+    bin
+    obj
+    .next
+    .turbo
+    .cache
+
+Required tests:
+
+| Test | Expected behavior |
+|---|---|
+| symlink loop | skipped/terminated safely |
+| binary file | skipped |
+| huge file | skipped |
+| invalid encoding | reported without crash |
+| ignored dir | skipped |
+| max files | graceful warning |
+| max depth | graceful warning |
+| deterministic order | stable output |
+| output traversal | blocked |
+
+Benchmark gate:
+
+    Do not build Rust/Go scanner unless:
+      - 100k-file scan with ignore rules takes >5 seconds on a normal dev machine, or
+      - memory exceeds 250 MB, or
+      - scanner complexity becomes harder to reason about than a small helper.
+
+### v0.5.0 — Analyzer Registry and Language Proof
+
+Goal: make language support credible.
+
+Required architecture:
+
+    AnalyzerRegistry
+      register(...)
+      detect(snapshot) -> DetectedProject[]
+      analyze(snapshot, detected_project) -> AnalysisResult
+      merge(results) -> RepoModel
+
+Evidence model:
+
+| Evidence | Meaning |
+|---|---|
+| `observed` | Directly found in files |
+| `inferred` | Likely based on markers |
+| `unknown` | Not enough evidence |
+| `unsupported` | Known analyzer gap |
+| `error` | Parse/read failure |
+
+Required fixture repos:
+
+    tests/fixtures/python_basic
+    tests/fixtures/node_ts_basic
+    tests/fixtures/dotnet_basic
+    tests/fixtures/rust_basic
+    tests/fixtures/go_basic
+    tests/fixtures/java_basic
+    tests/fixtures/generic_unknown
+    tests/fixtures/mixed_monorepo
+
+Minimum stack support:
+
+| Stack | Required v1 proof |
+|---|---|
+| Python | pyproject/requirements/package/test/script detection; stdlib AST basics |
+| Node/TypeScript | package.json/scripts/deps/tsconfig/entrypoint hints |
+| .NET | sln/csproj/framework/project/package refs |
+| Rust | Cargo/workspace/crate hints |
+| Go | go.mod/module/package/main hints |
+| Java | Maven/Gradle/source-root/package hints |
+| Generic | honest fallback |
+
+### v0.5.5 — Parser Upgrade Spike
+
+Goal: prepare deeper parsing without rewrite.
+
+| Task | Acceptance criteria |
+|---|---|
+| Add parser abstraction | Analyzer code does not depend on one parser implementation |
+| Evaluate Tree-sitter optional extra | At least two non-Python languages tested if dependency story is clean |
+| Keep Python AST where better | Do not replace useful stdlib AST unnecessarily |
+| Add parser support matrix | README/docs distinguish metadata vs syntax-aware support |
+| Keep parsers optional if heavy | Core install remains simple |
+
+Do not make Tree-sitter mandatory before v1 unless it stays clean and stable.
+
+### v0.6.0 — Generated Output Contract
+
+Goal: make generated docs useful, deterministic, and auditable.
+
+Required generated files:
+
+    AI_CONTEXT_INDEX.md
+    PROJECT_OVERVIEW.md
+    REPO_MAP.md
+    DEPENDENCY_GRAPH.md
+    ARCHITECTURE_SUMMARY.md
+    AGENT_BRIEF.md
+    VALIDATION_REPORT.md
+    SCAN_REPORT.md
+
+Required metadata in generated docs:
+
+    Generated by
+    Generated at
+    Source repo
+    Git commit
+    Analysis mode
+    Scanner
+    Confidence / evidence notes
+
+Output rules:
+
+| Rule | Reason |
+|---|---|
+| exact relative paths | actionable |
+| no invented purpose | trust |
+| observed/inferred/unknown labels | honesty |
+| deterministic ordering | tests |
+| profile support | token/detail control |
+| warnings visible | safe automation |
+| compact prose | agent usability |
+
+Profiles:
+
+| Profile | Intended use |
+|---|---|
+| compact | small context for coding agents |
+| standard | default useful docs |
+| deep | more detail for manual review |
+
+### v0.7.0 — Safety and Trust
+
+Goal: make safety claims test-backed.
+
+Required guarantees:
+
+| Guarantee | Proof |
+|---|---|
+| static-only | tests/docs |
+| no target execution | code audit/tests |
+| no network in core generation | tests or clear dependency boundary |
+| no symlink following by default | tests |
+| bounded scanning | tests |
+| binary/large skip | tests |
+| output confinement | tests |
+| no stdout logging in MCP mode | tests |
+| source text treated as untrusted | docs/tests |
+| basic secret warnings | tests if implemented |
+
+`SECURITY.md` must cover:
+
+- threat model
+- safe defaults
+- output confinement
+- prompt-injection/source-text handling
+- secret handling
+- known limitations
+- reporting process
+
+### v0.8.0 — CI and Release Engineering
+
+Goal: make the repo look maintained and reliable.
+
+Required checks:
+
+    uv sync --extra dev
+    uv run python -m compileall src tests
+    uv run ruff check .
+    uv run ruff format --check .
+    uv run mypy src
+    uv run pytest -q
+    uv build
+    uv run context-crafter-mcp self-test .
+    uv run context-crafter-mcp generate . --output .tmp/generated --profile compact --json
+    uv run context-crafter-mcp validate .tmp/generated --json
+
+CI targets:
+
+| Target | Requirement |
+|---|---|
+| Windows | at least latest |
+| Ubuntu | at least latest |
+| Python | 3.11 and 3.12 minimum; 3.13 if dependencies allow |
+| Permissions | minimal workflow permissions |
+| Dependency maintenance | Dependabot if feasible |
+| Security | CodeQL if feasible |
+
+Do not actually publish. Add release workflow as draft/safe config only if appropriate.
+
+### v0.9.0 — Demo and Reviewer Experience
+
+Goal: make quality visible without running the project.
+
+| Task | Acceptance criteria |
+|---|---|
+| Rewrite README | first screen is strong |
+| Add generated examples | real output committed |
+| Add demo repo | output reproducible |
+| Add MCP Inspector instructions | exact command included |
+| Add client config snippets | practical onboarding |
+| Add limitations matrix | honest support levels |
+| Add AICtx comparison | portfolio clarity |
+| Add scanner architecture section | language decision clear |
+| Add badges | CI/license/Python/version where accurate |
+| Add manual screenshot steps | if not generated automatically |
+
+README structure:
+
+    # Context Crafter MCP
+    ## What it generates
+    ## Quick start
+    ## Use with MCP clients
+    ## Example output
+    ## Safety model
+    ## Supported stacks
+    ## Architecture
+    ## Development
+    ## Limitations
+
+### v1.0.0 — Pin-Ready Release
+
+Goal: safe to pin after maintainer verification.
+
+Release blockers:
+
+| Blocker | Required state |
+|---|---|
+| name stable | yes |
+| package install works | yes |
+| CLI works | yes |
+| MCP stdio works | yes |
+| Scanner boundary stable | yes |
+| generated outputs stable | yes |
+| safety tests pass | yes |
+| fixture tests pass | yes |
+| README honest | yes |
+| examples visible | yes |
+| CI green | yes |
+| changelog current | yes |
+| manual steps documented | yes |
+
+## 7. Agent Implementation Strategy
+
+The implementation agent should produce a coherent working v0.9+ style repository state, not just roadmap-shaped documentation.
+
+Priority order:
+
+| Priority | Work |
+|---:|---|
+| 1 | Baseline audit and report |
+| 2 | naming/package/CLI |
+| 3 | MCP stdio server |
+| 4 | scanner boundary |
+| 5 | generated output contract |
+| 6 | validation |
+| 7 | safety tests |
+| 8 | fixture analyzers |
+| 9 | README/docs/examples |
+| 10 | CI and final verification |
+
+## 8. Concrete Acceptance Test
+
+Before calling the repo pin-ready, this should pass:
+
+    git clone https://github.com/0langa/context-crafter-mcp.git
+    cd context-crafter-mcp
+    uv sync --extra dev
+    uv run ruff check .
+    uv run ruff format --check .
+    uv run mypy src
+    uv run pytest -q
+    uv run context-crafter-mcp --help
+    uv run context-crafter-mcp doctor
+    uv run context-crafter-mcp self-test .
+    uv run context-crafter-mcp detect . --json
+    uv run context-crafter-mcp generate . --output docs/generated --profile standard --json
+    uv run context-crafter-mcp validate docs/generated --json
+
+Expected generated files:
+
+    docs/generated/AI_CONTEXT_INDEX.md
+    docs/generated/PROJECT_OVERVIEW.md
+    docs/generated/REPO_MAP.md
+    docs/generated/DEPENDENCY_GRAPH.md
+    docs/generated/ARCHITECTURE_SUMMARY.md
+    docs/generated/AGENT_BRIEF.md
+    docs/generated/VALIDATION_REPORT.md
+    docs/generated/SCAN_REPORT.md
+
+Expected MCP proof:
+
+- MCP Inspector can connect.
+- `tools/list` includes documented tools.
+- `detect_project` works.
+- `generate_context` works.
+- no stdout logging corrupts stdio.
+
+## 9. What Not To Do
+
+Avoid:
+
+| Trap | Why |
+|---|---|
+| rewriting in Rust/Go now | slows product progress without solving current UX/docs/test gaps |
+| adding LLM/API features | dilutes deterministic local-first story |
+| claiming deep understanding | static analysis must remain honest |
+| publishing packages | requires maintainer review |
+| remote repo rename by agent | manual GitHub action |
+| Docker-first workflow | unnecessary friction for v1 |
+| too many MCP tools | hurts model tool choice |
+| generated docs without tests | output quality becomes untrustworthy |
+| README claims not backed by code | hurts CV-facing credibility |
+| messy duplicate package trees | creates maintenance debt |
+| placeholder TODO implementations | creates false completion |
+
+## 10. Final Pin Decision Rule
+
+Pin only when:
+
+| Requirement | State |
+|---|---|
+| final name | done |
+| README first screen | polished |
+| clean install path | proven |
+| CLI | proven |
+| MCP server | proven |
+| generated examples | visible |
+| scanner boundary | implemented |
+| safety model | tested |
+| fixture language support | tested |
+| CI | green |
+| release | v0.9/v1.0 after maintainer review |
+| AICtx difference | clear |
+
+Until then, keep it public if active, but pin it below the stronger finished projects.

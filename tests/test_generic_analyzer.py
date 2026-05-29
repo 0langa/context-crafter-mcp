@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from repo_docs_mcp.analyzers.generic import analyze_generic
+from context_crafter_mcp.analyzers.generic import analyze_generic
 
 
 def test_generic_scan() -> None:
