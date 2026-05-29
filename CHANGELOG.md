@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-05-29
+
+### Added
+
+- **MCP resources**: Safe generated-resource listing with `context-crafter://latest/<filename>` URIs. `read_resource()` only reads files registered by the current server session.
+- **Validation module** (`src/context_crafter_mcp/validation.py`): Extended validation beyond file existence.
+  - Markdown relative-link checking.
+  - Non-empty mermaid block verification in `DEPENDENCY_GRAPH.md`.
+  - Machine-readable warning/error codes (`BROKEN_LINK`, `MERMAID_MISSING`, `MERMAID_EMPTY`, `READ_ERROR`).
+- **Demo examples**: `examples/demo-repo/` is now a tiny real Python package (`greeter`) with `pyproject.toml`, `src/greeter/`, and `tests/`.
+- **Benchmark script**: `scripts/bench_scan.py` creates a synthetic fixture and outputs JSON timing/stats.
+- **Doctor checks**: CLI entrypoint verification and temp output write test.
+
+### Changed
+
+- `doctor` now reports `mcp` and `langgraph` as "installed" even when version metadata is unavailable.
+- `examples/outputs/` regenerated from `examples/demo-repo/` instead of the full context-crafter repo.
+- Stopped advertising generic `file://` resource templates.
+
+### Fixed
+
+- `list_resources()` now returns actual registered generated docs instead of an empty list.
+
 ## [0.3.0] - 2026-05-29
 
 ### Added
