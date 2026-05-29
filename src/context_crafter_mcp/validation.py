@@ -260,10 +260,7 @@ def validate_output_dir(
     repo_path: str | Path | None = None,
 ) -> ValidationResult:
     """Validate generated output directory with extended checks."""
-    if repo_path is not None:
-        out = (Path(repo_path) / output_dir).resolve()
-    else:
-        out = Path(output_dir).resolve()
+    out = Path(output_dir).resolve()
     found: list[str] = []
     missing: list[str] = []
     checks: list[ValidationCheck] = []
