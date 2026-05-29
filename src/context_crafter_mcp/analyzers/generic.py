@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from context_crafter_mcp.analyzers import register_analyzer
+from context_crafter_mcp.analyzers import register_analyzer, register_analyzer_spec
 from context_crafter_mcp.filesystem import (
     INTERESTING_ROOT_FILES,
     list_directory_tree,
@@ -12,7 +12,7 @@ from context_crafter_mcp.filesystem import (
     validate_repo_path,
 )
 from context_crafter_mcp.detectors import _is_fixture_path
-from context_crafter_mcp.models import AnalysisResult, ScanConfig, get_profile_limit
+from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, EvidenceKind, ScanConfig, get_profile_limit
 from context_crafter_mcp.scanner import Scanner, ScannerOptions
 
 
@@ -136,7 +136,38 @@ def analyze_generic(
     result.test_directories = sorted(test_dirs)[: get_profile_limit(cfg.profile, "test_dirs")]
     result.source_directories = sorted(source_dirs)[: get_profile_limit(cfg.profile, "source_dirs")]
 
+    ev = result.evidence_set
+    ev.add(
+        EvidenceKind.OBSERVED,
+        f"Scanned {result.files_scanned} files, {len(snapshot.directories)} directories",
+        analyzer="generic",
+    )
+    for ep in result.likely_entry_points:
+        ev.add(
+            EvidenceKind.INFERRED,
+            f"Likely entry point `{ep}` inferred from filename",
+            source_path=ep,
+            analyzer="generic",
+        )
+    for cfg_file in result.config_files[:5]:
+        ev.add(
+            EvidenceKind.OBSERVED,
+            f"Config file `{cfg_file}` found",
+            source_path=cfg_file,
+            analyzer="generic",
+        )
+
     return result
 
 
 register_analyzer("generic", analyze_generic)
+register_analyzer_spec(
+    AnalyzerSpec(
+        project_type="generic",
+        display_name="Generic",
+        support_level="generic",
+        parser="none",
+        detects=[],
+        limitations=["No language-specific parsing", "Directory and filename heuristics only"],
+    )
+)

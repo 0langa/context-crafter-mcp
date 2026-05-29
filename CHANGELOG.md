@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-29
+
+### Added
+
+- **Evidence Model v1**: `EvidenceKind`, `Evidence`, `EvidenceSet` with `add`, `by_kind`, `by_analyzer`, `warnings` helpers.
+- **Rich evidence in analyzers**: All analyzers (Python, Node, Go, Rust, Java, .NET, Generic) now emit observed/inferred/unknown/unsupported/error evidence.
+- **Evidence in generated docs**: `PROJECT_OVERVIEW.md` includes an Evidence section; `AGENT_BRIEF.md` lists Unknowns/Limitations.
+- **Analyzer Registry Metadata**: `AnalyzerSpec` with `project_type`, `display_name`, `support_level`, `parser`, `detects`, `limitations`.
+- **`explain_capabilities`** returns registry-derived analyzer metadata.
+- **Validation v2**: New codes `missing_metadata_header`, `empty_output_file`, `graph_mmd_missing`, `ai_context_index_link_broken`.
+- **MCP tests**: Invalid repo path structured error, capabilities include analyzers.
+- **Tests**: `test_evidence.py` covers evidence serialization and queries.
+- **Confidence levels**: `Evidence` carries `confidence` (high/medium/low) with defaults per `EvidenceKind`; `EvidenceSet.verify(repo_path)` checks source_path existence.
+- **Validation v2.1**: `generated_version_mismatch` and `compact_profile_too_large` checks.
+- **Tests**: `test_graph.py` (LangGraph pipeline), `test_cli.py` (CLI commands).
+
+### Changed
+
+- Bumped version to `0.4.0`.
+- `detectors.py` emits detailed `EvidenceSet` for every detected stack.
+- Validation source-reference regex expanded to cover `scripts/`, `docs/`, and more config files.
+- Demo examples regenerated with versioned headers.
+- Compact profile now always omits optional sections (no longer depends on repo file count).
+
 ## [0.3.2] - 2026-05-29
 
 ### Added

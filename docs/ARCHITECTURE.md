@@ -22,12 +22,12 @@ Graph Pipeline (LangGraph)
     |
     v
 Analyzer Registry
-    |-- Python (AST)
-    |-- Node/JS (regex)
-    |-- .NET (XML)
-    |-- Rust (TOML)
-    |-- Go (regex)
-    |-- Java (XML/regex)
+    |-- Python (stdlib AST)
+    |-- Node/JS (tree-sitter AST + regex fallback)
+    |-- .NET (tree-sitter C# AST + XML + regex fallback)
+    |-- Rust (tree-sitter Rust AST + regex fallback)
+    |-- Go (tree-sitter Go AST + regex fallback)
+    |-- Java (javalang AST + regex fallback)
     |-- Generic (fallback)
     |
     v

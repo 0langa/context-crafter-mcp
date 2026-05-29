@@ -3,27 +3,23 @@
 ## Analysis Depth
 
 - **Static only**: No runtime behavior, dynamic imports, or conditional architecture.
-- **Python**: AST-based (best depth).
-- **Non-Python**: Regex/XML/TOML-based metadata parsing (no deep syntax trees).
+- **Python**: AST-based via stdlib `ast` (best depth).
+- **Java**: AST-based via `javalang` (full AST parsing).
+- **Node/TypeScript**: AST-based via `tree-sitter-javascript` / `tree-sitter-typescript`.
+- **Go**: AST-based via `tree-sitter-go`.
+- **Rust**: AST-based via `tree-sitter-rust`.
+- **.NET**: AST-based via `tree-sitter-c-sharp` for `.cs` files; XML for `.csproj`.
+- **Generic**: Directory and filename heuristics only.
 
-## Language Support Matrix
+## Fallback Behavior
 
-| Stack | Detection | Dependency parsing | Symbol extraction |
-|-------|-----------|-------------------|-------------------|
-| Python | Observed | Observed | AST-based (classes, functions, imports, constants) |
-| Node/JS | Observed | Observed | Regex-based (classes, functions, exports, imports) |
-| .NET | Observed | Observed | Regex/XML-based (classes, target framework, output type) |
-| Rust | Observed | Observed | Regex-based (modules, traits, impls, use statements) |
-| Go | Observed | Observed | Regex-based (structs, interfaces, functions, imports) |
-| Java | Observed | Observed | Regex/XML-based (classes, methods, annotations, imports) |
-| Generic | Inferred | None | None |
+All non-Python analyzers gracefully fall back to regex-based parsing if the AST parser is unavailable or fails. This ensures the tool works even when optional native parser wheels cannot be installed.
 
 ## Known Gaps
 
 - No secret redaction; review output before sharing.
-- HTML rendering is stdlib-only.
-- Tree-sitter integration is experimental and optional.
+- HTML rendering uses the `markdown` library when available, stdlib fallback otherwise.
 - Fixture/example directories are excluded from primary project detection.
 - Nested `.gitignore` files are supported via `pathspec` with "deepest matching wins" semantics.
-- Profile differences on small repositories: compact omits empty optional sections (Architecture Patterns, Key Abstractions, Module Relationships, Generic Notes) when the repo has fewer than 15 scanned files.
-- Source-reference validation in generated docs is conservative and may miss some paths or produce false negatives.
+- Profile differences on small repositories: compact always omits optional sections (Evidence, Generic Notes, Architecture subsections) regardless of repo size.
+- Source-reference validation covers `src/`, `tests/`, `docs/`, `scripts/`, `examples/` (with extensions), and common config files; bare paths without backticks are not validated.

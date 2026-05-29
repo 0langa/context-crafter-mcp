@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from context_crafter_mcp.filesystem import validate_repo_path
-from context_crafter_mcp.models import DetectResult
+from context_crafter_mcp.models import DetectResult, EvidenceKind, EvidenceSet
 from context_crafter_mcp.scanner import Scanner, ScannerOptions
 
 
@@ -42,10 +42,13 @@ def detect_project(repo_path: str) -> DetectResult:
     """Detect project types for a repository path."""
     path = validate_repo_path(repo_path)
     if path is None:
+        ev = EvidenceSet()
+        ev.add(EvidenceKind.ERROR, f"Path does not exist or is not a directory: {repo_path}")
         return DetectResult(
             repo_path=repo_path,
             exists=False,
             error=f"Path does not exist or is not a directory: {repo_path}",
+            evidence_set=ev,
         )
 
     scanner = Scanner()
@@ -53,6 +56,7 @@ def detect_project(repo_path: str) -> DetectResult:
 
     project_types: list[str] = []
     markers: dict[str, list[str]] = {}
+    ev = EvidenceSet()
 
     # Check marker files and extensions
     for ptype, exts in EXTENSIONS.items():
@@ -75,6 +79,20 @@ def detect_project(repo_path: str) -> DetectResult:
         if hits:
             project_types.append(ptype)
             markers[ptype] = sorted(set(hits))[:20]
+            for mh in marker_hits:
+                ev.add(
+                    EvidenceKind.OBSERVED,
+                    f"{ptype}: marker file `{Path(mh).name}` found at `{mh}`",
+                    source_path=mh,
+                    analyzer="detectors",
+                )
+            for eh in ext_hits:
+                ev.add(
+                    EvidenceKind.INFERRED,
+                    f"{ptype}: extension `{Path(eh).suffix}` inferred from `{eh}`",
+                    source_path=eh,
+                    analyzer="detectors",
+                )
 
     # Also check explicit marker files for types without extensions
     for ptype, names in MARKERS.items():
@@ -92,12 +110,24 @@ def detect_project(repo_path: str) -> DetectResult:
         if marker_hits2:
             project_types.append(ptype)
             markers[ptype] = sorted(set(marker_hits2))[:20]
+            for mh in marker_hits2:
+                ev.add(
+                    EvidenceKind.OBSERVED,
+                    f"{ptype}: marker file `{Path(mh).name}` found at `{mh}`",
+                    source_path=mh,
+                    analyzer="detectors",
+                )
 
     # Always include generic for existing repos
     project_types.append("generic")
     markers["generic"] = []
+    ev.add(
+        EvidenceKind.OBSERVED,
+        "generic: directory exists and was readable",
+        analyzer="detectors",
+    )
 
-    # Build evidence map
+    # Build legacy evidence map
     evidence: dict[str, str] = {}
     for ptype in project_types:
         if ptype == "generic":
@@ -109,10 +139,20 @@ def detect_project(repo_path: str) -> DetectResult:
         else:
             evidence[ptype] = "unknown"
 
+    # Add unknown evidence for any supported type not detected
+    for ptype in MARKERS:
+        if ptype not in project_types:
+            ev.add(
+                EvidenceKind.UNKNOWN,
+                f"{ptype}: no marker files or extensions found",
+                analyzer="detectors",
+            )
+
     return DetectResult(
         repo_path=str(path),
         exists=True,
         project_types=sorted(set(project_types)),
         markers=markers,
         evidence=evidence,
+        evidence_set=ev,
     )

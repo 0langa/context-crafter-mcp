@@ -7,10 +7,10 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from context_crafter_mcp.analyzers import register_analyzer
+from context_crafter_mcp.analyzers import register_analyzer, register_analyzer_spec
 from context_crafter_mcp.detectors import _is_fixture_path
 from context_crafter_mcp.filesystem import safe_read_text, safe_scan, validate_repo_path
-from context_crafter_mcp.models import AnalysisResult, PythonModule, ScanConfig
+from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, EvidenceKind, PythonModule, ScanConfig
 
 
 def guess_module_name(rel_path: str) -> str:
@@ -244,6 +244,7 @@ def analyze_python(
 
     cfg = config or ScanConfig()
     result = base_result or AnalysisResult(repo_path=str(path))
+    ev = result.evidence_set
     modules: list[PythonModule] = []
     count = 0
 
@@ -256,6 +257,20 @@ def analyze_python(
             count += 1
             mod = analyze_python_file(fi.path, fi.rel_path, path)
             modules.append(mod)
+            if mod.parse_error:
+                ev.add(
+                    EvidenceKind.ERROR,
+                    f"Python parse error in `{mod.rel_path}`: {mod.parse_error}",
+                    source_path=mod.rel_path,
+                    analyzer="python",
+                )
+            else:
+                ev.add(
+                    EvidenceKind.OBSERVED,
+                    f"Python module `{mod.rel_path}`: {len(mod.classes)} class(es), {len(mod.functions)} function(s), {len(mod.imports)} import(s)",
+                    source_path=mod.rel_path,
+                    analyzer="python",
+                )
 
     # Discover package roots and re-classify imports
     package_roots = _discover_package_roots(modules, path)
@@ -277,6 +292,12 @@ def analyze_python(
     scripts = read_console_scripts(path)
     for s in scripts:
         result.likely_entry_points.append(f"[console_script] {s}")
+        ev.add(
+            EvidenceKind.OBSERVED,
+            f"Console script `{s}` declared in `pyproject.toml`",
+            source_path="pyproject.toml",
+            analyzer="python",
+        )
 
     # Update source dirs from modules
     src_dirs: set[str] = set()
@@ -292,12 +313,60 @@ def analyze_python(
     for key, value in meta_dict.items():
         if value is not None and hasattr(result.metadata, key):
             setattr(result.metadata, key, value)
+            if key in ("name", "version", "description"):
+                ev.add(
+                    EvidenceKind.OBSERVED,
+                    f"Project {key} `{value}` from `pyproject.toml`",
+                    source_path="pyproject.toml",
+                    analyzer="python",
+                )
 
     deps, dev_deps = extract_python_dependencies(path)
     result.python_dependencies = deps
     result.python_dev_dependencies = dev_deps
+    for dep in deps:
+        ev.add(
+            EvidenceKind.OBSERVED,
+            f"Python runtime dependency `{dep}` from `pyproject.toml`",
+            source_path="pyproject.toml",
+            analyzer="python",
+        )
+    for dep in dev_deps:
+        ev.add(
+            EvidenceKind.OBSERVED,
+            f"Python dev dependency `{dep}` from `pyproject.toml`",
+            source_path="pyproject.toml",
+            analyzer="python",
+        )
+
+    # Entry points inferred from filenames
+    for mod in modules:
+        if mod.is_entry_point and not any(mod.rel_path == ep for ep in result.likely_entry_points):
+            result.likely_entry_points.append(mod.rel_path)
+            ev.add(
+                EvidenceKind.INFERRED,
+                f"Likely entry point `{mod.rel_path}` inferred from filename or `__main__` guard",
+                source_path=mod.rel_path,
+                analyzer="python",
+            )
+
+    ev.add(
+        EvidenceKind.UNSUPPORTED,
+        "Deep semantic call graph and dynamic import analysis are not implemented.",
+        analyzer="python",
+    )
 
     return result
 
 
 register_analyzer("python", analyze_python)
+register_analyzer_spec(
+    AnalyzerSpec(
+        project_type="python",
+        display_name="Python",
+        support_level="ast",
+        parser="stdlib_ast + toml",
+        detects=["pyproject.toml", "requirements.txt", "setup.py", "setup.cfg", "*.py"],
+        limitations=["Deep semantic call graph not implemented", "Dynamic imports not resolved"],
+    )
+)

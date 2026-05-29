@@ -127,13 +127,13 @@ See [`SECURITY.md`](SECURITY.md) for the full threat model and reporting process
 
 | Stack | Detection | Analysis depth |
 |-------|-----------|----------------|
-| Python | `pyproject.toml`, `requirements.txt`, `*.py` | AST-based imports, classes, functions |
-| Node/TypeScript | `package.json`, `tsconfig.json`, `*.js/ts` | Regex-based static imports, scripts, deps |
-| .NET | `*.sln`, `*.csproj` | XML-based project/package references |
-| Rust | `Cargo.toml`, `*.rs` | TOML deps, module/entry detection |
-| Go | `go.mod`, `*.go` | Module deps, package/main detection |
-| Java | `pom.xml`, `build.gradle` | XML/Gradle deps, class/main detection |
-| Generic | Any directory | Honest fallback with directory tree and root files |
+| Python | `pyproject.toml`, `requirements.txt`, `*.py` | stdlib AST (imports, classes, functions) |
+| Node/TypeScript | `package.json`, `tsconfig.json`, `*.js/ts` | tree-sitter AST + regex fallback |
+| .NET | `*.sln`, `*.csproj`, `*.cs` | tree-sitter C# AST + XML + regex fallback |
+| Rust | `Cargo.toml`, `*.rs` | tree-sitter Rust AST + regex fallback |
+| Go | `go.mod`, `*.go` | tree-sitter Go AST + regex fallback |
+| Java | `pom.xml`, `build.gradle`, `*.java` | javalang AST + regex fallback |
+| Generic | Any directory | Directory and filename heuristics |
 
 ## Architecture
 
@@ -161,10 +161,9 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 ## Limitations
 
 - Static analysis only; no runtime behavior or dynamic imports.
-- No deep syntax parsing for non-Python languages (uses regex/XML/TOML).
-- HTML rendering is stdlib-only and may not handle complex Markdown perfectly.
+- Non-Python analyzers use real AST parsers with regex fallback, not full semantic analysis.
+- HTML rendering uses the `markdown` library when available; stdlib fallback otherwise.
 - Secret redaction is not implemented; review generated output before sharing.
-- Tree-sitter integration is experimental and not required for core installation.
 - Nested `.gitignore` files are supported via `pathspec` with deepest-matching-wins semantics.
 
 ## License

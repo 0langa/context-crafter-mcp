@@ -1,6 +1,6 @@
 [project]
 name = "context-crafter-mcp"
-version = "0.3.2"
+version = "0.4.0"
 description = "Local-first MCP server that turns source repositories into compact AI-agent context: project overviews, repo maps, dependency graphs, architecture notes, and validation reports."
 requires-python = ">=3.11"
 authors = [
@@ -26,6 +26,15 @@ dependencies = [
     "pydantic",
     "uuid-utils<0.15",
     "pathspec",
+    "javalang",
+    "markdown",
+    "tree-sitter",
+    "tree-sitter-javascript",
+    "tree-sitter-typescript",
+    "tree-sitter-java",
+    "tree-sitter-go",
+    "tree-sitter-rust",
+    "tree-sitter-c-sharp",
 ]
 
 [project.optional-dependencies]

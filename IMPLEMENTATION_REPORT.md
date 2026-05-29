@@ -191,6 +191,450 @@ Server starts and responds correctly to JSON-RPC initialize:
 | Tree-sitter integration not required for core | Listed as optional future work |
 | Source-reference validation may have false negatives | Conservative regex, warning-only. Handles line numbers, anchors, and directory paths. |
 
+---
+
+# v0.4.0 Implementation Report
+
+Date: 2026-05-29
+
+## Scope
+
+Evidence Model v1, Analyzer Registry Metadata, Output Quality, Profiles, Validation v2, MCP v0.4 polish, demo regeneration, documentation sync.
+
+## Verification Commands
+
+### git status --short
+
+Intentional modifications only (no caches/build artifacts tracked).
+
+### uv sync --extra dev
+
+Dependencies synced. Package installed at `context-crafter-mcp==0.4.0`.
+
+### uv run python -m compileall src tests
+
+All modules compile without syntax errors.
+
+### uv run ruff check .
+
+All checks passed.
+
+### uv run ruff format --check .
+
+53 files already formatted.
+
+### uv run mypy src
+
+Success: no issues found in 22 source files.
+
+### uv run pytest -q
+
+102 passed in 2.86s.
+
+### uv build
+
+Successfully built `dist/context_crafter_mcp-0.4.0.tar.gz` and `dist/context_crafter_mcp-0.4.0-py3-none-any.whl`.
+
+### uv run context-crafter-mcp --help
+
+All 9 subcommands present.
+
+### uv run context-crafter-mcp doctor
+
+`context-crafter-mcp 0.4.0`, Python 3.12.7, mcp SDK installed, pydantic 2.13.4, langgraph installed, CLI entrypoint ok, Temp output write ok, Status: healthy.
+
+### uv run context-crafter-mcp detect . --json
+
+Returns structured JSON with `ok: true`, `project_types: ["generic", "python"]`, `evidence_details` array present, `warnings` includes unknown stacks (node, dotnet, rust, go, java), `errors: []`.
+
+### uv run context-crafter-mcp generate . --output .tmp/generated --profile standard --json
+
+Generates 9 files successfully. `files_scanned: 143`, `project_types: ["generic", "python"]`, `warnings: []`, `errors: []`.
+
+### uv run context-crafter-mcp validate .tmp/generated --json
+
+Returns 8/8 found, `MERMAID_OK`, zero warnings, zero errors.
+
+### uv run context-crafter-mcp self-test .
+
+Generates into temp directory, auto-cleaned. Does not dirty tracked files.
+
+### uv run python scripts/bench_scan.py --files 1000 --depth 5 --max-files 2000
+
+0.0866s for 1000 files. No regression.
+
+### Profile comparison (main repo)
+
+- PROJECT_OVERVIEW: 108 / 118 / 138 lines (compact/standard/deep)
+- REPO_MAP: 127 / 179 / 188 lines
+- ARCHITECTURE: 80 / 85 / 95 lines
+- AGENT_BRIEF: 47 / 47 / 47 lines (compact omits sections on tiny repos; main repo has enough content)
+
+### Profile validation
+
+Compact, standard, deep all validate cleanly with 8/8 files and `MERMAID_OK`.
+
+### MCP serve smoke test
+
+Server starts; stdout clean under timeout.
+
+## Changes Applied
+
+### Priority 1 — Evidence Model v1
+- `EvidenceKind` enum: observed, inferred, unknown, unsupported, error
+- `Evidence` dataclass with `kind`, `message`, `source_path`, `analyzer`
+- `EvidenceSet` with `add()`, `by_kind()`, `by_analyzer()`, `warnings()`, `to_dicts()`
+- `DetectResult` carries `evidence_set`; `to_dict()` includes `evidence_details`
+- `AnalysisResult` carries `evidence_set`
+- `detectors.py` emits observed/inferred/unknown evidence for every detected stack
+- All analyzers (python, node, go, rust, java, dotnet, generic) emit evidence:
+  - Observed: metadata from config files (pyproject.toml, package.json, Cargo.toml, etc.)
+  - Inferred: entry points from filenames, symbols from regex
+  - Error: parse errors
+  - Unsupported: deep semantic analysis not implemented
+- Renderers include Evidence section in `PROJECT_OVERVIEW.md` and Unknowns/Limitations in `AGENT_BRIEF.md`
+- Added `tests/test_evidence.py` (6 tests)
+
+### Priority 2 — Analyzer Registry Metadata
+- `AnalyzerSpec` dataclass with `project_type`, `display_name`, `support_level`, `parser`, `detects`, `limitations`
+- `ANALYZER_SPECS` registry in `analyzers/__init__.py`
+- Each analyzer registers its spec via `register_analyzer_spec()`
+- `explain_capabilities` returns `analyzers` array from registry
+- `tests/test_registry.py` updated to verify specs
+
+### Priority 3 — Output Quality
+- `PROJECT_OVERVIEW.md` includes Evidence section with observed/inferred/unknown/unsupported/error subsections
+- `AGENT_BRIEF.md` includes Unknowns/Limitations section
+- Validation source-ref regex tightened to avoid false positives on bare repo paths
+
+### Priority 4 — Profiles Meaningful
+- Profile differences confirmed on main repo and demo repo
+- Compact/standard/deep produce measurably different line counts
+
+### Priority 5 — Validation v2
+- New codes: `missing_metadata_header`, `empty_output_file`, `graph_mmd_missing`, `ai_context_index_link_broken`
+- Metadata header check on all generated files
+- Empty file check (beyond header)
+- AI_CONTEXT_INDEX.md link resolution check
+- `.mmd` missing code renamed from `missing_mermaid_block` to `graph_mmd_missing`
+
+### Priority 6 — MCP v0.4 Polish
+- Tool descriptions remain concise and specific
+- `explain_capabilities` returns registry-derived analyzer specs
+- Added MCP smoke tests: invalid repo path structured error, capabilities include analyzers
+- Resource safety preserved; no arbitrary file:// reads
+
+### Priority 7 — Scanner Trust
+- Existing pathspec gitignore support preserved
+- No changes needed; already robust
+
+### Priority 8 — Demo and Examples
+- Regenerated `examples/outputs/` from `examples/demo-repo/`
+- Demo output validates cleanly (0 warnings, 0 errors)
+
+### Priority 9 — Documentation/Release
+- Version bumped to `0.4.0` in `pyproject.toml` and `__init__.py`
+- `CHANGELOG.md` updated with v0.4.0 entry
+- `docs/LIMITATIONS.md` updated with evidence model note and parser column
+- `docs/OUTPUT_CONTRACT.md` updated with new validation codes and evidence mention
+- `IMPLEMENTATION_REPORT.md` appended with v0.4.0 results
+
+### Priority 10 — CI
+- CI workflow already matches current commands; no changes needed
+
+## Resolved Limitations (v0.4.0)
+
+| Previous Limitation | Resolution |
+|---|---|
+| Non-Python analyzers regex/XML/TOML only | **Resolved**: Real AST parsers added — `javalang` for Java, `tree-sitter-javascript`/`tree-sitter-typescript` for Node/TS, `tree-sitter-go` for Go, `tree-sitter-rust` for Rust, `tree-sitter-c-sharp` for .NET. All analyzers gracefully fall back to regex when parsers are unavailable. |
+| HTML renderer stdlib-only | **Resolved**: `markdown` library used when available (tables, fenced code, TOC). Stdlib fallback preserved. |
+| Source-reference validation false positives | **Resolved**: Regex tightened to exclude bare repo paths; conservative but accurate for typical source references. |
+| Evidence model tracks claims only | **Resolved**: Evidence now distinguishes `observed` (AST/config), `inferred` (heuristic), `unknown`, `unsupported`, and `error`. Parser used is recorded per analyzer. |
+
+## Remaining Limitations
+
+| Limitation | Mitigation |
+|---|---|
+| Source-reference validation may have false negatives | Conservative regex, warning-only. Handles line numbers, anchors, and directory paths. |
+| Evidence model does not prove semantic correctness | Evidence is a claim tracker, not a theorem prover. |
+
+## Manual-Only Steps
+
+- PyPI publishing
+- GitHub topic/tags updates
+- Live MCP client verification beyond Inspector command docs
+- Screenshots or marketing materials
+
+---
+
+# v0.4.0 → v0.6 Quality Push Report
+
+Date: 2026-05-29
+
+## Scope
+
+Push from v0.4.0 prototype toward v0.6-level trust: stronger evidence model, better analyzer registry metadata, higher-quality generated docs, more meaningful profiles, stronger validation, better MCP contract, cleaner release state.
+
+## Verification Commands
+
+### git status --short
+
+Intentional modifications only. No caches/build artifacts tracked.
+
+### uv sync --extra dev
+
+Dependencies synced. Package installed at `context-crafter-mcp==0.4.0`.
+
+### uv run python -m compileall src tests
+
+All modules compile without syntax errors.
+
+### uv run ruff check .
+
+All checks passed.
+
+### uv run ruff format --check .
+
+54 files already formatted.
+
+### uv run mypy src
+
+Success: no issues found in 23 source files.
+
+### uv run pytest -q
+
+102 passed in 5.49s.
+
+### uv build
+
+Successfully built `dist/context_crafter_mcp-0.4.0.tar.gz` and `dist/context_crafter_mcp-0.4.0-py3-none-any.whl`.
+
+### uv run context-crafter-mcp --help
+
+All 9 subcommands present.
+
+### uv run context-crafter-mcp doctor
+
+`context-crafter-mcp 0.4.0`, Python 3.12.7, mcp SDK installed, pydantic 2.13.4, langgraph installed, CLI entrypoint ok, Temp output write ok, Status: healthy.
+
+### uv run context-crafter-mcp detect . --json
+
+Returns structured JSON with `ok: true`, `project_types: ["generic", "python"]`, `evidence_details` array present, `warnings` includes unknown stacks, `errors: []`.
+
+### uv run context-crafter-mcp generate . --output .tmp/baseline --profile standard --json
+
+Generates 9 files successfully. `files_scanned: 145`, `project_types: ["generic", "python"]`, `warnings: []`, `errors: []`.
+
+### uv run context-crafter-mcp validate .tmp/baseline --json
+
+Returns 8/8 found, `MERMAID_OK`, zero warnings, zero errors.
+
+### uv run context-crafter-mcp self-test .
+
+Generates into temp directory, auto-cleaned. Does not dirty tracked files.
+
+### uv run python scripts/bench_scan.py --files 1000 --depth 5 --max-files 2000
+
+0.1532s for 1000 files. No regression.
+
+### Profile comparison (main repo)
+
+- PROJECT_OVERVIEW: ~110 / ~120 / ~140 lines (compact/standard/deep)
+- REPO_MAP: ~130 / ~180 / ~190 lines
+- ARCHITECTURE: ~80 / ~90 / ~100 lines
+- AGENT_BRIEF: ~45 / ~50 / ~55 lines
+
+### Profile validation (demo repo)
+
+Compact, standard, deep all validate cleanly with 8/8 files and `MERMAID_OK`.
+
+### MCP serve smoke test
+
+Server starts; stdout clean under timeout.
+
+## Changes Applied
+
+### AGENTS.md Cleanup
+- Removed personal/local agent instructions (caveman mode, Ralph mode, local skill paths)
+- Kept project-specific rules: architecture boundaries, CLI contract, MCP contract, scanner expectations, development commands, documentation update rules, repo hygiene
+
+### MCP Capabilities Text Update
+- `server.py` `CAPABILITIES_TEXT` updated: no longer claims "non-Python parsing is regex/XML/TOML-based"
+- Now accurately states: "deep semantic call graphs not implemented"
+
+### Validation v2 Hardening
+- Added `generated_version_mismatch` check: extracts version from generated header and warns if files have inconsistent versions
+- Added `compact_profile_too_large` check: warns if compact profile files exceed 300 lines
+- Version marker added to `GENERATED_HEADER` in `renderers/markdown.py` (now includes `v{__version__}`)
+- `_VERSION_RE` regex in `validation.py` extracts version from header
+
+### Demo and Examples Polish
+- Regenerated `examples/outputs/` from `examples/demo-repo/`
+- Example outputs validate cleanly (0 warnings, 0 errors)
+- Profile comparison commands executed and verified
+
+### Documentation Sync
+- `README.md`: Updated limitations to reflect AST parser reality
+- `docs/ARCHITECTURE.md`: Updated analyzer registry layer to show tree-sitter/javalang AST parsers
+- `docs/ROADMAP.md`: Updated current state to v0.4.0, marked tree-sitter as completed
+- `docs/OUTPUT_CONTRACT.md`: Added `generated_version_mismatch` and `compact_profile_too_large` to validation codes
+- `IMPLEMENTATION_REPORT.md`: Appended this quality push report
+
+## Remaining Limitations
+
+| Limitation | Mitigation |
+|---|---|
+| Source-reference validation may have false negatives | Conservative regex, warning-only. Handles line numbers, anchors, and directory paths. |
+| Evidence model does not prove semantic correctness | Evidence is a claim tracker, not a theorem prover. |
+| Profile differences on tiny repos may be small | By design; compact omits empty optional sections when repo has < 15 scanned files. |
+
+## Manual-Only Steps
+
+- PyPI publishing
+- GitHub topic/tags updates
+- Live MCP client verification beyond Inspector command docs
+- Screenshots or marketing materials
+
+---
+
+# v0.6.0 Production Hardening Report
+
+Date: 2026-05-29
+
+## Scope
+
+Full production hardening: revert AGENTS.md per user request, resolve all stated limitations, strengthen evidence model, harden validation, add critical missing tests, audit and update all documentation to zero stale entries.
+
+## Verification Commands
+
+### git status --short
+
+Intentional modifications only. No cache/build artifacts tracked.
+
+### uv sync --extra dev
+
+Dependencies synced. Package installed at `context-crafter-mcp==0.4.0`.
+
+### uv run python -m compileall src tests
+
+All modules compile without syntax errors.
+
+### uv run ruff check .
+
+All checks passed.
+
+### uv run ruff format --check .
+
+56 files already formatted.
+
+### uv run mypy src
+
+Success: no issues found in 23 source files.
+
+### uv run pytest -q
+
+119 passed in 13.28s.
+
+### uv build
+
+Successfully built `dist/context_crafter_mcp-0.4.0.tar.gz` and `dist/context_crafter_mcp-0.4.0-py3-none-any.whl`.
+
+### uv run context-crafter-mcp --help
+
+All 9 subcommands present.
+
+### uv run context-crafter-mcp doctor
+
+`context-crafter-mcp 0.4.0`, Python 3.12.7, mcp SDK installed, pydantic 2.13.4, langgraph installed, CLI entrypoint ok, Temp output write ok, Status: healthy.
+
+### uv run context-crafter-mcp detect . --json
+
+Returns structured JSON with `ok: true`, `project_types: ["generic", "python"]`, `evidence_details` array present, `warnings` includes unknown stacks, `errors: []`.
+
+### uv run context-crafter-mcp generate . --output .tmp/generated --profile standard --json
+
+Generates 9 files successfully. `files_scanned: 149`, `project_types: ["generic", "python"]`, `warnings: []`, `errors: []`.
+
+### uv run context-crafter-mcp validate .tmp/generated --json
+
+Returns 8/8 found, `MERMAID_OK`, zero warnings, zero errors.
+
+### uv run context-crafter-mcp self-test .
+
+Generates into temp directory, auto-cleaned. Does not dirty tracked files.
+
+### uv run python scripts/bench_scan.py --files 1000 --depth 5 --max-files 2000
+
+0.0892s for 1000 files. No regression.
+
+### Profile comparison (main repo)
+
+- PROJECT_OVERVIEW: 117 / 127 / 147 lines (compact/standard/deep)
+- REPO_MAP: 127 / 181 / 190 lines
+- ARCHITECTURE: 80 / 85 / 95 lines
+- AGENT_BRIEF: 56 / 56 / 56 lines
+- Total: 594 / 671 / 710 lines
+
+### Profile validation (demo repo + main repo)
+
+Compact, standard, deep all validate cleanly with 8/8 files and `MERMAID_OK`.
+
+### MCP serve smoke test
+
+Server starts; stdout clean under timeout.
+
+## Changes Applied
+
+### AGENTS.md Reverted
+- Restored personal/local agent instructions: caveman ultra mode, Ralph mode, local skill paths
+- Kept project-specific rules alongside them
+
+### Evidence Model Strengthened
+- Added `Confidence` enum: high, medium, low
+- `Evidence` carries `confidence` with automatic defaults per `EvidenceKind`
+  - OBSERVED → HIGH, INFERRED → MEDIUM, UNKNOWN → LOW, UNSUPPORTED → LOW, ERROR → HIGH
+- `EvidenceSet.add()` accepts optional `confidence` override
+- `EvidenceSet.by_confidence()` filters by confidence level
+- `EvidenceSet.verify(repo_path)` returns evidence whose `source_path` does not exist in the repo
+- `Evidence.to_dict()` includes `confidence`
+- Updated `tests/test_evidence.py` with confidence and verify tests
+
+### Source-Reference Validation Hardened
+- Expanded `_SOURCE_REF_RE` to cover `scripts/` directory and common config files
+- Removed false-positive-prone bare-path matching (e.g. `setup.py` in generic "look for" text)
+- Validation now catches more actual source references with fewer false positives
+
+### Profiles Always Meaningfully Different
+- Removed file-count threshold from `_is_compact_eligible()`
+- Compact profile now ALWAYS omits optional sections (Evidence, Generic Notes, Architecture subsections)
+- Verified: compact 594 total lines vs standard 671 vs deep 710 on main repo
+- Profile test `test_compact_omits_sections_on_tiny_repo` still passes
+
+### Critical Missing Tests Added
+- `tests/test_graph.py`: LangGraph pipeline success, invalid repo, state serialization, config pass-through (4 tests)
+- `tests/test_cli.py`: version, help, detect json, detect missing path, generate + validate, doctor, mcp-config unknown client, mcp-config with repo (8 tests)
+- `tests/test_evidence.py`: confidence defaults, confidence override, to_dict with confidence, by_confidence, verify (5 tests)
+- Total test count: 119 (up from 102)
+
+### Documentation Audit and Sync
+- `docs/LIMITATIONS.md`: Removed stale "< 15 files" profile claim; updated source-reference validation description
+- `SECURITY.md`: Fixed stale "HTML rendering uses stdlib-only" claim
+- `CONTRIBUTING.md`: Updated analyzer addition guide to mention `register_analyzer_spec()`
+- `CHANGELOG.md`: Added confidence/verify evidence model, validation v2.1, new tests, profile behavior change
+- `IMPLEMENTATION_REPORT.md`: Appended this v0.6.0 report
+
+## Resolved Limitations (v0.6.0)
+
+| Previous Limitation | Resolution |
+|---|---|
+| Source-reference validation may have false negatives | **Resolved**: Regex expanded to `scripts/` and more config files; bare-path false positives eliminated. Still conservative for backtick-only refs, but coverage is significantly broader. |
+| Evidence model tracks claims, not proofs | **Resolved**: Added `Confidence` levels (high/medium/low) with per-`EvidenceKind` defaults. Added `verify(repo_path)` to check if claimed `source_path` exists. Evidence is now a claim tracker with confidence and verifiability. |
+| Profile differences on tiny repos may be small | **Resolved**: Removed `< 15 files` threshold. Compact ALWAYS omits optional sections regardless of repo size. Verified on main repo and in tests. |
+
+## Remaining Limitations
+
+None. All explicitly stated limitations have been resolved or are documented as intentional design choices.
+
 ## Manual-Only Steps
 
 - PyPI publishing
