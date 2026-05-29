@@ -24,7 +24,7 @@ MARKERS: dict[str, list[str]] = {
     "node": ["package.json", "tsconfig.json", "jsconfig.json"],
     "dotnet": [],
     "rust": ["Cargo.toml"],
-    "go": ["go.mod"],
+    "go": ["go.mod", "go.work"],
     "java": ["pom.xml", "build.gradle", "build.gradle.kts"],
 }
 
@@ -52,7 +52,7 @@ def detect_project(repo_path: str) -> DetectResult:
         )
 
     scanner = Scanner()
-    snapshot = scanner.scan(path, ScannerOptions(max_depth=3, max_files=2_000))
+    snapshot = scanner.scan(path, ScannerOptions(max_depth=3, max_files=5_000))
 
     project_types: list[str] = []
     markers: dict[str, list[str]] = {}
