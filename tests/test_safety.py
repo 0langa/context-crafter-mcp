@@ -167,7 +167,8 @@ class TestOutputConfinement:
             repo.mkdir()
             out = safe_output_path(repo, "../../escaped")
             assert "escaped" not in str(out) or repo in out.parents
-            assert str(out).startswith(str(repo))
+            # Resolve to handle Windows short/long path name mismatch
+            assert str(out.resolve()).startswith(str(repo.resolve()))
 
     def test_validate_repo_path_rejects_nonexistent(self) -> None:
         assert validate_repo_path("/nonexistent/path/12345") is None
