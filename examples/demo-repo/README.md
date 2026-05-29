@@ -1,11 +1,11 @@
-# Demo Repo
+# Demo Greeter
 
-This project uses the repository itself as the demo and example source.
+A tiny Python package used to demonstrate `context-crafter-mcp` output.
 
-Real generated outputs from this repo are committed to `examples/outputs/` so reviewers can see the tool's output without running it.
-
-To regenerate:
+## Regenerate example outputs
 
 ```sh
-uv run context-crafter-mcp generate . --output examples/outputs --profile standard
+uv run context-crafter-mcp generate examples/demo-repo --output examples/outputs --profile standard
 ```
+
+The generated files in `examples/outputs/` are committed so reviewers can inspect the tool's output without running it.

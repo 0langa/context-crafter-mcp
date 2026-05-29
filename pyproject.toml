@@ -1,6 +1,6 @@
 [project]
 name = "context-crafter-mcp"
-version = "0.3.0"
+version = "0.3.1"
 description = "Local-first MCP server that turns source repositories into compact AI-agent context: project overviews, repo maps, dependency graphs, architecture notes, and validation reports."
 requires-python = ">=3.11"
 authors = [
@@ -47,6 +47,9 @@ packages = ["src/context_crafter_mcp"]
 [tool.ruff]
 line-length = 120
 target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.mypy]
 python_version = "3.11"

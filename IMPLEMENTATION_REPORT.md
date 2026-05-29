@@ -6,7 +6,10 @@ Date: 2026-05-29
 
 ### git status --short
 
-Clean working tree after fixes (only expected modifications).
+Working tree has intentional modifications:
+- Modified: version bump files, MCP server, CLI, tests, example outputs
+- Untracked: new validation module, benchmark script, demo-repo source
+- Clean: no cache/build artifacts tracked
 
 ### uv sync --extra dev
 
@@ -26,15 +29,15 @@ All files already formatted.
 
 ### uv run mypy src
 
-Success: no issues found in 21 source files.
+Success: no issues found in 22 source files.
 
 ### uv run pytest -q
 
-67 passed in ~2s.
+70 passed in ~4s.
 
 ### uv build
 
-Successfully built dist/context_crafter_mcp-0.3.0.tar.gz and dist/context_crafter_mcp-0.3.0-py3-none-any.whl.
+Successfully built dist/context_crafter_mcp-0.3.1.tar.gz and dist/context_crafter_mcp-0.3.1-py3-none-any.whl.
 
 ### uv run context-crafter-mcp --help
 
@@ -43,11 +46,13 @@ Help text displayed correctly with all subcommands.
 ### uv run context-crafter-mcp doctor
 
 ```
-context-crafter-mcp 0.3.0
+context-crafter-mcp 0.3.1
 Python: 3.12.7
-mcp SDK: unknown
-pydantic: 2.13.4
-langgraph: unknown
+mcp SDK: installed
+pydantic: installed (2.13.4)
+langgraph: installed
+CLI entrypoint: ok
+Temp output write: ok
 Status: healthy
 ```
 
@@ -57,26 +62,25 @@ Returns only `python` and `generic` project types. Evidence: `python: observed`,
 
 ### uv run context-crafter-mcp generate . --output .tmp/generated --profile standard --json
 
-Generates all 8 output files successfully.
+Generates all 8 output files successfully (9 including .mmd).
 
 ### uv run context-crafter-mcp validate .tmp/generated --json
 
 ```json
 {
   "ok": true,
-  "found": [
-    "AI_CONTEXT_INDEX.md",
-    "PROJECT_OVERVIEW.md",
-    "REPO_MAP.md",
-    "DEPENDENCY_GRAPH.md",
-    "ARCHITECTURE_SUMMARY.md",
-    "AGENT_BRIEF.md",
-    "VALIDATION_REPORT.md",
-    "SCAN_REPORT.md"
-  ],
+  "found": [...],
   "missing": [],
   "count": 8,
-  "expected": 8
+  "expected": 8,
+  "checks": [
+    {
+      "code": "MERMAID_OK",
+      "level": "ok",
+      "message": "DEPENDENCY_GRAPH.md contains a non-empty mermaid block.",
+      "file": "DEPENDENCY_GRAPH.md"
+    }
+  ]
 }
 ```
 
@@ -84,17 +88,15 @@ Generates all 8 output files successfully.
 
 Server starts and exits gracefully when stdin closes (stdio server).
 
-## Fixes Applied
+## Fixes Applied (v0.3.1)
 
-1. **MCP resource safety**: `read_resource()` now uses a whitelist `_ALLOWED_RESOURCE_PATHS` populated only by successful generation. Arbitrary paths return "Access denied". Test added.
-2. **Detection pollution**: Added `_is_fixture_path()` helper that skips `tests/fixtures/`, `examples/`, `docs/generated/` during detection and analysis. This repo now correctly reports only Python.
-3. **Version consistency**: Bumped to `0.3.0` in `__init__.py`, `pyproject.toml`, and `CHANGELOG.md` (date 2026-05-29).
-4. **Validation report**: Removed `VALIDATION_REPORT.md` from its own required checklist. It now validates the other 7 files only. Regression test added.
-5. **CLI contract**: `mcp-config --repo <path>` implemented. Emits local `uv run` config instead of `uvx` when repo path is provided.
-6. **Docs**: Added `docs/ROADMAP.md`, `docs/ARCHITECTURE.md`, `docs/SCANNER.md`, `docs/MCP_CLIENTS.md`, `docs/OUTPUT_CONTRACT.md`, `docs/LIMITATIONS.md`, `examples/demo-repo/README.md`.
-7. **Scanner architecture**: `safe_scan()` is now a thin wrapper around `Scanner.scan()`.
-8. **Evidence model**: Added `evidence: dict[str, str]` to `DetectResult` with levels `observed/inferred/unknown`. Rendered in `PROJECT_OVERVIEW.md`.
-9. **Repo cleanliness**: Removed 72 accidentally committed generated files from `tests/fixtures/*/docs/generated/`. Updated `.gitignore` to prevent recurrence.
+1. **Repo cleanliness**: Removed stale `.tmp/` contents. `.gitignore` already covers `.tmp/`, `dist/`, `__pycache__`, caches, and fixture-generated docs.
+2. **MCP resources**: Stopped advertising generic `file://` templates. Implemented `context-crafter://latest/<filename>` URIs. `read_resource()` only reads from `_REGISTERED_RESOURCES` populated during generation. `list_resources()` returns actual registered docs. Tests added for allowed/denied access.
+3. **Validation**: Extended beyond file existence. New `validation.py` module checks Markdown links, verifies DEPENDENCY_GRAPH.md has a non-empty mermaid block, and reports machine-readable warning/error codes (`BROKEN_LINK`, `MERMAID_MISSING`, `MERMAID_EMPTY`, `READ_ERROR`).
+4. **Demo examples**: `examples/demo-repo/` is now a tiny real Python package (`greeter`) with `pyproject.toml`, `src/greeter/`, and `tests/`. `examples/outputs/` regenerated from demo-repo. Exact command documented in `examples/demo-repo/README.md`.
+5. **Doctor polish**: Reports `mcp` and `langgraph` as "installed" even when version metadata is unavailable. Added CLI entrypoint check and temp output write check.
+6. **Benchmark script**: Added `scripts/bench_scan.py` which creates a synthetic fixture, runs `Scanner.scan()`, and outputs JSON timing/stats.
+7. **Version**: Bumped to `0.3.1` in `__init__.py`, `pyproject.toml`.
 
 ## Remaining Work Matrix
 
