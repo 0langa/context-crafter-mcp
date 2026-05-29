@@ -1166,7 +1166,7 @@ wheels = [
 ]
 
 [[package]]
-name = "repo-docs-mcp"
+name = "context-crafter-mcp"
 version = "0.2.0"
 source = { editable = "." }
 dependencies = [

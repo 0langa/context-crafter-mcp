@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from repo_docs_mcp.analyzers.node import analyze_node
+from context_crafter_mcp.analyzers.node import analyze_node
 
 
 def test_node_scripts_and_deps() -> None:

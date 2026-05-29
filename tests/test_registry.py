@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from repo_docs_mcp.analyzers import ANALYZER_REGISTRY, analyze_for_type
-from repo_docs_mcp.models import AnalysisResult, ScanConfig
+from context_crafter_mcp.analyzers import ANALYZER_REGISTRY, analyze_for_type
+from context_crafter_mcp.models import AnalysisResult, ScanConfig
 
 
 def test_registry_has_expected_types() -> None:
@@ -23,7 +23,7 @@ def test_register_new_analyzer() -> None:
         result.errors.append("dummy")
         return result
 
-    from repo_docs_mcp.analyzers import register_analyzer
+    from context_crafter_mcp.analyzers import register_analyzer
 
     register_analyzer("dummy", dummy_analyzer)
     assert "dummy" in ANALYZER_REGISTRY

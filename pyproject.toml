@@ -1,10 +1,10 @@
 [project]
-name = "repo-docs-mcp"
+name = "context-crafter-mcp"
 version = "0.2.0"
-description = "Universal stdio MCP server for generating repository documentation and architecture maps."
+description = "Local-first MCP server that turns source repositories into compact AI-agent context: project overviews, repo maps, dependency graphs, architecture notes, and validation reports."
 requires-python = ">=3.11"
 authors = [
-    {name = "repo-docs-mcp contributors"},
+    {name = "context-crafter-mcp contributors"},
 ]
 license = {text = "MIT"}
 readme = "README.md"
@@ -35,14 +35,14 @@ dev = [
 ]
 
 [project.scripts]
-repo-docs-mcp-self-test = "repo_docs_mcp.server:cli_self_test"
+context-crafter-mcp = "context_crafter_mcp.cli:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/repo_docs_mcp"]
+packages = ["src/context_crafter_mcp"]
 
 [tool.ruff]
 line-length = 120

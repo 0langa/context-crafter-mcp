@@ -5,14 +5,14 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from repo_docs_mcp.analyzers.generic import analyze_generic
-from repo_docs_mcp.detectors import detect_project
-from repo_docs_mcp.renderers.markdown import (
+from context_crafter_mcp.analyzers.generic import analyze_generic
+from context_crafter_mcp.detectors import detect_project
+from context_crafter_mcp.renderers.markdown import (
     render_architecture_summary,
     render_project_overview,
     render_repo_map,
 )
-from repo_docs_mcp.renderers.mermaid import render_dependency_graph
+from context_crafter_mcp.renderers.mermaid import render_dependency_graph
 
 
 def test_render_project_overview() -> None:

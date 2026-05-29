@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from repo_docs_mcp.analyzers.dotnet import analyze_dotnet
+from context_crafter_mcp.analyzers.dotnet import analyze_dotnet
 
 
 def test_dotnet_project_refs_and_frameworks() -> None:

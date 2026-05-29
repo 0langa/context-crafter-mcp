@@ -6,12 +6,17 @@ on:
   pull_request:
     branches: [main, master]
 
+permissions:
+  contents: read
+
 jobs:
   test:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest]
         python-version: ["3.11", "3.12", "3.13"]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
@@ -44,5 +49,14 @@ jobs:
       - name: Test with pytest
         run: uv run pytest -q
 
-      - name: Self-test smoke
-        run: uv run python -m repo_docs_mcp.server --self-test .
+      - name: Build package
+        run: uv build
+
+      - name: CLI smoke tests
+        run: |
+          uv run context-crafter-mcp --help
+          uv run context-crafter-mcp doctor
+          uv run context-crafter-mcp self-test .
+          uv run context-crafter-mcp detect . --json
+          uv run context-crafter-mcp generate . --output .tmp/generated --profile compact --json
+          uv run context-crafter-mcp validate .tmp/generated --json

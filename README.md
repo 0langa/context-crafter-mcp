@@ -1,299 +1,147 @@
-# repo-docs-mcp
+# Context Crafter MCP
 
-A universal, global, stdio-based MCP server that generates repository documentation and lightweight visual architecture artifacts for any project path passed to it.
+[![CI](https://github.com/0langa/context-crafter-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/0langa/context-crafter-mcp/actions)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## Quick Start
+Local-first MCP server that turns source repositories into compact AI-agent context: project overviews, repo maps, dependency graphs, architecture notes, and validation reports.
 
-Follow these steps to get the server running on your machine.
+## What it generates
 
-### 1. Clone the repository
+| File | Purpose |
+|------|---------|
+| `AI_CONTEXT_INDEX.md` | Master index linking all generated docs |
+| `PROJECT_OVERVIEW.md` | Detected stacks, root files, source layout, entry points |
+| `REPO_MAP.md` | Compact directory tree with config and test directories |
+| `DEPENDENCY_GRAPH.md` | Mermaid dependency graph + external dependency list |
+| `ARCHITECTURE_SUMMARY.md` | Architecture patterns, risks, and unknowns |
+| `AGENT_BRIEF.md` | Concise 1-page summary optimized for coding agents |
+| `VALIDATION_REPORT.md` | Output completeness and analysis health |
+| `SCAN_REPORT.md` | Scan coverage, skipped items, and safety notes |
 
-```sh
-git clone https://github.com/0langa/repo-docs-mcp.git
-cd repo-docs-mcp
-```
+## Quick start
 
-### 2. Install dependencies
-
-This project uses [`uv`](https://docs.astral.sh/uv/) for dependency management. If you don't have `uv` installed, install it first:
-
-```sh
-# macOS / Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Windows (PowerShell)
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
-
-Then sync the project dependencies:
+Requires Python 3.11+ and [`uv`](https://docs.astral.sh/uv/).
 
 ```sh
+git clone https://github.com/0langa/context-crafter-mcp.git
+cd context-crafter-mcp
 uv sync --extra dev
+uv run context-crafter-mcp --help
 ```
 
-### 3. Run a smoke test
-
-Make sure everything works by analyzing the current directory:
+Run a self-test against the current directory:
 
 ```sh
-uv run python -m repo_docs_mcp.server --self-test .
+uv run context-crafter-mcp self-test .
 ```
 
-You should see generated files appear in `docs/generated/`.
+Generate context docs for any repository:
 
-### 4. Connect to your MCP client
+```sh
+uv run context-crafter-mcp generate /path/to/repo --output docs/generated --profile standard
+```
 
-Add the server to your MCP client config (e.g., Kimi CLI, Claude Desktop, Cline, etc.):
+Validate the generated output:
+
+```sh
+uv run context-crafter-mcp validate docs/generated
+```
+
+## Use with MCP clients
+
+Add this to your MCP client config:
 
 ```json
 {
   "mcpServers": {
-    "repo-docs": {
-      "command": "uv",
-      "args": [
-        "--directory",
-        "/absolute/path/to/repo-docs-mcp",
-        "run",
-        "python",
-        "-m",
-        "repo_docs_mcp.server"
-      ]
+    "context-crafter": {
+      "command": "uvx",
+      "args": ["context-crafter-mcp", "serve"]
     }
   }
 }
 ```
 
-Replace `/absolute/path/to/repo-docs-mcp` with the actual path where you cloned the repository.
+Or generate a client-specific snippet:
 
-### 5. Use the tools
-
-Once connected, your MCP client can call tools like:
-
-- `detect_project` — identify what kind of project a repo is
-- `generate_all` — generate the full documentation suite
-- `generate_project_overview` — create just the project overview
-- `generate_repo_map` — create just the repository map
-- `generate_dependency_graph` — create Mermaid dependency graphs
-- `generate_architecture_summary` — create the architecture summary
-
----
-
-## What it does
-
-`repo-docs-mcp` analyzes a target repository using only static inspection (no execution, no network calls) and produces:
-
-- **Project Overview** (`PROJECT_OVERVIEW.md`) — detected stacks, root files, source layout, entry points, and language-specific summaries.
-- **Repository Map** (`REPO_MAP.md`) — a compact, depth-limited directory tree with config files, entry points, test directories, and docs.
-- **Dependency Graph** (`DEPENDENCY_GRAPH.mmd` + `.md`) — Mermaid diagrams of internal module/project references with an external dependency summary.
-- **Architecture Summary** (`ARCHITECTURE_SUMMARY.md`) — static-analysis-based architecture notes, risks, and unknowns.
-
-All tools accept `repo_path` and write artifacts into `<repo_path>/<output_dir>` (default: `docs/generated`).
-
-## Supported stacks
-
-| Stack   | Detection markers                                 | Analysis depth                        |
-|---------|---------------------------------------------------|---------------------------------------|
-| Python  | `pyproject.toml`, `requirements.txt`, `*.py`      | AST-based imports, classes, functions |
-| Node/JS | `package.json`, `tsconfig.json`, `*.js/ts`        | Regex-based static imports            |
-| .NET    | `*.sln`, `*.csproj`, `*.fsproj`, `*.vbproj`       | XML-based project references          |
-| Rust    | `Cargo.toml`, `*.rs`                              | TOML deps, module/entry detection     |
-| Go      | `go.mod`, `*.go`                                  | Module deps, package/main detection   |
-| Java    | `pom.xml`, `build.gradle`                         | XML/Gradle deps, class/main detection |
-| Generic | Any existing directory                            | Directory tree, root files, configs   |
-
-## Global MCP config
-
-Add this to your MCP client config (e.g., Kimi CLI, Claude Desktop, etc.):
-
-```json
-{
-  "mcpServers": {
-    "repo-docs": {
-      "command": "uv",
-      "args": [
-        "--directory",
-        "/path/to/repo-docs-mcp",
-        "run",
-        "python",
-        "-m",
-        "repo_docs_mcp.server"
-      ]
-    }
-  }
-}
+```sh
+uv run context-crafter-mcp mcp-config --client kimi
 ```
 
-Replace `/path/to/repo-docs-mcp` with the absolute path where you cloned this repository.
+Supported clients: `claude-desktop`, `claude-code`, `kimi`, `cline`, `roo`, `vscode`, `codex`, `generic-stdio`.
 
-## Example tool calls
+### MCP Inspector
 
-### detect_project
-```json
-{
-  "repo_path": "/path/to/target-repo"
-}
+Test the server with the [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
+
+```sh
+npx @modelcontextprotocol/inspector uv run context-crafter-mcp serve
 ```
 
-### generate_all with options
-```json
-{
-  "repo_path": "/path/to/target-repo",
-  "output_dir": "docs/generated",
-  "scan_depth": 6,
-  "max_files_per_dir": 200,
-  "html": true
-}
-```
+## Example output
 
-### Rust project
-```json
-{
-  "repo_path": "/path/to/rust-project",
-  "scan_depth": 5
-}
-```
+See [`examples/outputs/`](examples/outputs/) for real generated files from this repository.
 
-### Go project
-```json
-{
-  "repo_path": "/path/to/go-project",
-  "scan_depth": 5
-}
-```
+Quick preview of `AGENT_BRIEF.md`:
 
-### Java project
-```json
-{
-  "repo_path": "/path/to/java-project",
-  "scan_depth": 5
-}
-```
-
-## Optional features
-
-### HTML output
-Set `html: true` in `generate_project_overview` or `generate_all` to also produce `PROJECT_OVERVIEW.html`. This uses a lightweight stdlib-only markdown-to-HTML conversion.
-
-### Mermaid image export
-If the `mmdc` CLI (Mermaid CLI) is installed and on your PATH, the dependency graph renderer will also produce `DEPENDENCY_GRAPH.png` and `DEPENDENCY_GRAPH.svg` automatically. This step is entirely optional and external.
-
-### Configurable scanning limits
-Override defaults via `scan_depth` (1-20, default 4) and `max_files_per_dir` (1-5000, default 80). Values outside safe bounds are rejected.
-
-## Plugin architecture for analyzers
-
-Analyzers are registered in a central registry (`repo_docs_mcp.analyzers.ANALYZER_REGISTRY`). To add a new analyzer:
-
-1. Create a module under `src/repo_docs_mcp/analyzers/`.
-2. Implement a function with the signature:
-   ```python
-   def analyze_mylang(repo_path: str, analysis: AnalysisResult | None, config: ScanConfig) -> AnalysisResult:
-       ...
-   ```
-3. Register it:
-   ```python
-   from repo_docs_mcp.analyzers import register_analyzer
-   register_analyzer("mylang", analyze_mylang)
-   ```
-4. Update `repo_docs_mcp/detectors.py` to detect your language markers.
-
-No changes to `graph.py` or `server.py` are required.
+- **Entry points**: `src/context_crafter_mcp/cli.py`, `src/context_crafter_mcp/server.py`
+- **Stacks**: Python (MCP server, LangGraph pipeline, static analyzers)
+- **Key dependencies**: `mcp`, `langgraph`, `pydantic`
 
 ## Safety model
 
 - **Read-only analysis** — never executes code in the target repository.
 - **Output confined to repo** — `output_dir` is resolved and validated so it cannot escape the repository root.
 - **No network** — no HTTP calls, no model inference, no API keys.
-- **Bounded scans** — ignores `.git`, `node_modules`, `venv`, `__pycache__`, `dist`, `build`, `target` (Rust), `bin`, `obj`, etc.
+- **Bounded scans** — depth, file count, and file size limits with safe defaults.
 - **No symlinks followed** — prevents infinite loops and directory escaping.
-- **Graceful errors** — individual parse failures do not crash the entire run. Errors are collected and surfaced in reports.
-- **No shell execution** — except for the optional `mmdc` subprocess, which is only invoked if the binary is present.
+- **No stdout logging in MCP mode** — stdio protocol is protected from corrupting output.
 
-## Verification commands
+See [`SECURITY.md`](SECURITY.md) for the full threat model and reporting process.
 
-Run these from the project root:
+## Supported stacks
+
+| Stack | Detection | Analysis depth |
+|-------|-----------|----------------|
+| Python | `pyproject.toml`, `requirements.txt`, `*.py` | AST-based imports, classes, functions |
+| Node/TypeScript | `package.json`, `tsconfig.json`, `*.js/ts` | Regex-based static imports, scripts, deps |
+| .NET | `*.sln`, `*.csproj` | XML-based project/package references |
+| Rust | `Cargo.toml`, `*.rs` | TOML deps, module/entry detection |
+| Go | `go.mod`, `*.go` | Module deps, package/main detection |
+| Java | `pom.xml`, `build.gradle` | XML/Gradle deps, class/main detection |
+| Generic | Any directory | Honest fallback with directory tree and root files |
+
+## Architecture
+
+- **Scanner boundary** — `Scanner.scan(root, options) -> RepoSnapshot`. Everything above the scanner consumes `RepoSnapshot`, making the scanner replaceable without changing analyzers.
+- **Python product layer** — MCP server, CLI, analyzers, and renderers are Python. A lower-level scanner (Rust/Go) is only considered if benchmarks prove Python traversal is the bottleneck.
+- **LangGraph pipeline** — `validate_repo -> detect -> scan -> analyze -> render`.
+- **Analyzer registry** — Language analyzers are registered and run based on detected project types.
+
+See [`docs/adr/0001-python-product-layer-replaceable-scanner.md`](docs/adr/0001-python-product-layer-replaceable-scanner.md).
+
+## Development
 
 ```sh
 uv sync --extra dev
-uv run python -m compileall src tests
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy src
 uv run pytest -q
+uv run context-crafter-mcp self-test .
 ```
 
-Smoke test against the current repository:
+See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-```sh
-uv run python -m repo_docs_mcp.server --self-test .
-```
+## Limitations
 
-Or using the installed console script:
+- Static analysis only; no runtime behavior or dynamic imports.
+- No deep syntax parsing for non-Python languages (uses regex/XML/TOML).
+- HTML rendering is stdlib-only and may not handle complex Markdown perfectly.
+- Secret redaction is not implemented; review generated output before sharing.
+- Tree-sitter integration is experimental and not required for core installation.
 
-```sh
-repo-docs-mcp-self-test .
-```
+## License
 
-## CI integration
-
-A GitHub Actions workflow is included in `.github/workflows/ci.yml`. It runs linting, type checking, and tests on Python 3.11-3.13.
-
-To regenerate docs in CI, add a step like:
-
-```yaml
-- name: Generate repo docs
-  run: uv run python -m repo_docs_mcp.server --self-test .
-```
-
-To use as a pre-commit hook, create `.pre-commit-config.yaml`:
-
-```yaml
-repos:
-  - repo: local
-    hooks:
-      - id: repo-docs-mcp
-        name: Generate repository docs
-        entry: repo-docs-mcp-self-test
-        language: system
-        pass_filenames: false
-        always_run: true
-```
-
-## Troubleshooting
-
-### `ModuleNotFoundError: No module named 'repo_docs_mcp'`
-- Ensure you ran `uv sync` from the project root.
-- Use `uv run python -m repo_docs_mcp.server` so the virtual environment is active.
-
-### Wrong `uv` environment
-- Check that `.venv` exists in the project root.
-- If you have multiple `uv` projects, make sure your shell is in the correct directory before running commands.
-
-### MCP client cannot find server
-- Verify the `--directory` path in your MCP config matches the absolute path to this repository.
-- Ensure `uv` is on the system PATH used by the MCP client.
-- Try running the server manually first: `uv run python -m repo_docs_mcp.server --self-test .`
-
-### Target repo path does not exist
-- The server returns a clear error JSON and exits gracefully.
-- Double-check the path string. In JSON configs, backslashes must be escaped (`\\`).
-
-### New language not detected
-- Ensure the language has marker files or extensions registered in `repo_docs_mcp/detectors.py`.
-- Check that the analyzer is registered in `repo_docs_mcp/analyzers/__init__.py`.
-- Increase `scan_depth` if the project is deeply nested.
-
-### Parse errors in generated reports
-- Files that fail to parse (malformed JSON, TOML, XML) are reported in the **Errors** section of outputs.
-- The run continues; errors do not block other files.
-
-## Architecture
-
-- `server.py` — MCP stdio server and tool dispatch.
-- `graph.py` — LangGraph pipeline (`validate_repo → detect → scan → analyze → render`).
-- `filesystem.py` — safe, bounded directory scanning.
-- `detectors.py` — project-type detection by markers and extensions.
-- `analyzers/` — generic, Python (AST), Node (regex), .NET (XML), Rust (TOML), Go (regex), Java (XML/regex).
-- `renderers/` — Markdown, Mermaid, and optional HTML output generation.
-- `models.py` — shared typed dataclasses.
-- `state.py` — LangGraph state definition.
+MIT. See [`LICENSE`](LICENSE).

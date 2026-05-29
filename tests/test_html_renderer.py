@@ -5,9 +5,9 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from repo_docs_mcp.analyzers.generic import analyze_generic
-from repo_docs_mcp.detectors import detect_project
-from repo_docs_mcp.renderers.html import render_html_overview
+from context_crafter_mcp.analyzers.generic import analyze_generic
+from context_crafter_mcp.detectors import detect_project
+from context_crafter_mcp.renderers.html import render_html_overview
 
 
 def test_html_overview_generated() -> None:

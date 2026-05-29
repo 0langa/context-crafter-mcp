@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from repo_docs_mcp.analyzers.java import analyze_java
+from context_crafter_mcp.analyzers.java import analyze_java
 
 
 def test_java_maven() -> None:

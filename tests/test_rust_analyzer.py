@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from repo_docs_mcp.analyzers.rust import analyze_rust
+from context_crafter_mcp.analyzers.rust import analyze_rust
 
 
 def test_rust_basic() -> None:

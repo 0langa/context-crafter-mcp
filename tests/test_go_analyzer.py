@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from repo_docs_mcp.analyzers.go import analyze_go
+from context_crafter_mcp.analyzers.go import analyze_go
 
 
 def test_go_basic() -> None:
