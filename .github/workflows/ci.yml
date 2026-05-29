@@ -62,7 +62,7 @@ jobs:
           uv run context-crafter-mcp self-test .
           uv run context-crafter-mcp detect . --json
           uv run context-crafter-mcp generate . --output .tmp/generated --profile compact --json
-          uv run context-crafter-mcp validate docs/generated --repo . --json
+          uv run context-crafter-mcp validate .tmp/generated --repo . --json
           $after = git status --short --untracked-files=normal
           if ($before -ne $after) {
             Write-Host "Repository state changed unexpectedly during CLI smoke tests."
@@ -113,7 +113,7 @@ jobs:
             & $cli doctor
             & $cli detect . --json
             & $cli generate . --output .tmp/generated --profile compact --json
-            & $cli validate docs/generated --repo . --json
+            & $cli validate .tmp/generated --repo . --json
           }
 
           Invoke-Smoke "wheel" $wheel
