@@ -15,6 +15,8 @@ def test_dotnet_project_refs_and_frameworks() -> None:
             '<Project Sdk="Microsoft.NET.Sdk">\n'
             "  <PropertyGroup>\n"
             "    <TargetFramework>net8.0</TargetFramework>\n"
+            "    <OutputType>Exe</OutputType>\n"
+            "    <AssemblyName>MyApp</AssemblyName>\n"
             "  </PropertyGroup>\n"
             "  <ItemGroup>\n"
             '    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />\n'
@@ -25,12 +27,16 @@ def test_dotnet_project_refs_and_frameworks() -> None:
         (root / "MyApp.sln").write_text(
             'Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyApp", "MyApp.csproj", "{GUID}"\nEndProject\n'
         )
+        (root / "Program.cs").write_text("namespace MyApp { class Program { static void Main() { } } }\n")
         result = analyze_dotnet(td)
         assert result.dotnet_projects
         proj = result.dotnet_projects[0]
         assert "net8.0" in proj.target_frameworks
         assert "Newtonsoft.Json" in proj.package_refs
         assert any("Lib.csproj" in ref for ref in proj.project_refs)
+        assert proj.output_type == "Exe"
+        assert proj.assembly_name == "MyApp"
+        assert "Program" in proj.classes
         assert result.dotnet_solutions
         assert result.dotnet_solutions[0].name == "MyApp"
 

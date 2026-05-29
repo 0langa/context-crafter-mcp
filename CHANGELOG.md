@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-05-29
+
+### Added
+
+- **Scanner enrichment**: `SnapshotFile` now carries `extension`, `language_hint`, and `is_text`.
+- **Gitignore semantics**: Root `.gitignore` parsing uses `pathspec` with Git-style wildmatch support (`*.log`, `build/`, `foo/**`, negation).
+- **Profile modes**: `compact`, `standard`, and `deep` now produce measurably different output depths and list limits.
+- **Validation hardening**:
+  - `.mmd` existence check.
+  - Source path reference validation (conservative backtick parsing).
+  - Fixture/demo pollution warnings.
+  - File-size sanity checks.
+  - New machine-readable codes: `missing_required_file`, `broken_markdown_link`, `missing_mermaid_block`, `empty_mermaid_block`, `referenced_source_missing`, `fixture_path_primary_claim`, `oversized_section`, `validation_internal_error`.
+- **Structured MCP tool results**: All tools return JSON with `ok`, `summary`, `warnings`, `errors`, `generated_files` where relevant.
+- **Tests**: `test_validation_extended.py`, `test_profiles.py`, additional scanner gitignore tests, MCP resource traversal/empty-list tests.
+
+### Changed
+
+- `self-test` defaults to a temporary directory; added `--output` option for persistent output.
+- `ValidationResult.to_dict()`, `DetectResult.to_dict()`, `RenderResult.to_dict()`, `RepoState.to_tool_result()` all include `summary`, `warnings`, `errors`.
+- `explain_capabilities` returns structured JSON.
+- `validate` CLI accepts `--repo` for source-reference checks.
+
+### Fixed
+
+- False positives in source-reference validation from `path::Class` backtick syntax.
+- Validation JSON serialization error when `warnings`/`errors` contained dataclass objects.
+
 ## [0.3.1] - 2026-05-29
 
 ### Added

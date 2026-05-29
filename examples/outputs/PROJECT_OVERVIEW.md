@@ -5,7 +5,7 @@
 - **Path**: `examples/demo-repo`
 - **Detected types**: generic, python
 - **Evidence**: python (observed), generic (observed)
-- **Generated**: 2026-05-29T04:34:23.272836+00:00
+- **Generated**: 2026-05-29T10:48:30.309570+00:00
 
 ## Table of Contents
 

@@ -16,7 +16,9 @@ def test_go_basic() -> None:
         )
         (root / "main.go").write_text('package main\n\nfunc main() {\n\tprintln("hello")\n}\n')
         (root / "pkg" / "utils.go").parent.mkdir(parents=True)
-        (root / "pkg" / "utils.go").write_text('package utils\n\nfunc Helper() string { return "help" }\n')
+        (root / "pkg" / "utils.go").write_text(
+            'package utils\n\ntype Helper struct{}\n\ntype Stringer interface {\n\tString() string\n}\n\nfunc HelperFunc() string { return "help" }\n'
+        )
         result = analyze_go(td)
         assert result.go_modules
         mod = result.go_modules[0]
@@ -24,3 +26,5 @@ def test_go_basic() -> None:
         assert any("github.com/stretchr/testify" in d for d in mod.dependencies)
         assert "main.go" in mod.entry_points
         assert "pkg" in mod.packages or "" in mod.packages
+        assert any("Helper" in s for s in mod.structs)
+        assert any("Stringer" in i for i in mod.interfaces)

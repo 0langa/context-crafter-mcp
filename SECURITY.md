@@ -20,6 +20,7 @@ Primary threats we design against:
 - Binary and oversized files are **skipped**.
 - Output is **confined** to the repository root.
 - No stdout logging in **MCP stdio mode**.
+- MCP resource reads are **session-scoped**; arbitrary local paths and traversal are blocked.
 
 ## Secret Handling
 

@@ -16,8 +16,12 @@ def test_node_scripts_and_deps() -> None:
             '"dependencies":{"react":"^18.0"},'
             '"devDependencies":{"jest":"^29.0"}}\n'
         )
-        (root / "index.js").write_text("const react = require('react');\n")
-        (root / "app.ts").write_text("import express from 'express';\n")
+        (root / "index.js").write_text(
+            "const react = require('react');\n"
+            "export class App { constructor() {} }\n"
+            "export default function main() { return 1; }\n"
+        )
+        (root / "app.ts").write_text("import express from 'express';\nexport const PORT = 3000;\n")
         result = analyze_node(td)
         assert result.node_packages
         pkg = result.node_packages[0]
@@ -27,6 +31,9 @@ def test_node_scripts_and_deps() -> None:
         assert "jest" in pkg.dev_dependencies
         assert len(pkg.import_edges) == 2
         assert any("express" in target for _, target in pkg.import_edges)
+        assert any("App" in c for c in pkg.classes)
+        assert any("main" in f for f in pkg.functions)
+        assert any("PORT" in e for e in pkg.exports)
 
 
 def test_node_parse_error_collected() -> None:

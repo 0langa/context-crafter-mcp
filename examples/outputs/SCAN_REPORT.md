@@ -3,11 +3,11 @@
 # Scan Report: demo-repo
 
 - **Path**: `examples/demo-repo`
-- **Generated**: 2026-05-29T04:34:23.321728+00:00
+- **Generated**: 2026-05-29T10:48:30.327213+00:00
 
 ## Coverage
 
-- Files scanned: 28
+- Files scanned: 10
 - Root files: 2
 - Source directories: 2
 - Test directories: 1

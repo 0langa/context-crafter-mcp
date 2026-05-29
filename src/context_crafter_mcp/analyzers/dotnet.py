@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -9,6 +10,9 @@ from context_crafter_mcp.analyzers import register_analyzer
 from context_crafter_mcp.detectors import _is_fixture_path
 from context_crafter_mcp.filesystem import safe_read_text, safe_scan, validate_repo_path
 from context_crafter_mcp.models import AnalysisResult, DotNetProject, DotNetSolution, ScanConfig
+
+DOTNET_CLASS_RE = re.compile(r"\bclass\s+(\w+)")
+DOTNET_NAMESPACE_RE = re.compile(r"\bnamespace\s+([\w.]+)")
 
 
 def parse_solution(path: Path, rel_path: str) -> DotNetSolution:
@@ -60,6 +64,16 @@ def parse_project(path: Path, rel_path: str) -> DotNetProject:
         if href:
             proj.project_refs.append(href)
 
+    # Output type
+    for ot in root.iter("OutputType"):
+        if ot.text:
+            proj.output_type = ot.text
+
+    # Assembly name
+    for an in root.iter("AssemblyName"):
+        if an.text:
+            proj.assembly_name = an.text
+
     return proj
 
 
@@ -98,14 +112,21 @@ def analyze_dotnet(
     result.dotnet_projects = projects
     result.files_scanned += count
 
-    # Entry points
+    # Entry points + class scanning
     for p in projects:
-        if "Exe" in p.target_frameworks or any("Exe" in str(t) for t in p.target_frameworks):
+        if p.output_type == "Exe":
             result.likely_entry_points.append(p.rel_path)
         proj_dir = Path(p.rel_path).parent
         program_file = path / proj_dir / "Program.cs"
         if program_file.exists():
             result.likely_entry_points.append(str((proj_dir / "Program.cs").as_posix()))
+        # Scan .cs files for classes and namespaces
+        cs_files = list((path / proj_dir).rglob("*.cs")) if (path / proj_dir).is_dir() else []
+        for cs_file in cs_files[:20]:
+            src = safe_read_text(cs_file, max_bytes=200_000)
+            if src:
+                for m in DOTNET_CLASS_RE.finditer(src):
+                    p.classes.append(m.group(1))
 
     return result
 

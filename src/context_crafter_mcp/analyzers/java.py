@@ -16,6 +16,13 @@ GRADLE_DEP_RE = re.compile(
     r"(?:implementation|compile|api|testImplementation)\s+[\"\']([^\"\']+:[^\"\']+:[^\"\']+)[\"\']"
 )
 JAVA_MAIN_RE = re.compile(r"public\s+static\s+void\s+main\s*\(", re.MULTILINE)
+JAVA_CLASS_RE = re.compile(r"\b(public\s+)?(class|interface|enum|record)\s+(\w+)")
+JAVA_PACKAGE_RE = re.compile(r"^package\s+([\w.]+);", re.MULTILINE)
+JAVA_IMPORT_RE = re.compile(r"^import\s+([\w.*]+);", re.MULTILINE)
+JAVA_METHOD_RE = re.compile(
+    r"\b(public|protected|private)\s+(?:static\s+)?(?:final\s+)?[\w<>,\[\]\s]+\s+(\w+)\s*\(", re.MULTILINE
+)
+JAVA_ANNOTATION_RE = re.compile(r"@(\w+)")
 
 
 def parse_pom(path: Path) -> JavaProject:
@@ -98,10 +105,26 @@ def analyze_java(
             count += 1
             classes.append(fi.rel_path)
             src = safe_read_text(fi.path, max_bytes=500_000)
-            if src and JAVA_MAIN_RE.search(src):
-                java_proj.entry_points.append(fi.rel_path)
+            if src:
+                if JAVA_MAIN_RE.search(src):
+                    java_proj.entry_points.append(fi.rel_path)
+                for m in JAVA_CLASS_RE.finditer(src):
+                    class_name = m.group(3)
+                    pkg_match = JAVA_PACKAGE_RE.search(src)
+                    pkg = pkg_match.group(1) + "." if pkg_match else ""
+                    java_proj.classes.append(pkg + class_name)
+                for m in JAVA_IMPORT_RE.finditer(src):
+                    imp = m.group(1)
+                    if not imp.startswith("java.") and not imp.startswith("javax."):
+                        java_proj.dependencies.append(imp)
+                for m in JAVA_METHOD_RE.finditer(src):
+                    java_proj.methods.append(m.group(2))
+                for m in JAVA_ANNOTATION_RE.finditer(src):
+                    java_proj.annotations.append(m.group(1))
 
-    java_proj.classes = classes
+    java_proj.classes = sorted(set(java_proj.classes))
+    java_proj.methods = sorted(set(java_proj.methods))
+    java_proj.annotations = sorted(set(java_proj.annotations))
     result.java_projects = [java_proj]
     result.files_scanned += count
     return result

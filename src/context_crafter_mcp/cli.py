@@ -216,7 +216,7 @@ def cmd_generate(args: argparse.Namespace) -> int:
 def cmd_validate(args: argparse.Namespace) -> int:
     from context_crafter_mcp.validation import validate_output_dir
 
-    result = validate_output_dir(args.output_dir)
+    result = validate_output_dir(args.output_dir, repo_path=getattr(args, "repo", None))
     if args.json:
         print(json.dumps(result.to_dict(), indent=2))
     else:
@@ -245,16 +245,33 @@ def cmd_self_test(args: argparse.Namespace) -> int:
         print(f"Path not found, skipping: {repo_path}")
         return 0
     print(f"Self-test: {repo_path}")
-    state = run_generate_all(repo_path)
-    result = state.to_tool_result()
-    print(json.dumps(result, indent=2))
-    if result["ok"]:
-        for w in result["written"]:
-            print(f"  -> {w}")
-        return 0
-    else:
-        print("Errors:", result["errors"])
-        return 1
+    output_dir = getattr(args, "output", None)
+    if output_dir:
+        state = run_generate_all(repo_path, output_dir)
+        result = state.to_tool_result()
+        print(json.dumps(result, indent=2))
+        if result["ok"]:
+            for w in result["written"]:
+                print(f"  -> {w}")
+            return 0
+        else:
+            print("Errors:", result["errors"])
+            return 1
+    import tempfile
+
+    repo = Path(repo_path).resolve()
+    with tempfile.TemporaryDirectory(dir=repo) as td:
+        rel = Path(td).name
+        state = run_generate_all(repo_path, rel)
+        result = state.to_tool_result()
+        print(json.dumps(result, indent=2))
+        if result["ok"]:
+            for w in result["written"]:
+                print(f"  -> {w}")
+            return 0
+        else:
+            print("Errors:", result["errors"])
+            return 1
 
 
 def cmd_mcp_config(args: argparse.Namespace) -> int:
@@ -330,10 +347,20 @@ def build_parser() -> argparse.ArgumentParser:
     p_validate = sub.add_parser("validate", help="Validate generated output directory.")
     p_validate.add_argument("output_dir")
     p_validate.add_argument("--json", action="store_true")
+    p_validate.add_argument(
+        "--repo",
+        default=None,
+        help="Repository root path for source-reference validation.",
+    )
     p_validate.set_defaults(func=cmd_validate)
 
     p_self = sub.add_parser("self-test", help="Run end-to-end self test.")
     p_self.add_argument("repo_path", nargs="?", default=".")
+    p_self.add_argument(
+        "--output",
+        default=None,
+        help="Output directory for self-test generated docs (default: temporary directory).",
+    )
     p_self.set_defaults(func=cmd_self_test)
 
     p_config = sub.add_parser("mcp-config", help="Emit MCP client config snippet.")

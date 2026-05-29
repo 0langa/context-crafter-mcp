@@ -275,11 +275,12 @@ wheels = [
 
 [[package]]
 name = "context-crafter-mcp"
-version = "0.3.1"
+version = "0.3.2"
 source = { editable = "." }
 dependencies = [
     { name = "langgraph" },
     { name = "mcp", extra = ["cli"] },
+    { name = "pathspec" },
     { name = "pydantic" },
     { name = "uuid-utils" },
 ]
@@ -296,6 +297,7 @@ requires-dist = [
     { name = "langgraph" },
     { name = "mcp", extras = ["cli"] },
     { name = "mypy", marker = "extra == 'dev'" },
+    { name = "pathspec" },
     { name = "pydantic" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "ruff", marker = "extra == 'dev'" },

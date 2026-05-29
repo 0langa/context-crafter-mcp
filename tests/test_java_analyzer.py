@@ -25,7 +25,12 @@ def test_java_maven() -> None:
         )
         (root / "src" / "main" / "java" / "com" / "example" / "App.java").parent.mkdir(parents=True)
         (root / "src" / "main" / "java" / "com" / "example" / "App.java").write_text(
-            "package com.example;\npublic class App { public static void main(String[] args) { } }\n"
+            "package com.example;\n"
+            "@Entity\n"
+            "public class App {\n"
+            "  public static void main(String[] args) { }\n"
+            '  public String getName() { return "app"; }\n'
+            "}\n"
         )
         result = analyze_java(td)
         assert result.java_projects
@@ -35,6 +40,8 @@ def test_java_maven() -> None:
         assert any("org.junit:junit" in d for d in proj.dependencies)
         assert len(proj.classes) == 1
         assert any("App.java" in ep for ep in proj.entry_points)
+        assert "getName" in proj.methods
+        assert "Entity" in proj.annotations
 
 
 def test_java_gradle() -> None:

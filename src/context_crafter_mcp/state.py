@@ -24,8 +24,15 @@ class RepoState:
     def to_tool_result(self) -> dict[str, Any]:
         return {
             "ok": self.ok,
+            "summary": (
+                f"Generated {len(self.written)} file(s) for {', '.join(self.detect_result.project_types if self.detect_result else [])}"
+                if self.ok
+                else f"Generation failed: {'; '.join(self.errors)}"
+            ),
+            "generated_files": self.written,
             "written": self.written,
             "files_scanned": self.analysis.files_scanned if self.analysis else 0,
             "project_types": self.detect_result.project_types if self.detect_result else [],
+            "warnings": [],
             "errors": self.errors,
         }

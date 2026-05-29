@@ -2,7 +2,7 @@
 
 # Dependency Graph: demo-repo
 
-- **Generated**: 2026-05-29T04:34:23.280886+00:00
+- **Generated**: 2026-05-29T10:48:30.313583+00:00
 
 ## Graph
 

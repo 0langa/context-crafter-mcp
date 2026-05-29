@@ -16,7 +16,11 @@ def test_rust_basic() -> None:
         )
         (root / "src" / "main.rs").parent.mkdir(parents=True)
         (root / "src" / "main.rs").write_text('fn main() { println!("hi"); }\n')
-        (root / "src" / "lib.rs").write_text("pub fn add(a: i32, b: i32) -> i32 { a + b }\n")
+        (root / "src" / "lib.rs").write_text(
+            "pub fn add(a: i32, b: i32) -> i32 { a + b }\n"
+            "pub trait Drawable { fn draw(&self); }\n"
+            "impl Drawable for i32 { fn draw(&self) {} }\n"
+        )
         result = analyze_rust(td)
         assert result.rust_crates
         crate = result.rust_crates[0]
@@ -25,3 +29,5 @@ def test_rust_basic() -> None:
         assert "src/main.rs" in crate.entry_points
         assert "src/lib.rs" in crate.entry_points
         assert len(crate.modules) == 2
+        assert "Drawable" in crate.traits
+        assert "i32" in crate.impls

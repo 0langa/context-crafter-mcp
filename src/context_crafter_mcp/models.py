@@ -36,12 +36,18 @@ class DetectResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "ok": self.exists,
+            "summary": f"Detected types: {', '.join(self.project_types)}"
+            if self.exists
+            else f"Detection failed: {self.error}",
             "repo_path": self.repo_path,
             "exists": self.exists,
             "project_types": self.project_types,
             "markers": self.markers,
             "error": self.error,
             "evidence": self.evidence,
+            "warnings": [],
+            "errors": [self.error] if self.error else [],
         }
 
 
@@ -75,6 +81,9 @@ class NodePackage:
     dev_dependencies: list[str] = field(default_factory=list)
     files: list[str] = field(default_factory=list)
     import_edges: list[tuple[str, str]] = field(default_factory=list)
+    exports: list[str] = field(default_factory=list)
+    classes: list[str] = field(default_factory=list)
+    functions: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -84,6 +93,9 @@ class DotNetProject:
     target_frameworks: list[str] = field(default_factory=list)
     package_refs: list[str] = field(default_factory=list)
     project_refs: list[str] = field(default_factory=list)
+    output_type: str | None = None
+    assembly_name: str | None = None
+    classes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -99,6 +111,8 @@ class RustCrate:
     dependencies: list[str] = field(default_factory=list)
     modules: list[str] = field(default_factory=list)
     entry_points: list[str] = field(default_factory=list)
+    traits: list[str] = field(default_factory=list)
+    impls: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -107,6 +121,8 @@ class GoModule:
     dependencies: list[str] = field(default_factory=list)
     packages: list[str] = field(default_factory=list)
     entry_points: list[str] = field(default_factory=list)
+    structs: list[str] = field(default_factory=list)
+    interfaces: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -117,6 +133,8 @@ class JavaProject:
     modules: list[str] = field(default_factory=list)
     classes: list[str] = field(default_factory=list)
     entry_points: list[str] = field(default_factory=list)
+    methods: list[str] = field(default_factory=list)
+    annotations: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -156,6 +174,7 @@ class AnalysisResult:
     metadata: ProjectMetadata = field(default_factory=ProjectMetadata)
     python_dependencies: list[str] = field(default_factory=list)
     python_dev_dependencies: list[str] = field(default_factory=list)
+    profile: str = "standard"
 
 
 @dataclass
@@ -169,8 +188,77 @@ class RenderResult:
     def to_dict(self) -> dict[str, Any]:
         return {
             "ok": self.ok,
+            "summary": f"Generated {len(self.written)} file(s)" if self.ok else f"Generation failed: {self.error}",
+            "generated_files": self.written,
             "written": self.written,
             "files_scanned": self.files_scanned,
             "project_types": self.project_types,
-            "error": self.error,
+            "warnings": [],
+            "errors": [self.error] if self.error else [],
         }
+
+
+_PROFILE_LIMITS: dict[str, dict[str, int]] = {
+    "compact": {
+        "tree_max_lines": 80,
+        "root_files": 15,
+        "source_dirs": 10,
+        "entry_points": 10,
+        "test_dirs": 10,
+        "docs_files": 20,
+        "config_files": 20,
+        "deps": 15,
+        "dev_deps": 15,
+        "python_modules_display": 5,
+        "classes_display": 5,
+        "functions_display": 5,
+        "mermaid_external": 20,
+        "internal_edges": 8,
+        "large_modules": 3,
+        "cycles": 3,
+        "abstractions": 5,
+    },
+    "standard": {
+        "tree_max_lines": 200,
+        "root_files": 30,
+        "source_dirs": 20,
+        "entry_points": 20,
+        "test_dirs": 20,
+        "docs_files": 50,
+        "config_files": 50,
+        "deps": 30,
+        "dev_deps": 30,
+        "python_modules_display": 10,
+        "classes_display": 10,
+        "functions_display": 10,
+        "mermaid_external": 40,
+        "internal_edges": 15,
+        "large_modules": 5,
+        "cycles": 5,
+        "abstractions": 10,
+    },
+    "deep": {
+        "tree_max_lines": 400,
+        "root_files": 60,
+        "source_dirs": 40,
+        "entry_points": 40,
+        "test_dirs": 40,
+        "docs_files": 100,
+        "config_files": 100,
+        "deps": 60,
+        "dev_deps": 60,
+        "python_modules_display": 20,
+        "classes_display": 20,
+        "functions_display": 20,
+        "mermaid_external": 80,
+        "internal_edges": 30,
+        "large_modules": 10,
+        "cycles": 10,
+        "abstractions": 20,
+    },
+}
+
+
+def get_profile_limit(profile: str, key: str) -> int:
+    """Return a numeric limit for the given profile and key."""
+    return _PROFILE_LIMITS.get(profile, _PROFILE_LIMITS["standard"]).get(key, _PROFILE_LIMITS["standard"][key])

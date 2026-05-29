@@ -3,7 +3,7 @@
 # AI Context Index: demo-repo
 
 - **Path**: `examples/demo-repo`
-- **Generated**: 2026-05-29T04:34:23.270124+00:00
+- **Generated**: 2026-05-29T10:48:30.307563+00:00
 - **Detected types**: generic, python
 
 ## Generated Files

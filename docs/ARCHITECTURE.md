@@ -41,7 +41,19 @@ The scanner is a strict replaceable boundary. Everything above it consumes `Repo
 
 - `ScannerOptions` controls safety defaults
 - `RepoSnapshot` contains `SnapshotFile`, `SnapshotDirectory`, `SkippedEntry`, `ScanError`, `ScanStats`, `GitMetadata`
+- `SnapshotFile` is enriched with `extension`, `language_hint`, and `is_text`
 - `safe_scan` in `filesystem.py` is a thin compatibility wrapper around `Scanner`
+- Root `.gitignore` is parsed with `pathspec` (Git-style wildmatch); nested `.gitignore` files are supported via `active_gitignores` stack with deepest-matching-wins semantics
+
+## Profile Pipeline
+
+`ScanConfig.profile` flows through the pipeline:
+
+1. `analyze_generic` adjusts tree depth and collection limits
+2. Language analyzers respect profile limits where applicable
+3. Renderers slice lists/trees based on `get_profile_limit(profile, key)`
+
+Result: compact/standard/deep produce measurably different output on substantial repositories.
 
 ## Safety Model
 
@@ -52,3 +64,4 @@ The scanner is a strict replaceable boundary. Everything above it consumes `Repo
 - No symlink following
 - Output confined to repo root
 - MCP stdio protected from stdout pollution
+- Resource registry blocks arbitrary local path reads

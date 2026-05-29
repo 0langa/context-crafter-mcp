@@ -6,6 +6,8 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import pathspec
+
 
 DEFAULT_IGNORED_DIRS = {
     ".git",
@@ -52,12 +54,272 @@ class ScannerOptions:
             raise ValueError("max_file_bytes must be positive")
 
 
+_TEXT_EXTENSIONS = {
+    ".py",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".cs",
+    ".fs",
+    ".vb",
+    ".rs",
+    ".go",
+    ".java",
+    ".md",
+    ".txt",
+    ".rst",
+    ".json",
+    ".toml",
+    ".yaml",
+    ".yml",
+    ".ini",
+    ".cfg",
+    ".conf",
+    ".config",
+    ".html",
+    ".htm",
+    ".css",
+    ".scss",
+    ".sass",
+    ".less",
+    ".xml",
+    ".sql",
+    ".sh",
+    ".bat",
+    ".ps1",
+    ".c",
+    ".cpp",
+    ".h",
+    ".hpp",
+    ".swift",
+    ".kt",
+    ".kts",
+    ".scala",
+    ".rb",
+    ".php",
+    ".pl",
+    ".lua",
+    ".r",
+    ".m",
+    ".mm",
+    ".dart",
+    ".elm",
+    ".erl",
+    ".ex",
+    ".exs",
+    ".hs",
+    ".lhs",
+    ".ml",
+    ".mli",
+    ".nim",
+    ".nims",
+    ".pas",
+    ".pp",
+    ".lpr",
+    ".dpr",
+    ".cr",
+    ".gd",
+    ".gdscript",
+    ".lua",
+    ".moon",
+    ".pwn",
+    ".inc",
+    ".sma",
+    ".pawn",
+    ".glsl",
+    ".vert",
+    ".frag",
+    ".geom",
+    ".comp",
+    ".tesc",
+    ".tese",
+    ".wgsl",
+    ".hlsl",
+    ".cg",
+    ".shader",
+    ". Compute",
+}
+
+_BINARY_EXTENSIONS = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".bmp",
+    ".tiff",
+    ".webp",
+    ".ico",
+    ".icns",
+    ".exe",
+    ".dll",
+    ".so",
+    ".dylib",
+    ".a",
+    ".lib",
+    ".o",
+    ".obj",
+    ".class",
+    ".jar",
+    ".war",
+    ".ear",
+    ".zip",
+    ".tar",
+    ".gz",
+    ".bz2",
+    ".xz",
+    ".7z",
+    ".rar",
+    ".pdf",
+    ".woff",
+    ".woff2",
+    ".ttf",
+    ".otf",
+    ".eot",
+    ".mp3",
+    ".mp4",
+    ".avi",
+    ".mov",
+    ".wmv",
+    ".flv",
+    ".mkv",
+    ".wav",
+    ".flac",
+    ".aac",
+    ".ogg",
+    ".webm",
+    ".wasm",
+    ".bin",
+    ".dat",
+    ".db",
+    ".sqlite",
+    ".sqlite3",
+    ".deb",
+    ".rpm",
+    ".msi",
+    ".dmg",
+    ".pkg",
+    ".iso",
+    ".img",
+    ".vmdk",
+    ".qcow2",
+    ".vhd",
+    ".vhdx",
+    ".ova",
+    ".ovf",
+}
+
+_LANGUAGE_HINTS: dict[str, str] = {
+    ".py": "python",
+    ".js": "node",
+    ".jsx": "node",
+    ".ts": "node",
+    ".tsx": "node",
+    ".cs": "dotnet",
+    ".csproj": "dotnet",
+    ".sln": "dotnet",
+    ".fsproj": "dotnet",
+    ".vbproj": "dotnet",
+    ".rs": "rust",
+    ".go": "go",
+    ".java": "java",
+    ".md": "docs",
+    ".txt": "docs",
+    ".rst": "docs",
+    ".json": "config",
+    ".toml": "config",
+    ".yaml": "config",
+    ".yml": "config",
+    ".ini": "config",
+    ".cfg": "config",
+    ".conf": "config",
+    ".config": "config",
+}
+
+_FILENAME_HINTS: dict[str, str] = {
+    "package.json": "node",
+    "tsconfig.json": "node",
+    "jsconfig.json": "node",
+    "Cargo.toml": "rust",
+    "go.mod": "go",
+    "pom.xml": "java",
+    "build.gradle": "java",
+    "build.gradle.kts": "java",
+    "pyproject.toml": "python",
+    "setup.py": "python",
+    "requirements.txt": "python",
+}
+
+
+# Common binary file magic bytes
+_BINARY_MAGIC = {
+    b"\x89PNG",
+    b"\xff\xd8\xff",
+    b"\x7fELF",
+    b"MZ",
+    b"PK\x03\x04",
+    b"PK\x05\x06",
+    b"PK\x07\x08",
+    b"Rar!",
+    b"7z\xbc\xaf",
+    b"\x1f\x8b",
+    b"BZh",
+    b"\xfd7z",
+    b"%PDF",
+    b"\x00\x00\x01\x00",
+    b"\x00\x00\x02\x00",
+    b"\xca\xfe\xba\xbe",
+    b"\xfe\xed\xfa",
+    b"\xcf\xfa\xed\xfe",
+    b"\x28\xb5\x2f\xfd",
+}
+
+
+def _has_binary_magic(chunk: bytes) -> bool:
+    """Check if chunk starts with known binary file magic bytes."""
+    for magic in _BINARY_MAGIC:
+        if chunk.startswith(magic):
+            return True
+    return False
+
+
+def _guess_is_text(path: Path) -> bool:
+    """Guess whether a file is text using extension heuristics, magic bytes, and null-byte check."""
+    ext = path.suffix.lower()
+    if ext in _TEXT_EXTENSIONS:
+        return True
+    if ext in _BINARY_EXTENSIONS:
+        return False
+    try:
+        with open(path, "rb") as f:
+            chunk = f.read(1024)
+        if not chunk:
+            return True
+        if _has_binary_magic(chunk):
+            return False
+        return b"\x00" not in chunk
+    except (OSError, ValueError):
+        return False
+
+
+def _language_hint(path: Path) -> str | None:
+    """Guess language hint from filename or extension."""
+    name = path.name
+    if name in _FILENAME_HINTS:
+        return _FILENAME_HINTS[name]
+    ext = path.suffix.lower()
+    return _LANGUAGE_HINTS.get(ext)
+
+
 @dataclass
 class SnapshotFile:
     """A file entry in the snapshot."""
 
     rel_path: str
     size: int
+    extension: str = ""
+    language_hint: str | None = None
+    is_text: bool = True
 
 
 @dataclass
@@ -150,17 +412,7 @@ class Scanner:
         file_count = 0
         dir_count = 0
 
-        gitignore_patterns: set[str] = set()
-        if opts.respect_gitignore:
-            gitignore_path = root_path / ".gitignore"
-            if gitignore_path.exists():
-                try:
-                    for line in gitignore_path.read_text(encoding="utf-8", errors="replace").splitlines():
-                        stripped = line.strip()
-                        if stripped and not stripped.startswith("#"):
-                            gitignore_patterns.add(stripped)
-                except (OSError, ValueError):
-                    pass
+        active_gitignores: list[tuple[str, pathspec.PathSpec, int]] = []
 
         for walk_root, dirs, walk_files in os.walk(root_path, topdown=True):
             walk_root_path = Path(walk_root)
@@ -185,6 +437,42 @@ class Scanner:
                 skipped.append(SkippedEntry(rel_path=rel_root or ".", reason="max_depth"))
                 continue
 
+            # Prune gitignores from deeper directories and load current dir's gitignore
+            if opts.respect_gitignore:
+                active_gitignores = [(r, s, d) for r, s, d in active_gitignores if d <= depth]
+                gitignore_path = walk_root_path / ".gitignore"
+                if gitignore_path.exists():
+                    try:
+                        lines = gitignore_path.read_text(encoding="utf-8", errors="replace").splitlines()
+                        spec = pathspec.PathSpec.from_lines("gitignore", lines)
+                        active_gitignores.append((rel_root, spec, depth))
+                    except (OSError, ValueError):
+                        pass
+
+            def _match_gitignore(rel_path: str, is_dir: bool = False) -> bool:
+                if not active_gitignores:
+                    return False
+                best_result = None
+                best_depth = -1
+                for gitignore_dir, spec, spec_depth in active_gitignores:
+                    if gitignore_dir:
+                        prefix = gitignore_dir + "/"
+                        if rel_path.startswith(prefix):
+                            sub = rel_path[len(prefix) :]
+                        elif rel_path == gitignore_dir:
+                            sub = "."
+                        else:
+                            continue
+                    else:
+                        sub = rel_path
+                    check = spec.check_file(sub + "/" if is_dir else sub)
+                    if check.include is not None and spec_depth > best_depth:
+                        best_depth = spec_depth
+                        best_result = check
+                if best_result is None:
+                    return False
+                return best_result.include is True
+
             # Filter dirs
             filtered_dirs: list[str] = []
             for d in dirs:
@@ -198,7 +486,7 @@ class Scanner:
                 if not opts.include_hidden and d.startswith("."):
                     skipped.append(SkippedEntry(rel_path=(rel_root + "/" + d) if rel_root else d, reason="hidden"))
                     continue
-                if opts.respect_gitignore and d in gitignore_patterns:
+                if opts.respect_gitignore and _match_gitignore((rel_root + "/" + d) if rel_root else d, is_dir=True):
                     skipped.append(SkippedEntry(rel_path=(rel_root + "/" + d) if rel_root else d, reason="gitignore"))
                     continue
                 filtered_dirs.append(d)
@@ -223,7 +511,7 @@ class Scanner:
                 if not opts.include_hidden and name.startswith("."):
                     skipped.append(SkippedEntry(rel_path=rel, reason="hidden"))
                     continue
-                if opts.respect_gitignore and name in gitignore_patterns:
+                if opts.respect_gitignore and _match_gitignore(rel, is_dir=False):
                     skipped.append(SkippedEntry(rel_path=rel, reason="gitignore"))
                     continue
 
@@ -236,7 +524,23 @@ class Scanner:
                     skipped.append(SkippedEntry(rel_path=rel, reason="max_file_bytes"))
                     continue
 
-                files.append(SnapshotFile(rel_path=rel, size=size))
+                ext = Path(name).suffix.lower()
+                if ext in _TEXT_EXTENSIONS:
+                    is_text = True
+                elif ext in _BINARY_EXTENSIONS:
+                    is_text = False
+                else:
+                    is_text = _guess_is_text(fpath)
+
+                files.append(
+                    SnapshotFile(
+                        rel_path=rel,
+                        size=size,
+                        extension=ext,
+                        language_hint=_language_hint(fpath),
+                        is_text=is_text,
+                    )
+                )
                 file_count += 1
 
         git = GitMetadata()
