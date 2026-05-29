@@ -13,6 +13,7 @@ from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
+from context_crafter_mcp import __version__
 from context_crafter_mcp.graph import (
     run_detect,
     run_generate_all,
@@ -24,7 +25,7 @@ from context_crafter_mcp.graph import (
 from context_crafter_mcp.models import ScanConfig
 from context_crafter_mcp.renderers.html import render_html_overview
 
-app = Server("context-crafter")
+app = Server("context-crafter", version=__version__)
 
 # Session-registered generated resources: URI -> absolute path
 _REGISTERED_RESOURCES: dict[str, Path] = {}
@@ -132,7 +133,7 @@ async def call_tool(name: str, arguments: dict) -> list:
             )
         ]
 
-    if name in ("generate_all", "generate_context"):
+    if name == "generate_context":
         state = run_generate_all(repo_path, output_dir, scan_config)
         result = state.to_tool_result()
         if html and state.ok and state.detect_result and state.analysis:
@@ -185,7 +186,7 @@ async def call_tool(name: str, arguments: dict) -> list:
 @app.list_tools()
 async def list_tools() -> list:
     """List available MCP tools."""
-    common_props = {
+    base_props = {
         "repo_path": {
             "type": "string",
             "description": "Absolute path to the repository.",
@@ -217,6 +218,12 @@ async def list_tools() -> list:
             "default": False,
         },
     }
+    generation_props = dict(base_props)
+    generation_props["output_dir"] = {
+        "type": "string",
+        "description": "Relative output directory inside the repo. Escaping paths are confined to docs/generated.",
+        "default": "docs/generated",
+    }
     return [
         Tool(
             name="detect_project",
@@ -224,7 +231,7 @@ async def list_tools() -> list:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "repo_path": common_props["repo_path"],
+                    "repo_path": base_props["repo_path"],
                 },
                 "required": ["repo_path"],
             },
@@ -234,7 +241,7 @@ async def list_tools() -> list:
             description="Generate the full context documentation suite for a repository.",
             inputSchema={
                 "type": "object",
-                "properties": common_props,
+                "properties": generation_props,
                 "required": ["repo_path"],
             },
         ),
@@ -243,7 +250,7 @@ async def list_tools() -> list:
             description="Generate a Markdown project overview.",
             inputSchema={
                 "type": "object",
-                "properties": {k: v for k, v in common_props.items() if k != "repo_path" or True},
+                "properties": generation_props,
                 "required": ["repo_path"],
             },
         ),
@@ -252,7 +259,7 @@ async def list_tools() -> list:
             description="Generate a compact repository map.",
             inputSchema={
                 "type": "object",
-                "properties": {k: v for k, v in common_props.items() if k != "html" or True},
+                "properties": {key: value for key, value in generation_props.items() if key != "html"},
                 "required": ["repo_path"],
             },
         ),
@@ -261,7 +268,7 @@ async def list_tools() -> list:
             description="Generate Mermaid dependency graph files.",
             inputSchema={
                 "type": "object",
-                "properties": {k: v for k, v in common_props.items() if k != "html" or True},
+                "properties": {key: value for key, value in generation_props.items() if key != "html"},
                 "required": ["repo_path"],
             },
         ),
@@ -270,7 +277,7 @@ async def list_tools() -> list:
             description="Generate an architecture summary.",
             inputSchema={
                 "type": "object",
-                "properties": {k: v for k, v in common_props.items() if k != "html" or True},
+                "properties": {key: value for key, value in generation_props.items() if key != "html"},
                 "required": ["repo_path"],
             },
         ),
@@ -283,6 +290,10 @@ async def list_tools() -> list:
                     "output_dir": {
                         "type": "string",
                         "description": "Path to the output directory to validate.",
+                    },
+                    "repo_path": {
+                        "type": "string",
+                        "description": "Optional repository root for conservative source-reference validation.",
                     },
                 },
                 "required": ["output_dir"],

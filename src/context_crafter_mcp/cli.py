@@ -204,6 +204,7 @@ def cmd_generate(args: argparse.Namespace) -> int:
     if args.json:
         print(json.dumps(result, indent=2))
     else:
+        print(f"Resolved output dir: {result.get('resolved_output_dir')}")
         if result["ok"]:
             print("Generated:")
             for w in result["written"]:

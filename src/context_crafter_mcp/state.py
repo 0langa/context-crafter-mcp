@@ -14,6 +14,7 @@ class RepoState:
 
     repo_path: str = ""
     output_dir: str = "docs/generated"
+    resolved_output_dir: str | None = None
     scan_config: ScanConfig = field(default_factory=ScanConfig)
     detect_result: DetectResult | None = None
     analysis: AnalysisResult | None = None
@@ -33,6 +34,7 @@ class RepoState:
             "written": self.written,
             "files_scanned": self.analysis.files_scanned if self.analysis else 0,
             "project_types": self.detect_result.project_types if self.detect_result else [],
+            "resolved_output_dir": self.resolved_output_dir,
             "warnings": [],
             "errors": self.errors,
         }

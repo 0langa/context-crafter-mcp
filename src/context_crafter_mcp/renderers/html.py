@@ -173,7 +173,11 @@ def render_html_overview(
 
     md_result = render_project_overview(repo_path, detect, analysis, output_dir)
     if not md_result.ok or not md_result.written:
-        return RenderResult(ok=False, error="Markdown generation failed")
+        return RenderResult(
+            ok=False,
+            error="Markdown generation failed",
+            resolved_output_dir=md_result.resolved_output_dir,
+        )
 
     md_path = Path(md_result.written[0])
     md_text = md_path.read_text(encoding="utf-8")
@@ -213,4 +217,5 @@ th {{ background: #f4f4f4; }}
         written=[str(html_path)],
         files_scanned=analysis.files_scanned,
         project_types=detect.project_types,
+        resolved_output_dir=str(out),
     )

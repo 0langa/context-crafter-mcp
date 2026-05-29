@@ -62,12 +62,25 @@ def test_cli_generate_and_validate() -> None:
         data = json.loads(result.stdout)
         assert data["ok"] is True
         assert len(data["written"]) >= 8
+        assert data["resolved_output_dir"] == str(out.resolve())
+        assert "warnings" in data
+        assert "errors" in data
 
         val = _run(["validate", str(out), "--json"])
         assert val.returncode == 0
         vdata = json.loads(val.stdout)
         assert vdata["ok"] is True
         assert vdata["count"] == 8
+
+
+def test_cli_generate_json_reports_confined_output_dir() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        Path(td, "main.py").write_text("print(1)\n")
+        result = _run(["generate", td, "--output", "../escape", "--json"])
+        assert result.returncode == 0
+        data = json.loads(result.stdout)
+        assert data["ok"] is True
+        assert data["resolved_output_dir"] == str((Path(td) / "docs" / "generated").resolve())
 
 
 def test_cli_doctor() -> None:

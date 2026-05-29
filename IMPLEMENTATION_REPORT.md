@@ -2,6 +2,46 @@
 
 Date: 2026-05-29
 
+## Current truth note
+
+This file contains historical implementation sections for prior milestones. For current release-readiness claims, trust:
+
+- source code
+- tests
+- `CHANGELOG.md`
+- `docs/ROADMAP.md`
+- CI workflows
+
+## Pre-1.0 readiness pass
+
+This pass focuses on contract stability, packaging confidence, CI/security hardening, and documentation truth sync before the eventual `1.0.0` public release.
+
+### Applied
+
+- generation-style JSON results now report `resolved_output_dir`
+- MCP server metadata now reports package version
+- MCP tool schemas align more closely with actual supported args
+- package metadata now includes public URLs
+- CI now validates committed example outputs, checks smoke-test repo cleanliness, and smoke-tests installed wheel and sdist artifacts
+- Dependabot and CodeQL configs added
+- maintainer release checklist expanded
+- roadmap rewritten into hardening milestones
+- public-repo smoke matrix documented for pre-`1.0.0`
+
+### Verification target for this pass
+
+- `uv run python -m compileall src tests`
+- `uv run ruff check .`
+- `uv run ruff format --check .`
+- `uv run mypy src`
+- `uv run pytest -q`
+- `uv build`
+- `uv run context-crafter-mcp --help`
+- `uv run context-crafter-mcp doctor`
+- `uv run context-crafter-mcp detect . --json`
+- `uv run context-crafter-mcp generate . --output .tmp/generated --profile standard --json`
+- `uv run context-crafter-mcp validate docs/generated --repo . --json`
+
 ## Scope
 
 This pass targets v0.3.2/v0.4.0 quality: cleanup, validation hardening, scanner enrichment, profile modes, MCP polish, and documentation accuracy.

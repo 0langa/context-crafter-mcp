@@ -23,11 +23,36 @@ Local-first MCP server that turns source repositories into compact AI-agent cont
 
 Requires Python 3.11+ and [`uv`](https://docs.astral.sh/uv/).
 
+### From a repo checkout
+
 ```sh
 git clone https://github.com/0langa/context-crafter-mcp.git
 cd context-crafter-mcp
 uv sync --extra dev
 uv run context-crafter-mcp --help
+```
+
+### From an installed artifact
+
+Until a release is published, install from a built wheel:
+
+```sh
+uv build
+uv tool install --from dist/context_crafter_mcp-*.whl context-crafter-mcp
+context-crafter-mcp --help
+```
+
+For MCP clients, the published-package path uses `uvx`:
+
+```json
+{
+  "mcpServers": {
+    "context-crafter": {
+      "command": "uvx",
+      "args": ["context-crafter-mcp", "serve"]
+    }
+  }
+}
 ```
 
 Run a self-test against the current directory (uses a temp directory by default):
@@ -58,20 +83,7 @@ uv run context-crafter-mcp validate docs/generated
 
 ## Use with MCP clients
 
-Add this to your MCP client config:
-
-```json
-{
-  "mcpServers": {
-    "context-crafter": {
-      "command": "uvx",
-      "args": ["context-crafter-mcp", "serve"]
-    }
-  }
-}
-```
-
-Or generate a client-specific snippet:
+Generate a client-specific snippet:
 
 ```sh
 uv run context-crafter-mcp mcp-config --client kimi
@@ -102,6 +114,8 @@ npx @modelcontextprotocol/inspector uv run context-crafter-mcp serve
 
 After `generate_context`, generated files are exposed as `context-crafter://latest/<filename>` resources. Only files from the current session are readable; arbitrary local paths are denied.
 
+Generation results also report `resolved_output_dir`. If the requested `output_dir` would escape the repository root, output is confined to `docs/generated`.
+
 ## Example output
 
 See [`examples/outputs/`](examples/outputs/) for real generated files from the demo repository.
@@ -116,6 +130,7 @@ Quick preview of `AGENT_BRIEF.md`:
 
 - **Read-only analysis** — never executes code in the target repository.
 - **Output confined to repo** — `output_dir` is resolved and validated so it cannot escape the repository root.
+- **Resolved path reported** — generation JSON explicitly reports the actual output directory used after confinement.
 - **No network** — no HTTP calls, no model inference, no API keys.
 - **Bounded scans** — depth, file count, and file size limits with safe defaults.
 - **No symlinks followed** — prevents infinite loops and directory escaping.
@@ -165,6 +180,8 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - HTML rendering uses the `markdown` library when available; stdlib fallback otherwise.
 - Secret redaction is not implemented; review generated output before sharing.
 - Nested `.gitignore` files are supported via `pathspec` with deepest-matching-wins semantics.
+
+See [`docs/REAL_REPO_SMOKE_MATRIX.md`](docs/REAL_REPO_SMOKE_MATRIX.md) for the maintainers' pre-`1.0.0` public-repo confidence set.
 
 ## License
 

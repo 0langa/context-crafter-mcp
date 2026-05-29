@@ -319,6 +319,7 @@ class RenderResult:
     written: list[str] = field(default_factory=list)
     files_scanned: int = 0
     project_types: list[str] = field(default_factory=list)
+    resolved_output_dir: str | None = None
     error: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -329,6 +330,7 @@ class RenderResult:
             "written": self.written,
             "files_scanned": self.files_scanned,
             "project_types": self.project_types,
+            "resolved_output_dir": self.resolved_output_dir,
             "warnings": [],
             "errors": [self.error] if self.error else [],
         }

@@ -425,6 +425,7 @@ def render_project_overview(
         written=[str(path)],
         files_scanned=analysis.files_scanned,
         project_types=detect.project_types,
+        resolved_output_dir=str(out),
     )
 
 
@@ -481,6 +482,7 @@ def render_repo_map(
         written=[str(path)],
         files_scanned=analysis.files_scanned,
         project_types=detect.project_types,
+        resolved_output_dir=str(out),
     )
 
 
@@ -792,6 +794,7 @@ def render_architecture_summary(
         written=[str(path)],
         files_scanned=analysis.files_scanned,
         project_types=detect.project_types,
+        resolved_output_dir=str(out),
     )
 
 
@@ -846,6 +849,7 @@ def render_ai_context_index(
         written=[str(path)],
         files_scanned=analysis.files_scanned,
         project_types=detect.project_types,
+        resolved_output_dir=str(out),
     )
 
 
@@ -949,6 +953,7 @@ def render_agent_brief(
         written=[str(path)],
         files_scanned=analysis.files_scanned,
         project_types=detect.project_types,
+        resolved_output_dir=str(out),
     )
 
 
@@ -1047,6 +1052,7 @@ def render_validation_report(
         written=[str(path)],
         files_scanned=analysis.files_scanned,
         project_types=detect.project_types,
+        resolved_output_dir=str(out),
     )
 
 
@@ -1122,4 +1128,5 @@ def render_scan_report(
         written=[str(path)],
         files_scanned=analysis.files_scanned,
         project_types=detect.project_types,
+        resolved_output_dir=str(out),
     )
