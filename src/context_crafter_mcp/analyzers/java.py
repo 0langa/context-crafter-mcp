@@ -82,69 +82,12 @@ def analyze_java(
     cfg = config or ScanConfig()
     result = base_result or AnalysisResult(repo_path=str(path))
     ev = result.evidence_set
-    java_proj = JavaProject()
-    classes: list[str] = []
-    count = 0
     parser_used = "regex"
 
-    pom = path / "pom.xml"
-    gradle = path / "build.gradle"
-    gradle_kts = path / "build.gradle.kts"
-
-    if pom.exists():
-        java_proj = parse_pom(pom)
-        java_proj.build_tool = "maven"
-        ev.add(
-            EvidenceKind.OBSERVED,
-            "Java build tool `maven` detected from `pom.xml`",
-            source_path="pom.xml",
-            analyzer="java",
-        )
-        for dep in java_proj.dependencies:
-            ev.add(
-                EvidenceKind.OBSERVED,
-                f"Java dependency `{dep}` from `pom.xml`",
-                source_path="pom.xml",
-                analyzer="java",
-            )
-    elif gradle.exists():
-        java_proj = parse_gradle(gradle)
-        java_proj.build_tool = "gradle"
-        ev.add(
-            EvidenceKind.OBSERVED,
-            "Java build tool `gradle` detected from `build.gradle`",
-            source_path="build.gradle",
-            analyzer="java",
-        )
-        for dep in java_proj.dependencies:
-            ev.add(
-                EvidenceKind.OBSERVED,
-                f"Java dependency `{dep}` from `build.gradle`",
-                source_path="build.gradle",
-                analyzer="java",
-            )
-    elif gradle_kts.exists():
-        java_proj = parse_gradle(gradle_kts)
-        java_proj.build_tool = "gradle"
-        ev.add(
-            EvidenceKind.OBSERVED,
-            "Java build tool `gradle` detected from `build.gradle.kts`",
-            source_path="build.gradle.kts",
-            analyzer="java",
-        )
-        for dep in java_proj.dependencies:
-            ev.add(
-                EvidenceKind.OBSERVED,
-                f"Java dependency `{dep}` from `build.gradle.kts`",
-                source_path="build.gradle.kts",
-                analyzer="java",
-            )
-    else:
-        ev.add(
-            EvidenceKind.UNKNOWN,
-            "No `pom.xml` or `build.gradle` found; Java build metadata unavailable.",
-            analyzer="java",
-        )
+    # Pass 1: discover build files and collect Java source paths
+    build_files: list[tuple[Path, Path, str]] = []
+    java_files: list = []
+    count = 0
 
     for fi in safe_scan(path, max_depth=cfg.max_depth + 2, max_files_per_dir=cfg.max_files_per_dir):
         if fi.is_dir:
@@ -152,62 +95,131 @@ def analyze_java(
         if _is_fixture_path(fi.rel_path):
             continue
         name = fi.path.name
-        if name.endswith(".java"):
+        if name == "pom.xml":
+            build_files.append((fi.path.parent, fi.path, "maven"))
+        elif name == "build.gradle":
+            build_files.append((fi.path.parent, fi.path, "gradle"))
+        elif name == "build.gradle.kts":
+            build_files.append((fi.path.parent, fi.path, "gradle"))
+        elif name.endswith(".java"):
+            java_files.append(fi)
             count += 1
-            classes.append(fi.rel_path)
 
-            # Try javalang first
-            parsed = parse_java(fi.path)
-            if parsed and parsed.parser_used != "none" and not parsed.error:
-                parser_used = parsed.parser_used
-                for cls in parsed.classes:
-                    java_proj.classes.append(cls)
-                for func in parsed.functions:
-                    java_proj.methods.append(func)
-                for ann in parsed.dependencies:
-                    java_proj.annotations.append(ann)
-                for imp in parsed.imports:
+    # Parse build files into projects keyed by module root
+    modules: dict[Path, JavaProject] = {}
+    for root, bf, btype in sorted(build_files, key=lambda x: len(x[0].parts)):
+        rel = root.relative_to(path).as_posix() or "."
+        if btype == "maven":
+            proj = parse_pom(bf)
+        else:
+            proj = parse_gradle(bf)
+        proj.build_tool = btype
+        proj.rel_path = rel
+        modules[root] = proj
+        ev.add(
+            EvidenceKind.OBSERVED,
+            f"Java build tool `{btype}` detected from `{bf.relative_to(path).as_posix()}`",
+            source_path=bf.relative_to(path).as_posix(),
+            analyzer="java",
+        )
+        for dep in proj.dependencies:
+            ev.add(
+                EvidenceKind.OBSERVED,
+                f"Java dependency `{dep}` from `{bf.relative_to(path).as_posix()}`",
+                source_path=bf.relative_to(path).as_posix(),
+                analyzer="java",
+            )
+
+    if not modules:
+        ev.add(
+            EvidenceKind.UNKNOWN,
+            "No `pom.xml` or `build.gradle` found; Java build metadata unavailable.",
+            analyzer="java",
+        )
+
+    # Fallback project for orphan .java files
+    if path not in modules:
+        fallback = JavaProject()
+        fallback.rel_path = "."
+        modules[path] = fallback
+
+    # Pass 2: assign each .java file to nearest module by path prefix
+    for fi in java_files:
+        file_dir = fi.path.parent
+        best_proj = modules[path]
+        best_depth = -1
+        for root, proj in modules.items():
+            if root == path:
+                continue
+            try:
+                file_dir.relative_to(root)
+                depth = len(root.parts)
+                if depth > best_depth:
+                    best_proj = proj
+                    best_depth = depth
+            except ValueError:
+                continue
+
+        # Try javalang first
+        parsed = parse_java(fi.path)
+        if parsed and parsed.parser_used != "none" and not parsed.error:
+            parser_used = parsed.parser_used
+            for cls in parsed.classes:
+                best_proj.classes.append(cls)
+            for func in parsed.functions:
+                best_proj.methods.append(func)
+            for ann in parsed.dependencies:
+                best_proj.annotations.append(ann)
+            for imp in parsed.imports:
+                if not imp.startswith("java.") and not imp.startswith("javax."):
+                    best_proj.dependencies.append(imp)
+            if parsed.entry_points:
+                best_proj.entry_points.extend(parsed.entry_points)
+        else:
+            # Regex fallback
+            src = safe_read_text(fi.path, max_bytes=500_000)
+            if src:
+                if JAVA_MAIN_RE.search(src):
+                    best_proj.entry_points.append(fi.rel_path)
+                    ev.add(
+                        EvidenceKind.OBSERVED,
+                        f"Java entry point `{fi.rel_path}` (`public static void main`)",
+                        source_path=fi.rel_path,
+                        analyzer="java",
+                    )
+                for m in JAVA_CLASS_RE.finditer(src):
+                    class_name = m.group(3)
+                    pkg_match = JAVA_PACKAGE_RE.search(src)
+                    pkg = pkg_match.group(1) + "." if pkg_match else ""
+                    best_proj.classes.append(pkg + class_name)
+                for m in JAVA_IMPORT_RE.finditer(src):
+                    imp = m.group(1)
                     if not imp.startswith("java.") and not imp.startswith("javax."):
-                        java_proj.dependencies.append(imp)
-                if parsed.entry_points:
-                    java_proj.entry_points.extend(parsed.entry_points)
-            else:
-                # Regex fallback
-                src = safe_read_text(fi.path, max_bytes=500_000)
-                if src:
-                    if JAVA_MAIN_RE.search(src):
-                        java_proj.entry_points.append(fi.rel_path)
-                        ev.add(
-                            EvidenceKind.OBSERVED,
-                            f"Java entry point `{fi.rel_path}` (`public static void main`)",
-                            source_path=fi.rel_path,
-                            analyzer="java",
-                        )
-                    for m in JAVA_CLASS_RE.finditer(src):
-                        class_name = m.group(3)
-                        pkg_match = JAVA_PACKAGE_RE.search(src)
-                        pkg = pkg_match.group(1) + "." if pkg_match else ""
-                        java_proj.classes.append(pkg + class_name)
-                    for m in JAVA_IMPORT_RE.finditer(src):
-                        imp = m.group(1)
-                        if not imp.startswith("java.") and not imp.startswith("javax."):
-                            java_proj.dependencies.append(imp)
-                    for m in JAVA_METHOD_RE.finditer(src):
-                        java_proj.methods.append(m.group(2))
-                    for m in JAVA_ANNOTATION_RE.finditer(src):
-                        java_proj.annotations.append(m.group(1))
+                        best_proj.dependencies.append(imp)
+                for m in JAVA_METHOD_RE.finditer(src):
+                    best_proj.methods.append(m.group(2))
+                for m in JAVA_ANNOTATION_RE.finditer(src):
+                    best_proj.annotations.append(m.group(1))
 
-    java_proj.classes = sorted(set(java_proj.classes))
-    java_proj.methods = sorted(set(java_proj.methods))
-    java_proj.annotations = sorted(set(java_proj.annotations))
-    java_proj.dependencies = sorted(set(java_proj.dependencies))
-    result.java_projects = [java_proj]
+    # Deduplicate and sort, drop empty fallback if real modules exist
+    for proj in modules.values():
+        proj.classes = sorted(set(proj.classes))
+        proj.methods = sorted(set(proj.methods))
+        proj.annotations = sorted(set(proj.annotations))
+        proj.dependencies = sorted(set(proj.dependencies))
+        proj.entry_points = sorted(set(proj.entry_points))
+
+    result.java_projects = [
+        p for p in modules.values() if p.rel_path != "." or p.classes or p.methods or p.dependencies
+    ]
     result.files_scanned += count
 
-    if java_proj.classes or java_proj.methods:
+    total_classes = sum(len(p.classes) for p in result.java_projects)
+    total_methods = sum(len(p.methods) for p in result.java_projects)
+    if total_classes or total_methods:
         ev.add(
             EvidenceKind.OBSERVED if parser_used != "regex" else EvidenceKind.INFERRED,
-            f"Java symbols via {parser_used}: {len(java_proj.classes)} class(es), {len(java_proj.methods)} method(s)",
+            f"Java symbols via {parser_used}: {total_classes} class(es), {total_methods} method(s)",
             analyzer="java",
         )
 

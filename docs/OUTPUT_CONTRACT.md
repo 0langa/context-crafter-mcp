@@ -8,7 +8,7 @@
 | `PROJECT_OVERVIEW.md` | Metadata, stacks, entry points, dependencies, evidence |
 | `REPO_MAP.md` | Directory tree, config files, entry points, tests |
 | `DEPENDENCY_GRAPH.md` | Mermaid graph and external dependencies |
-| `ARCHITECTURE_SUMMARY.md` | Patterns, abstractions, risks |
+| `ARCHITECTURE_SUMMARY.md` | Patterns, abstractions, risks, workspace/monorepo layout, category-tagged source directories |
 | `AGENT_BRIEF.md` | Concise 1-page agent summary with unknowns/limitations |
 | `VALIDATION_REPORT.md` | Output completeness check |
 | `SCAN_REPORT.md` | Coverage, skipped items, safety notes |
@@ -63,7 +63,6 @@ Profiles measurably change output size on repositories with enough content. On t
 
 Validation can report these machine-readable codes:
 
-- `missing_required_file`
 - `broken_markdown_link`
 - `missing_mermaid_block`
 - `empty_mermaid_block`
@@ -78,6 +77,14 @@ Validation can report these machine-readable codes:
 - `ai_context_index_link_broken`
 - `generated_version_mismatch`
 - `compact_profile_too_large`
+
+## Workspace and Monorepo Layout
+
+When multiple `package.json` files or workspace patterns (pnpm/npm workspaces) are detected, `ARCHITECTURE_SUMMARY.md` includes a **Workspace / Monorepo Layout** section listing packages with their classification (product, tooling, vendor) and file/dependency counts.
+
+## Category Tags
+
+Source directories and entry points in `ARCHITECTURE_SUMMARY.md` and `AGENT_BRIEF.md` may carry category tags such as `[product]`, `[tooling]`, `[vendor]`, `[generated]`, `[fixture]`, or `[test]` to help agents distinguish runtime surfaces from noise.
 
 ## Rules
 

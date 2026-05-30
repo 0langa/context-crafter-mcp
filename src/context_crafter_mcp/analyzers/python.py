@@ -122,9 +122,8 @@ def _discover_package_roots(modules: list[PythonModule], repo_path: Path) -> set
     return roots
 
 
-def _read_pyproject(repo_path: Path) -> dict[str, Any]:
-    """Read and parse pyproject.toml if it exists."""
-    pp = repo_path / "pyproject.toml"
+def _read_pyproject_at(pp: Path) -> dict[str, Any]:
+    """Read and parse a specific pyproject.toml path."""
     text = safe_read_text(pp)
     if text is None:
         return {}
@@ -134,9 +133,14 @@ def _read_pyproject(repo_path: Path) -> dict[str, Any]:
         return {}
 
 
-def read_console_scripts(repo_path: Path) -> list[str]:
-    """Try to read console_scripts from pyproject.toml."""
-    data = _read_pyproject(repo_path)
+def _read_pyproject(repo_path: Path) -> dict[str, Any]:
+    """Read and parse pyproject.toml if it exists at repo root."""
+    return _read_pyproject_at(repo_path / "pyproject.toml")
+
+
+def read_console_scripts(pyproject_path: Path) -> list[str]:
+    """Try to read console_scripts from a pyproject.toml path."""
+    data = _read_pyproject_at(pyproject_path)
     scripts = data.get("project", {}).get("scripts", {})
     return list(scripts.keys())
 
@@ -260,22 +264,31 @@ def _read_pipfile(repo_path: Path) -> tuple[list[str], list[str], str | None]:
     return deps, dev_deps, None
 
 
-def extract_python_dependencies(repo_path: Path) -> tuple[list[str], list[str], list[str], list[str]]:
+def extract_python_dependencies(base_path: Path) -> tuple[list[str], list[str], list[str], list[str]]:
     """Extract runtime and dev dependencies from pyproject.toml, requirements.txt, setup.py, and Pipfile.
 
+    Looks in *base_path* (e.g. repo root or a subproject directory).
     Returns (runtime_deps, dev_deps, sources, errors).
     """
-    data = _read_pyproject(repo_path)
+    data = _read_pyproject_at(base_path / "pyproject.toml")
     deps: list[str] = []
     dev_deps: list[str] = []
     sources: list[str] = []
     errors: list[str] = []
+
+    def _strip_version(name: str) -> str:
+        for op in ("==", ">=", "<=", ">", "<", "!=", "~=", "===", "@"):
+            if op in name:
+                name = name.split(op)[0].strip()
+                break
+        return name
 
     # PEP 621 standard dependencies
     project = data.get("project", {})
     for dep in project.get("dependencies", []):
         # Strip version specifiers for cleaner output
         name = dep.split("[")[0].split(";")[0].strip()
+        name = _strip_version(name)
         if name:
             deps.append(name)
 
@@ -285,6 +298,7 @@ def extract_python_dependencies(repo_path: Path) -> tuple[list[str], list[str], 
         is_dev = group_name.lower() in ("dev", "test", "lint", "docs", "typing")
         for dep in group_deps:
             name = dep.split("[")[0].split(";")[0].strip()
+            name = _strip_version(name)
             if name:
                 if is_dev:
                     dev_deps.append(name)
@@ -320,13 +334,13 @@ def extract_python_dependencies(repo_path: Path) -> tuple[list[str], list[str], 
         sources.append("pyproject.toml")
 
     # requirements.txt
-    req_deps = _read_requirements_txt(repo_path)
+    req_deps = _read_requirements_txt(base_path)
     if req_deps:
         deps.extend(req_deps)
         sources.append("requirements.txt")
 
     # setup.py
-    setup_deps, setup_dev_deps, setup_err = _read_setup_py(repo_path)
+    setup_deps, setup_dev_deps, setup_err = _read_setup_py(base_path)
     if setup_err:
         errors.append(setup_err)
     if setup_deps or setup_dev_deps:
@@ -335,7 +349,7 @@ def extract_python_dependencies(repo_path: Path) -> tuple[list[str], list[str], 
         sources.append("setup.py")
 
     # Pipfile
-    pip_deps, pip_dev_deps, pip_err = _read_pipfile(repo_path)
+    pip_deps, pip_dev_deps, pip_err = _read_pipfile(base_path)
     if pip_err:
         errors.append(pip_err)
     if pip_deps or pip_dev_deps:
@@ -346,9 +360,9 @@ def extract_python_dependencies(repo_path: Path) -> tuple[list[str], list[str], 
     return sorted(set(deps)), sorted(set(dev_deps)), sources, errors
 
 
-def extract_project_metadata(repo_path: Path) -> dict[str, Any]:
-    """Extract project metadata from pyproject.toml."""
-    data = _read_pyproject(repo_path)
+def extract_project_metadata(base_path: Path) -> dict[str, Any]:
+    """Extract project metadata from pyproject.toml in base_path."""
+    data = _read_pyproject_at(base_path / "pyproject.toml")
     project = data.get("project", {})
     poetry = data.get("tool", {}).get("poetry", {})
 
@@ -439,14 +453,36 @@ def analyze_python(
     result.python_modules = modules
     result.files_scanned += count
 
+    # Discover the best pyproject.toml for metadata / deps / console scripts
+    from context_crafter_mcp.ranking import score_path
+
+    best_pyproject: Path | None = None
+    best_score = -999.0
+    for fi in safe_scan(path, max_depth=cfg.max_depth + 2, max_files_per_dir=cfg.max_files_per_dir):
+        if fi.is_dir:
+            continue
+        if _is_fixture_path(fi.rel_path):
+            continue
+        if fi.path.name == "pyproject.toml":
+            sc = score_path(fi.rel_path, has_marker=True)
+            if sc > best_score:
+                best_score = sc
+                best_pyproject = fi.path
+
+    pyproject_dir = best_pyproject.parent if best_pyproject else path
+    pyproject_rel = str(best_pyproject.relative_to(path)) if best_pyproject else "pyproject.toml"
+
     # Add console scripts as likely entry points
-    scripts = read_console_scripts(path)
+    if best_pyproject:
+        scripts = read_console_scripts(best_pyproject)
+    else:
+        scripts = []
     for s in scripts:
         result.likely_entry_points.append(f"[console_script] {s}")
         ev.add(
             EvidenceKind.OBSERVED,
-            f"Console script `{s}` declared in `pyproject.toml`",
-            source_path="pyproject.toml",
+            f"Console script `{s}` declared in `{pyproject_rel}`",
+            source_path=pyproject_rel,
             analyzer="python",
         )
 
@@ -459,20 +495,20 @@ def analyze_python(
     if src_dirs:
         result.source_directories = sorted(set(result.source_directories) | src_dirs)
 
-    # Extract project metadata and dependencies from pyproject.toml
-    meta_dict = extract_project_metadata(path)
+    # Extract project metadata and dependencies from the best pyproject.toml
+    meta_dict = extract_project_metadata(pyproject_dir)
     for key, value in meta_dict.items():
         if value is not None and hasattr(result.metadata, key):
             setattr(result.metadata, key, value)
             if key in ("name", "version", "description"):
                 ev.add(
                     EvidenceKind.OBSERVED,
-                    f"Project {key} `{value}` from `pyproject.toml`",
-                    source_path="pyproject.toml",
+                    f"Project {key} `{value}` from `{pyproject_rel}`",
+                    source_path=pyproject_rel,
                     analyzer="python",
                 )
 
-    deps, dev_deps, dep_sources, dep_errors = extract_python_dependencies(path)
+    deps, dev_deps, dep_sources, dep_errors = extract_python_dependencies(pyproject_dir)
     result.python_dependencies = deps
     result.python_dev_dependencies = dev_deps
     for dep in deps:

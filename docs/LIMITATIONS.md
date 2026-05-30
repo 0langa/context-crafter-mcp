@@ -21,10 +21,11 @@ Non-Python analyzers are intended to degrade gracefully when parser support is u
 - No deep semantic call graph construction.
 - No runtime dependency resolution.
 - HTML rendering uses the `markdown` package when available, with stdlib fallback otherwise.
-- Fixture/example directories are excluded from primary project detection.
+- Test/example/demo-context fixtures are excluded from primary project detection. Product-path fixtures (e.g., `src/fixtures/`) are included.
+- Bounded scans may truncate files when `max_files` or `max_files_per_dir` caps are exceeded. Priority ordering ensures truncation hits lowest-signal files first.
 - Source-reference validation is conservative and backtick-oriented; bare prose paths are not validated.
 - Compact profile intentionally omits optional sections even when a small repo could technically fit more detail.
 
-## Release-scope note
+## Roadmap-scope note
 
-Before `1.0.0`, real-world smoke coverage is focused on Python, Node/TypeScript, Go, and Rust. Java and .NET remain primarily fixture-backed until the release sprint or until a blocker appears.
+For the current `0.5.0` hardening target, real-world smoke coverage is focused on Python, Node/TypeScript, Go, and Rust. Java now supports nested multi-module discovery (all `pom.xml` / `build.gradle` files), but its analysis depth is still not at the same trust bar. .NET remains primarily fixture-backed until it is hardened enough for the same standard.

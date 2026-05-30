@@ -5,7 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from context_crafter_mcp.filesystem import validate_repo_path
-from context_crafter_mcp.models import DetectResult, EvidenceKind, EvidenceSet
+from context_crafter_mcp.models import Confidence, DetectResult, EvidenceKind, EvidenceSet
+from context_crafter_mcp.ranking import is_vendor_path
 from context_crafter_mcp.scanner import Scanner, ScannerOptions
 
 
@@ -52,7 +53,7 @@ def detect_project(repo_path: str) -> DetectResult:
         )
 
     scanner = Scanner()
-    snapshot = scanner.scan(path, ScannerOptions(max_depth=3, max_files=5_000))
+    snapshot = scanner.scan(path, ScannerOptions(max_depth=3, max_files=5_000, max_files_per_dir=200))
 
     project_types: list[str] = []
     markers: dict[str, list[str]] = {}
@@ -72,7 +73,8 @@ def detect_project(repo_path: str) -> DetectResult:
                 marker_hits.append(sf.rel_path)
             for ext in exts:
                 if name.endswith(ext):
-                    ext_hits.append(sf.rel_path)
+                    if not is_vendor_path(sf.rel_path):
+                        ext_hits.append(sf.rel_path)
                     break
 
         hits = marker_hits + ext_hits
@@ -86,12 +88,20 @@ def detect_project(repo_path: str) -> DetectResult:
                     source_path=mh,
                     analyzer="detectors",
                 )
-            for eh in ext_hits:
+            # Cap inferred extension evidence to avoid flooding from large directories
+            for eh in ext_hits[:10]:
                 ev.add(
                     EvidenceKind.INFERRED,
                     f"{ptype}: extension `{Path(eh).suffix}` inferred from `{eh}`",
                     source_path=eh,
                     analyzer="detectors",
+                )
+            if len(ext_hits) > 10:
+                ev.add(
+                    EvidenceKind.INFERRED,
+                    f"{ptype}: {len(ext_hits)} additional extension hits omitted to avoid noise",
+                    analyzer="detectors",
+                    confidence=Confidence.LOW,
                 )
 
     # Also check explicit marker files for types without extensions

@@ -2,6 +2,8 @@
 
 Steps that remain intentionally manual for release and repository stewardship.
 
+Roadmap note: the current working milestone is the internal `0.5.0` hardening baseline. This file still describes what remains manual for the eventual first public release at `1.0.0`.
+
 ## Repository settings
 
 - Repository description:

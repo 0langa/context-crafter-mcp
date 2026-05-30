@@ -31,6 +31,12 @@ Analyzer Registry
     |-- Generic (fallback)
     |
     v
+Signal Ranking
+    |-- classify_path -> product | tooling | vendor | generated | fixture | test | docs | unknown
+       (fixture classification is context-aware: test/demo-context only)
+    |-- score_path -> importance by depth, category, markers, entrypoints
+    |
+    v
 Scanner Boundary
     Scanner.scan(root, options) -> RepoSnapshot
 ```
@@ -44,6 +50,9 @@ The scanner is a strict replaceable boundary. Everything above it consumes `Repo
 - `SnapshotFile` is enriched with `extension`, `language_hint`, and `is_text`
 - `safe_scan` in `filesystem.py` is a thin compatibility wrapper around `Scanner`
 - Root `.gitignore` is parsed with `pathspec` (Git-style wildmatch); nested `.gitignore` files are supported via `active_gitignores` stack with deepest-matching-wins semantics
+- Deterministic file ordering: files are sorted by importance (manifests → entrypoints → config → text → binary) before caps apply
+- Priority reserve: 20% of `max_files` (up to 1000) is reserved for product directories; vendor/build files cannot consume it
+- `ScanStats` tracks `skipped_reasons` and `budget_exhausted` for honest bounded-scan reporting
 
 ## Profile Pipeline
 

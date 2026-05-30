@@ -1,6 +1,6 @@
 # Real Repo Smoke Matrix
 
-Maintainer-facing pre-`1.0.0` confidence set. These repos are not vendored into this repository.
+Maintainer-facing `0.5.0` hardening confidence set. These repos are not vendored into this repository.
 
 ## Fixed smoke set
 
@@ -11,7 +11,7 @@ Maintainer-facing pre-`1.0.0` confidence set. These repos are not vendored into 
 | Go | `https://github.com/spf13/cobra` | Widely used Go module with CLI-oriented structure |
 | Rust | `https://github.com/serde-rs/json` | Established Rust crate with clear package metadata |
 
-Java and .NET stay on fixture coverage until the `0.9.5` release sprint unless a release blocker appears sooner.
+Java and .NET stay on fixture coverage until their results meet the same trust bar or a blocker forces earlier work.
 
 ## Command set
 
@@ -26,7 +26,7 @@ uv run context-crafter-mcp validate <tmp-dir>/docs/generated --repo <tmp-dir> --
 
 ## Latest run
 
-Run date: `2026-05-29`
+Run date: `2026-05-30`
 
 | Repository | Detect | Generate | Validate | Files scanned | Warnings | Notes |
 |------------|--------|----------|----------|---------------|----------|-------|
@@ -41,4 +41,4 @@ These warnings came from `detect_project` reporting unsupported/non-matching sta
 
 - No command crashes.
 - Output files are generated and validate cleanly or with documented non-blocking warnings.
-- Any warning that undermines core trust becomes a release blocker or a documented limitation.
+- Any warning that undermines core trust becomes a `0.5.0` blocker or a documented limitation.

@@ -13,6 +13,7 @@ from context_crafter_mcp.filesystem import (
 )
 from context_crafter_mcp.detectors import _is_fixture_path
 from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, EvidenceKind, ScanConfig, get_profile_limit
+from context_crafter_mcp.ranking import is_vendor_path, score_path
 from context_crafter_mcp.scanner import Scanner, ScannerOptions
 
 
@@ -94,6 +95,7 @@ def analyze_generic(
             max_depth=tree_depth + 1,
             max_files=cfg.max_files_per_dir * 10,
             max_file_bytes=cfg.max_file_bytes,
+            max_files_per_dir=cfg.max_files_per_dir,
         ),
     )
 
@@ -130,11 +132,29 @@ def analyze_generic(
 
     result.profile = cfg.profile
     result.files_scanned = len(snapshot.files)
+    from context_crafter_mcp.models import BoundedScanSummary
+
+    result.scan_summary = BoundedScanSummary(
+        files_scanned=snapshot.stats.files_scanned,
+        dirs_scanned=snapshot.stats.dirs_scanned,
+        files_skipped=snapshot.stats.files_skipped,
+        dirs_skipped=snapshot.stats.dirs_skipped,
+        budget_exhausted=snapshot.stats.budget_exhausted,
+        skipped_reasons=snapshot.stats.skipped_reasons,
+    )
     result.docs_files = sorted(set(docs_files))[: get_profile_limit(cfg.profile, "docs_files")]
     result.config_files = sorted(set(config_files))[: get_profile_limit(cfg.profile, "config_files")]
-    result.likely_entry_points = sorted(set(likely_entry_points))[: get_profile_limit(cfg.profile, "entry_points")]
+
+    # Rank and filter entry points / source dirs by importance
+    filtered_eps = [ep for ep in set(likely_entry_points) if not is_vendor_path(ep)]
+    result.likely_entry_points = sorted(filtered_eps, key=lambda p: score_path(p, is_entrypoint=True), reverse=True)[
+        : get_profile_limit(cfg.profile, "entry_points")
+    ]
     result.test_directories = sorted(test_dirs)[: get_profile_limit(cfg.profile, "test_dirs")]
-    result.source_directories = sorted(source_dirs)[: get_profile_limit(cfg.profile, "source_dirs")]
+    filtered_src = [d for d in source_dirs if not is_vendor_path(d)]
+    result.source_directories = sorted(filtered_src, key=lambda d: score_path(d), reverse=True)[
+        : get_profile_limit(cfg.profile, "source_dirs")
+    ]
 
     ev = result.evidence_set
     ev.add(

@@ -150,3 +150,144 @@ def test_referenced_source_with_line_number() -> None:
         result = validate_output_dir(out, repo_path=repo)
         codes = [c.code for c in result.checks]
         assert "referenced_source_missing" not in codes
+
+
+def test_referenced_source_deep_manifest_found() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        repo = Path(td, "repo")
+        repo.mkdir()
+        # Manifest lives deep in product path, not at root
+        (repo / "services" / "api" / "python").mkdir(parents=True)
+        (repo / "services" / "api" / "python" / "pyproject.toml").write_text("[project]\n")
+        out = Path(td, "out")
+        out.mkdir()
+        for name in [
+            "AI_CONTEXT_INDEX.md",
+            "PROJECT_OVERVIEW.md",
+            "REPO_MAP.md",
+            "DEPENDENCY_GRAPH.md",
+            "ARCHITECTURE_SUMMARY.md",
+            "AGENT_BRIEF.md",
+            "SCAN_REPORT.md",
+            "VALIDATION_REPORT.md",
+        ]:
+            Path(out, name).write_text("ok\n")
+        # Bare manifest name referenced in generated doc
+        Path(out, "PROJECT_OVERVIEW.md").write_text("Look for `pyproject.toml`.")
+        result = validate_output_dir(out, repo_path=repo)
+        codes = [c.code for c in result.checks]
+        assert "referenced_source_missing" not in codes, (
+            f"deep pyproject.toml should be found, got: {[c.message for c in result.checks if c.code == 'referenced_source_missing']}"
+        )
+
+
+def test_fixture_deep_manifest_does_not_silence_warning() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        repo = Path(td, "repo")
+        repo.mkdir()
+        # Manifest only exists in fixtures — should NOT suppress warning
+        (repo / "tests" / "fixtures").mkdir(parents=True)
+        (repo / "tests" / "fixtures" / "pyproject.toml").write_text("[project]\n")
+        out = Path(td, "out")
+        out.mkdir()
+        for name in [
+            "AI_CONTEXT_INDEX.md",
+            "PROJECT_OVERVIEW.md",
+            "REPO_MAP.md",
+            "DEPENDENCY_GRAPH.md",
+            "ARCHITECTURE_SUMMARY.md",
+            "AGENT_BRIEF.md",
+            "SCAN_REPORT.md",
+            "VALIDATION_REPORT.md",
+        ]:
+            Path(out, name).write_text("ok\n")
+        Path(out, "PROJECT_OVERVIEW.md").write_text("Look for `pyproject.toml`.")
+        result = validate_output_dir(out, repo_path=repo)
+        codes = [c.code for c in result.checks]
+        assert "referenced_source_missing" in codes, (
+            f"fixture pyproject.toml should NOT suppress warning, got: {[c.message for c in result.checks]}"
+        )
+
+
+def test_vendor_deep_manifest_does_not_silence_warning() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        repo = Path(td, "repo")
+        repo.mkdir()
+        # Manifest only exists in vendor — should NOT suppress warning
+        (repo / "vendor" / "some-lib").mkdir(parents=True)
+        (repo / "vendor" / "some-lib" / "pyproject.toml").write_text("[project]\n")
+        out = Path(td, "out")
+        out.mkdir()
+        for name in [
+            "AI_CONTEXT_INDEX.md",
+            "PROJECT_OVERVIEW.md",
+            "REPO_MAP.md",
+            "DEPENDENCY_GRAPH.md",
+            "ARCHITECTURE_SUMMARY.md",
+            "AGENT_BRIEF.md",
+            "SCAN_REPORT.md",
+            "VALIDATION_REPORT.md",
+        ]:
+            Path(out, name).write_text("ok\n")
+        Path(out, "PROJECT_OVERVIEW.md").write_text("Look for `pyproject.toml`.")
+        result = validate_output_dir(out, repo_path=repo)
+        codes = [c.code for c in result.checks]
+        assert "referenced_source_missing" in codes, (
+            f"vendor pyproject.toml should NOT suppress warning, got: {[c.message for c in result.checks]}"
+        )
+
+
+def test_demo_repo_deep_manifest_does_not_silence_warning() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        repo = Path(td, "repo")
+        repo.mkdir()
+        # Manifest only exists in examples/demo-repo — should NOT suppress warning
+        (repo / "examples" / "demo-repo").mkdir(parents=True)
+        (repo / "examples" / "demo-repo" / "pyproject.toml").write_text("[project]\n")
+        out = Path(td, "out")
+        out.mkdir()
+        for name in [
+            "AI_CONTEXT_INDEX.md",
+            "PROJECT_OVERVIEW.md",
+            "REPO_MAP.md",
+            "DEPENDENCY_GRAPH.md",
+            "ARCHITECTURE_SUMMARY.md",
+            "AGENT_BRIEF.md",
+            "SCAN_REPORT.md",
+            "VALIDATION_REPORT.md",
+        ]:
+            Path(out, name).write_text("ok\n")
+        Path(out, "PROJECT_OVERVIEW.md").write_text("Look for `pyproject.toml`.")
+        result = validate_output_dir(out, repo_path=repo)
+        codes = [c.code for c in result.checks]
+        assert "referenced_source_missing" in codes, (
+            f"demo-repo pyproject.toml should NOT suppress warning, got: {[c.message for c in result.checks]}"
+        )
+
+
+def test_product_fixture_manifest_silences_warning() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        repo = Path(td, "repo")
+        repo.mkdir()
+        # Manifest in src/fixtures (legitimate product dir) — SHOULD suppress warning
+        (repo / "src" / "fixtures").mkdir(parents=True)
+        (repo / "src" / "fixtures" / "pyproject.toml").write_text("[project]\n")
+        out = Path(td, "out")
+        out.mkdir()
+        for name in [
+            "AI_CONTEXT_INDEX.md",
+            "PROJECT_OVERVIEW.md",
+            "REPO_MAP.md",
+            "DEPENDENCY_GRAPH.md",
+            "ARCHITECTURE_SUMMARY.md",
+            "AGENT_BRIEF.md",
+            "SCAN_REPORT.md",
+            "VALIDATION_REPORT.md",
+        ]:
+            Path(out, name).write_text("ok\n")
+        Path(out, "PROJECT_OVERVIEW.md").write_text("Look for `pyproject.toml`.")
+        result = validate_output_dir(out, repo_path=repo)
+        codes = [c.code for c in result.checks]
+        assert "referenced_source_missing" not in codes, (
+            f"product fixtures pyproject.toml SHOULD suppress warning, got: {[c.message for c in result.checks if c.code == 'referenced_source_missing']}"
+        )

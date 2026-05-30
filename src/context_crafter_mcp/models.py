@@ -209,16 +209,36 @@ class PythonModule:
 
 
 @dataclass
+class BoundedScanSummary:
+    """Honest summary of scanner bounds and skips."""
+
+    files_scanned: int = 0
+    dirs_scanned: int = 0
+    files_skipped: int = 0
+    dirs_skipped: int = 0
+    budget_exhausted: bool = False
+    skipped_reasons: dict[str, int] = field(default_factory=dict)
+
+
+@dataclass
 class NodePackage:
     name: str | None = None
+    rel_path: str | None = None
     scripts: dict[str, str] = field(default_factory=dict)
     dependencies: list[str] = field(default_factory=list)
     dev_dependencies: list[str] = field(default_factory=list)
+    peer_dependencies: list[str] = field(default_factory=list)
     files: list[str] = field(default_factory=list)
     import_edges: list[tuple[str, str]] = field(default_factory=list)
     exports: list[str] = field(default_factory=list)
     classes: list[str] = field(default_factory=list)
     functions: list[str] = field(default_factory=list)
+    category: str | None = None  # product | tooling | vendor | unknown
+    role: str | None = None  # app | service | library | tool | unknown
+    frameworks: list[str] = field(default_factory=list)
+    local_deps: list[str] = field(default_factory=list)
+    likely_entry_points: list[str] = field(default_factory=list)
+    package_type: str | None = None  # module | commonjs | unknown
 
 
 @dataclass
@@ -253,6 +273,7 @@ class RustCrate:
 @dataclass
 class GoModule:
     name: str | None = None
+    rel_path: str | None = None
     dependencies: list[str] = field(default_factory=list)
     packages: list[str] = field(default_factory=list)
     entry_points: list[str] = field(default_factory=list)
@@ -263,6 +284,7 @@ class GoModule:
 @dataclass
 class JavaProject:
     name: str | None = None
+    rel_path: str | None = None
     build_tool: str | None = None
     dependencies: list[str] = field(default_factory=list)
     modules: list[str] = field(default_factory=list)
@@ -309,8 +331,10 @@ class AnalysisResult:
     metadata: ProjectMetadata = field(default_factory=ProjectMetadata)
     python_dependencies: list[str] = field(default_factory=list)
     python_dev_dependencies: list[str] = field(default_factory=list)
+    workspace_packages: list[str] = field(default_factory=list)
     profile: str = "standard"
     evidence_set: EvidenceSet = field(default_factory=EvidenceSet)
+    scan_summary: BoundedScanSummary = field(default_factory=BoundedScanSummary)
 
 
 @dataclass

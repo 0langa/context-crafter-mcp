@@ -6,6 +6,8 @@
 
 Local-first MCP server that turns source repositories into compact AI-agent context: project overviews, repo maps, dependency graphs, architecture notes, and validation reports.
 
+Current roadmap target is an internal **`0.5.0` hardening baseline**. The first public release still remains `1.0.0`.
+
 ## What it generates
 
 | File | Purpose |
@@ -147,7 +149,7 @@ See [`SECURITY.md`](SECURITY.md) for the full threat model and reporting process
 | .NET | `*.sln`, `*.csproj`, `*.cs` | tree-sitter C# AST + XML + regex fallback |
 | Rust | `Cargo.toml`, `*.rs` | tree-sitter Rust AST + regex fallback |
 | Go | `go.mod`, `*.go` | tree-sitter Go AST + regex fallback |
-| Java | `pom.xml`, `build.gradle`, `*.java` | javalang AST + regex fallback |
+| Java | `pom.xml`, `build.gradle`, `build.gradle.kts`, `*.java` | javalang AST + regex fallback (nested build files discovered) |
 | Generic | Any directory | Directory and filename heuristics |
 
 ## Architecture
@@ -181,7 +183,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - Secret redaction is not implemented; review generated output before sharing.
 - Nested `.gitignore` files are supported via `pathspec` with deepest-matching-wins semantics.
 
-See [`docs/REAL_REPO_SMOKE_MATRIX.md`](docs/REAL_REPO_SMOKE_MATRIX.md) for the maintainers' pre-`1.0.0` public-repo confidence set.
+See [`docs/REAL_REPO_SMOKE_MATRIX.md`](docs/REAL_REPO_SMOKE_MATRIX.md) for the current `0.5.0` hardening confidence set.
 
 ## License
 

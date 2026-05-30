@@ -44,6 +44,7 @@ class ScannerOptions:
     max_files: int = 5_000
     max_depth: int = 6
     max_file_bytes: int = 5_000_000
+    max_files_per_dir: int = 0  # 0 means unlimited; callers opt-in to per-dir caps
 
     def __post_init__(self) -> None:
         if self.max_depth < 1 or self.max_depth > 20:
@@ -52,6 +53,8 @@ class ScannerOptions:
             raise ValueError("max_files must be between 1 and 100000")
         if self.max_file_bytes < 1:
             raise ValueError("max_file_bytes must be positive")
+        if self.max_files_per_dir < 0 or self.max_files_per_dir > 10_000:
+            raise ValueError("max_files_per_dir must be between 0 and 10000")
 
 
 _TEXT_EXTENSIONS = {
@@ -353,6 +356,8 @@ class ScanStats:
     dirs_scanned: int = 0
     files_skipped: int = 0
     dirs_skipped: int = 0
+    budget_exhausted: bool = False
+    skipped_reasons: dict[str, int] = field(default_factory=dict)
     errors: list[ScanError] = field(default_factory=list)
 
 
@@ -394,6 +399,187 @@ class RepoSnapshot:
         return None
 
 
+_HIGH_PRIORITY_DIRS = {
+    "src",
+    "lib",
+    "source",
+    "sources",
+    "app",
+    "apps",
+    "services",
+    "service",
+    "packages",
+    "pkg",
+    "core",
+    "cmd",
+    "main",
+    "server",
+    "api",
+    "worker",
+    "ingest",
+    "indexer",
+    "web",
+    "frontend",
+    "backend",
+    "client",
+    "internal",
+    "domain",
+    "runtime",
+    "product",
+    "crates",
+}
+
+_LOW_PRIORITY_DIRS = {
+    "vendor",
+    "vendors",
+    "node_modules",
+    "third_party",
+    "thirdparty",
+    "3rdparty",
+    "aa_vendor_mirror",
+    "vendor_mirror",
+    "mirrors",
+    "mirror",
+    "dist",
+    "build",
+    "out",
+    "output",
+    "generated",
+    "gen",
+    "autogen",
+    ".next",
+    ".turbo",
+    ".cache",
+    "coverage",
+    "tmp",
+    "temp",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "target",
+    "debug",
+    "bin",
+    "obj",
+}
+
+_CONFIG_EXTENSIONS = frozenset({".toml", ".json", ".yaml", ".yml", ".ini", ".cfg", ".conf", ".config"})
+
+# Entrypoint stem patterns — tier 1 (highest priority)
+_ENTRYPOINT_STEMS_TIER1 = frozenset(
+    {
+        "main",
+        "index",
+        "app",
+        "cli",
+        "server",
+        "api",
+        "program",
+        "startup",
+        "lib",
+        "mod",
+        "routes",
+        "views",
+        "controller",
+        "handlers",
+        "service",
+        "repository",
+        "models",
+        "schema",
+    }
+)
+
+# Entrypoint stem patterns — tier 2 (secondary priority)
+_ENTRYPOINT_STEMS_TIER2 = frozenset(
+    {
+        "worker",
+        "gateway",
+        "driver",
+        "engine",
+        "core",
+        "bootstrap",
+        "init",
+        "runner",
+        "scheduler",
+        "processor",
+        "manager",
+        "loader",
+        "factory",
+        "consumer",
+        "producer",
+        "task",
+        "job",
+        "batch",
+        "pipeline",
+        "ingest",
+    }
+)
+
+
+def _entrypoint_tier(name: str) -> int:
+    """Return entrypoint tier (1 = highest, 2 = secondary, 0 = none)."""
+    lower = name.lower()
+    # Python dunder files
+    if lower.startswith("__") and lower.endswith(".py"):
+        return 1
+    stem = Path(lower).stem
+    if stem in _ENTRYPOINT_STEMS_TIER1:
+        return 1
+    if stem in _ENTRYPOINT_STEMS_TIER2:
+        return 2
+    return 0
+
+
+def _file_priority(name: str) -> tuple[int, str]:
+    """Return a sort key for deterministic file prioritization within a directory.
+
+    Lower tuple values are processed first, so important manifests and
+    entrypoints are retained when a per-directory cap is applied.
+    """
+    lower = name.lower()
+    if lower in _FILENAME_HINTS:
+        return (0, lower)
+    tier = _entrypoint_tier(name)
+    if tier == 1:
+        return (1, lower)
+    if tier == 2:
+        return (2, lower)
+    ext = Path(name).suffix.lower()
+    if ext in _CONFIG_EXTENSIONS:
+        return (3, lower)
+    if ext in _TEXT_EXTENSIONS:
+        return (4, lower)
+    return (5, lower)
+
+
+def _dir_priority(name: str) -> tuple[int, str]:
+    """Return a sort key for directory prioritization during scanning.
+
+    Lower tuple values are walked earlier, so product/config directories
+    come before vendor/build/cache directories.
+    """
+    lower = name.lower()
+    if lower in _HIGH_PRIORITY_DIRS:
+        return (0, lower)
+    if lower in _LOW_PRIORITY_DIRS:
+        return (2, lower)
+    return (1, lower)
+
+
+def _is_priority_0_path(rel_path: str) -> bool:
+    """Check if a directory path is under a high-priority product segment.
+
+    Root directory is treated as priority-0. Low-priority segments override
+    high-priority ones (e.g., vendor/src/ is still low-priority).
+    """
+    if not rel_path:
+        return True
+    parts = Path(rel_path.lower()).parts
+    if any(p in _LOW_PRIORITY_DIRS for p in parts):
+        return False
+    return any(p in _HIGH_PRIORITY_DIRS for p in parts)
+
+
 class Scanner:
     """Safe, bounded, deterministic filesystem scanner."""
 
@@ -407,10 +593,19 @@ class Scanner:
         files: list[SnapshotFile] = []
         directories: list[SnapshotDirectory] = []
         skipped: list[SkippedEntry] = []
+        skipped_reasons: dict[str, int] = {}
         errors: list[ScanError] = []
         seen: set[Path] = set()
         file_count = 0
         dir_count = 0
+        budget_exhausted = False
+        reserve = min(1000, opts.max_files // 5)
+        low_priority_budget = opts.max_files - reserve
+        low_priority_files_scanned = 0
+
+        def _skip(rel_path: str, reason: str) -> None:
+            skipped.append(SkippedEntry(rel_path=rel_path, reason=reason))
+            skipped_reasons[reason] = skipped_reasons.get(reason, 0) + 1
 
         active_gitignores: list[tuple[str, pathspec.PathSpec, int]] = []
 
@@ -434,7 +629,7 @@ class Scanner:
             depth = len(Path(rel_root).parts) if rel_root else 0
             if depth > opts.max_depth:
                 dirs[:] = []
-                skipped.append(SkippedEntry(rel_path=rel_root or ".", reason="max_depth"))
+                _skip(rel_root or ".", "max_depth")
                 continue
 
             # Prune gitignores from deeper directories and load current dir's gitignore
@@ -478,41 +673,45 @@ class Scanner:
             for d in dirs:
                 dpath = walk_root_path / d
                 if not opts.follow_symlinks and dpath.is_symlink():
-                    skipped.append(SkippedEntry(rel_path=(rel_root + "/" + d) if rel_root else d, reason="symlink"))
+                    _skip((rel_root + "/" + d) if rel_root else d, "symlink")
                     continue
                 if d in DEFAULT_IGNORED_DIRS:
-                    skipped.append(SkippedEntry(rel_path=(rel_root + "/" + d) if rel_root else d, reason="ignored_dir"))
+                    _skip((rel_root + "/" + d) if rel_root else d, "ignored_dir")
                     continue
                 if not opts.include_hidden and d.startswith("."):
-                    skipped.append(SkippedEntry(rel_path=(rel_root + "/" + d) if rel_root else d, reason="hidden"))
+                    _skip((rel_root + "/" + d) if rel_root else d, "hidden")
                     continue
                 if opts.respect_gitignore and _match_gitignore((rel_root + "/" + d) if rel_root else d, is_dir=True):
-                    skipped.append(SkippedEntry(rel_path=(rel_root + "/" + d) if rel_root else d, reason="gitignore"))
+                    _skip((rel_root + "/" + d) if rel_root else d, "gitignore")
                     continue
                 filtered_dirs.append(d)
+            filtered_dirs.sort(key=_dir_priority)
             dirs[:] = filtered_dirs
 
             directories.append(SnapshotDirectory(rel_path=rel_root or "."))
             dir_count += 1
+            dir_file_count = 0
 
-            for name in walk_files:
+            # Deterministic file ordering: important manifests/entrypoints/config first
+            sorted_files = sorted(walk_files, key=_file_priority)
+
+            for name in sorted_files:
                 if file_count >= opts.max_files:
-                    skipped.append(
-                        SkippedEntry(rel_path=(rel_root + "/" + name) if rel_root else name, reason="max_files")
-                    )
+                    budget_exhausted = True
+                    _skip((rel_root + "/" + name) if rel_root else name, "max_files")
                     continue
 
                 fpath = walk_root_path / name
                 rel = (rel_root + "/" + name) if rel_root else name
 
                 if not opts.follow_symlinks and fpath.is_symlink():
-                    skipped.append(SkippedEntry(rel_path=rel, reason="symlink"))
+                    _skip(rel, "symlink")
                     continue
                 if not opts.include_hidden and name.startswith("."):
-                    skipped.append(SkippedEntry(rel_path=rel, reason="hidden"))
+                    _skip(rel, "hidden")
                     continue
                 if opts.respect_gitignore and _match_gitignore(rel, is_dir=False):
-                    skipped.append(SkippedEntry(rel_path=rel, reason="gitignore"))
+                    _skip(rel, "gitignore")
                     continue
 
                 size = 0
@@ -521,8 +720,20 @@ class Scanner:
                 except (OSError, ValueError):
                     errors.append(ScanError(rel_path=rel, message="stat_failed"))
                 if size > opts.max_file_bytes:
-                    skipped.append(SkippedEntry(rel_path=rel, reason="max_file_bytes"))
+                    _skip(rel, "max_file_bytes")
                     continue
+
+                # Per-directory cap
+                if opts.max_files_per_dir > 0 and dir_file_count >= opts.max_files_per_dir:
+                    _skip(rel, "max_files_per_dir")
+                    continue
+
+                # Priority reserve: preserve budget for product directories
+                if not _is_priority_0_path(rel_root):
+                    if low_priority_files_scanned >= low_priority_budget:
+                        _skip(rel, "priority_reserve")
+                        continue
+                    low_priority_files_scanned += 1
 
                 ext = Path(name).suffix.lower()
                 if ext in _TEXT_EXTENSIONS:
@@ -542,6 +753,7 @@ class Scanner:
                     )
                 )
                 file_count += 1
+                dir_file_count += 1
 
         git = GitMetadata()
         git_dir = root_path / ".git"
@@ -586,6 +798,8 @@ class Scanner:
                 dirs_scanned=dir_count,
                 files_skipped=len([s for s in skipped if "max_file_bytes" in s.reason or "max_files" in s.reason]),
                 dirs_skipped=len([s for s in skipped if "max_depth" in s.reason or "ignored_dir" in s.reason]),
+                budget_exhausted=budget_exhausted,
+                skipped_reasons=skipped_reasons,
                 errors=errors,
             ),
             git=git,

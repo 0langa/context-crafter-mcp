@@ -34,37 +34,12 @@ def analyze_go(
     cfg = config or ScanConfig()
     result = base_result or AnalysisResult(repo_path=str(path))
     ev = result.evidence_set
-    mod = GoModule()
-    packages: set[str] = set()
-    count = 0
     parser_used = "regex"
 
-    go_mod = path / "go.mod"
-    text = safe_read_text(go_mod)
-    if text:
-        m = GO_MOD_MODULE_RE.search(text)
-        if m:
-            mod.name = m.group(1)
-            ev.add(
-                EvidenceKind.OBSERVED,
-                f"Go module `{mod.name}` from `go.mod`",
-                source_path="go.mod",
-                analyzer="go",
-            )
-        for req in GO_MOD_REQUIRE_RE.finditer(text):
-            mod.dependencies.append(req.group(1))
-            ev.add(
-                EvidenceKind.OBSERVED,
-                f"Go dependency `{req.group(1)}` from `go.mod`",
-                source_path="go.mod",
-                analyzer="go",
-            )
-    else:
-        ev.add(
-            EvidenceKind.UNKNOWN,
-            "No `go.mod` found; Go module metadata unavailable.",
-            analyzer="go",
-        )
+    # Pass 1: discover go.mod files and collect Go source paths
+    go_mod_files: list[Path] = []
+    go_files: list = []
+    count = 0
 
     for fi in safe_scan(path, max_depth=cfg.max_depth + 2, max_files_per_dir=cfg.max_files_per_dir):
         if fi.is_dir:
@@ -72,75 +47,145 @@ def analyze_go(
         if _is_fixture_path(fi.rel_path):
             continue
         name = fi.path.name
-        if name.endswith(".go"):
+        if name == "go.mod":
+            go_mod_files.append(fi.path)
+        elif name.endswith(".go"):
+            go_files.append(fi)
             count += 1
-            pkg_dir = str(Path(fi.rel_path).parent)
-            if pkg_dir == ".":
-                pkg_dir = ""
-            packages.add(pkg_dir or "main")
 
-            # Try tree-sitter first
-            parsed = parse_go(fi.path)
-            if parsed and parsed.parser_used != "none":
-                parser_used = parsed.parser_used
-                for imp in parsed.imports:
-                    mod.dependencies.append(imp)
-                for func in parsed.functions:
-                    mod.packages.append(f"{pkg_dir or 'main'}.{func}")
-                for cls in parsed.classes:
-                    mod.structs.append(f"{pkg_dir or 'main'}.{cls}")
-                for iface in parsed.dependencies:
-                    mod.interfaces.append(f"{pkg_dir or 'main'}.{iface}")
-                # Convert absolute paths from parser to relative
-                for ep in parsed.entry_points:
-                    rel = str(Path(ep).relative_to(path)) if Path(ep).is_absolute() else ep
-                    if rel not in mod.entry_points:
-                        mod.entry_points.append(rel)
+    # Parse each go.mod into a module keyed by directory
+    modules: dict[Path, GoModule] = {}
+    for gm in go_mod_files:
+        mod = GoModule()
+        text = safe_read_text(gm)
+        if text:
+            rel = gm.relative_to(path).as_posix()
+            mod.rel_path = str(Path(rel).parent) if Path(rel).parent.as_posix() != "." else "."
+            m = GO_MOD_MODULE_RE.search(text)
+            if m:
+                mod.name = m.group(1)
+                ev.add(
+                    EvidenceKind.OBSERVED,
+                    f"Go module `{mod.name}` from `{rel}`",
+                    source_path=rel,
+                    analyzer="go",
+                )
+            for req in GO_MOD_REQUIRE_RE.finditer(text):
+                mod.dependencies.append(req.group(1))
+                ev.add(
+                    EvidenceKind.OBSERVED,
+                    f"Go dependency `{req.group(1)}` from `{rel}`",
+                    source_path=rel,
+                    analyzer="go",
+                )
+        modules[gm.parent] = mod
+
+    if not modules:
+        ev.add(
+            EvidenceKind.UNKNOWN,
+            "No `go.mod` found; Go module metadata unavailable.",
+            analyzer="go",
+        )
+
+    # Fallback module for orphan .go files
+    if path not in modules:
+        fallback = GoModule()
+        fallback.rel_path = "."
+        modules[path] = fallback
+
+    # Pass 2: assign each .go file to nearest module by path prefix
+    for fi in go_files:
+        file_dir = fi.path.parent
+        best_mod = modules[path]
+        best_depth = -1
+        for root, mod in modules.items():
+            if root == path:
+                continue
+            try:
+                file_dir.relative_to(root)
+                depth = len(root.parts)
+                if depth > best_depth:
+                    best_mod = mod
+                    best_depth = depth
+            except ValueError:
+                continue
+
+        pkg_dir = str(Path(fi.rel_path).parent)
+        if pkg_dir == ".":
+            pkg_dir = ""
+        best_mod.packages.append(pkg_dir or "main")
+
+        # Try tree-sitter first
+        parsed = parse_go(fi.path)
+        if parsed and parsed.parser_used != "none":
+            parser_used = parsed.parser_used
+            for imp in parsed.imports:
+                best_mod.dependencies.append(imp)
+            for func in parsed.functions:
+                best_mod.packages.append(f"{pkg_dir or 'main'}.{func}")
+            for cls in parsed.classes:
+                best_mod.structs.append(f"{pkg_dir or 'main'}.{cls}")
+            for iface in parsed.dependencies:
+                best_mod.interfaces.append(f"{pkg_dir or 'main'}.{iface}")
+            # Convert absolute paths from parser to relative
+            for ep in parsed.entry_points:
+                rel = str(Path(ep).relative_to(path)) if Path(ep).is_absolute() else ep
+                if rel not in best_mod.entry_points:
+                    best_mod.entry_points.append(rel)
                     ev.add(
                         EvidenceKind.OBSERVED,
                         f"Go entry point `{rel}` (package main)",
                         source_path=rel,
                         analyzer="go",
                     )
-            else:
-                # Regex fallback
-                src = safe_read_text(fi.path, max_bytes=500_000)
-                if src:
-                    if "package main" in src:
-                        mod.entry_points.append(fi.rel_path)
-                        ev.add(
-                            EvidenceKind.OBSERVED,
-                            f"Go entry point `{fi.rel_path}` (package main)",
-                            source_path=fi.rel_path,
-                            analyzer="go",
-                        )
-                    for m in GO_IMPORT_RE.finditer(src):
-                        block = m.group(1)
-                        single = m.group(2)
-                        if single:
-                            mod.dependencies.append(single)
-                        elif block:
-                            for line in block.splitlines():
-                                line = line.strip().strip('"')
-                                if line and not line.startswith("."):
-                                    mod.dependencies.append(line)
-                    for m in GO_FUNC_RE.finditer(src):
-                        mod.packages.append(f"{pkg_dir or 'main'}.{m.group(1)}")
-                    for m in GO_STRUCT_RE.finditer(src):
-                        mod.structs.append(f"{pkg_dir or 'main'}.{m.group(1)}")
-                    for m in GO_INTERFACE_RE.finditer(src):
-                        mod.interfaces.append(f"{pkg_dir or 'main'}.{m.group(1)}")
+        else:
+            # Regex fallback
+            src = safe_read_text(fi.path, max_bytes=500_000)
+            if src:
+                if "package main" in src:
+                    best_mod.entry_points.append(fi.rel_path)
+                    ev.add(
+                        EvidenceKind.OBSERVED,
+                        f"Go entry point `{fi.rel_path}` (package main)",
+                        source_path=fi.rel_path,
+                        analyzer="go",
+                    )
+                for m in GO_IMPORT_RE.finditer(src):
+                    block = m.group(1)
+                    single = m.group(2)
+                    if single:
+                        best_mod.dependencies.append(single)
+                    elif block:
+                        for line in block.splitlines():
+                            line = line.strip().strip('"')
+                            if line and not line.startswith("."):
+                                best_mod.dependencies.append(line)
+                for m in GO_FUNC_RE.finditer(src):
+                    best_mod.packages.append(f"{pkg_dir or 'main'}.{m.group(1)}")
+                for m in GO_STRUCT_RE.finditer(src):
+                    best_mod.structs.append(f"{pkg_dir or 'main'}.{m.group(1)}")
+                for m in GO_INTERFACE_RE.finditer(src):
+                    best_mod.interfaces.append(f"{pkg_dir or 'main'}.{m.group(1)}")
 
-    mod.packages = sorted(set(mod.packages) | packages)
-    mod.structs = sorted(set(mod.structs))
-    mod.interfaces = sorted(set(mod.interfaces))
-    result.go_modules = [mod]
+    # Deduplicate and sort, drop empty fallback if real modules exist
+    for mod in modules.values():
+        mod.packages = sorted(set(mod.packages))
+        mod.structs = sorted(set(mod.structs))
+        mod.interfaces = sorted(set(mod.interfaces))
+        mod.dependencies = sorted(set(mod.dependencies))
+        mod.entry_points = sorted(set(mod.entry_points))
+
+    result.go_modules = [
+        m for m in modules.values() if m.rel_path != "." or m.packages or m.dependencies or m.entry_points
+    ]
     result.files_scanned += count
 
-    if mod.structs or mod.interfaces:
+    total_structs = sum(len(m.structs) for m in result.go_modules)
+    total_interfaces = sum(len(m.interfaces) for m in result.go_modules)
+    if total_structs or total_interfaces:
         ev.add(
             EvidenceKind.OBSERVED if parser_used != "regex" else EvidenceKind.INFERRED,
-            f"Go symbols via {parser_used}: {len(mod.structs)} struct(s), {len(mod.interfaces)} interface(s)",
+            f"Go symbols via {parser_used}: {total_structs} struct(s), {total_interfaces} interface(s)",
             analyzer="go",
         )
 

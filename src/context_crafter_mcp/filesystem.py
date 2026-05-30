@@ -99,6 +99,7 @@ def safe_scan(
         ScannerOptions(
             max_depth=max_depth,
             max_files=max(5_000, max_files_per_dir * 10),
+            max_files_per_dir=max_files_per_dir,
         ),
     )
 
