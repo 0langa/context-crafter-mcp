@@ -33,3 +33,6 @@ tests/fixtures/**/docs/generated/
 
 # Development roadmap (private)
 DEVELOPMENT_ROADMAP for context-crafter-mcp.txt
+
+# Internal maintainer notes (private, untracked)
+docs/internal/

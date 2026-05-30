@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Signal Ranking & Path Classification (`ranking.py`)**: New module classifies paths as product, tooling, vendor, generated, fixture, test, docs, or unknown, and scores importance by depth, category, markers, and entrypoints.
+- **Scanner deterministic file ordering**: Files within each directory are sorted by importance (manifests → tier-1 entrypoints → tier-2 entrypoints → config → text → binary) before caps apply, guaranteeing reproducible scans.
+- **Scanner priority reserve**: When the global `max_files` cap is hit, 20% of the budget (up to 1000 files) is reserved exclusively for product directories. Vendor/build/cache files cannot consume this reserve. `ScanStats.budget_exhausted` signals when the cap is hit.
+- **Tiered entrypoint priority**: Entrypoints are split into tier 1 (core: `main`, `index`, `app`, `cli`, ...) and tier 2 (secondary: `worker`, `gateway`, `driver`, `engine`, ...). Tier 1 is retained ahead of tier 2 under tight caps.
+- **Validation deep-path filtering**: Bare-filename deep search uses a cached, directory-pruning `os.walk` that skips fixture/vendor/generated/demo subtrees entirely. Unrelated subtrees cannot silence real warnings.
+- **Context-aware fixture classification**: `fixtures` segments are only classified as `FIXTURE` when under test/example/demo context. `src/fixtures/` and `lib/fixtures/` are classified as `PRODUCT`; `vendor/fixtures/` remains `VENDOR`.
+- **Vendor/Generated De-weighting**: Detector extension hits inside vendor/generated zones are filtered from markers and evidence; analyzers skip vendor files from package counts.
+- **Workspace/Monorepo Interpretation**: Node analyzer discovers all `package.json` files, classifies each as product/tooling/vendor, detects pnpm/npm workspaces, and renders a "Workspace / Monorepo Layout" section in `ARCHITECTURE_SUMMARY.md`.
+- **Deep Python Discovery**: Python analyzer discovers the highest-scored `pyproject.toml` at any depth, extracting metadata, console scripts, and dependencies from deep subprojects.
+- **Node Role & Framework Inference**: Node analyzer infers `role` (`app` | `service` | `library` | `tool`), `frameworks` (web-server, frontend, cli), `local_deps` (intersection with local package names), and `likely_entry_points` from `package.json` fields.
+- **Ranked Output**: Source directories, entry points, and package groups are now ordered by importance score rather than alphabetically.
+- **Category Tags**: `ARCHITECTURE_SUMMARY.md` and `AGENT_BRIEF.md` tag source directories and entry points with `[product]`, `[tooling]`, etc.
+- **Per-Language Dependency Sections**: `PROJECT_OVERVIEW.md` now shows runtime/development dependencies per language (Python, Node, Rust, Go, Java) instead of falling through to a single list.
 - `resolved_output_dir` in generation-style JSON results for CLI and MCP calls.
 - Package metadata URLs for homepage, repository, issues, and changelog.
 - Dependabot config for Python dependencies and GitHub Actions.
@@ -17,10 +30,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Node Analyzer**: Now creates a `NodePackage` per discovered `package.json` instead of one mega-package; product packages are listed before tooling packages. Each package carries `role`, `frameworks`, `local_deps`, `likely_entry_points`, `package_type`, and `peer_dependencies`.
+- **Java & Go Nested Build Discovery**: Analyzers now scan up to depth 5 for `pom.xml` / `build.gradle` / `go.mod` instead of assuming root presence, eliminating false "not found" evidence on repos with nested build files.
+- **Renderer Honesty**: `AGENT_BRIEF.md` and `ARCHITECTURE_SUMMARY.md` now warn when scan budget is exhausted or many files are skipped. `PROJECT_OVERVIEW.md` only mentions Java build files (`pom.xml`, `build.gradle`) that were actually detected.
+- **Architecture Pattern De-overfit**: Removed "MCP stdio server" parenthetical from server-pattern detection; now emits generic "Server/API pattern detected."
+- **Detector Evidence**: Extension-inferred evidence is capped at 10 items with an overflow note to avoid flooding from large directories.
 - MCP server now reports the package version in server metadata.
 - MCP tool schemas now match actual supported arguments more closely.
 - CI now validates committed example outputs, checks CLI smoke commands for unexpected repo dirtiness, and smoke-tests installed wheel and sdist artifacts.
-- Roadmap rewritten around broad pre-`1.0.0` phases with a `0.9.5` release sprint and `1.0.0` as the first public release.
+- Roadmap rewritten around a realistic `0.5.0` internal hardening baseline, with `1.0.0` still reserved for the first public release.
 - README, output contract, limitations, MCP client docs, security policy, and manual steps updated to reflect current release policy and output confinement behavior.
 
 ## [0.4.0] - 2026-05-29

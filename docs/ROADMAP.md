@@ -2,79 +2,79 @@
 
 ## Current state
 
-Package is at **v0.4.0**. Core scanner, CLI, MCP server, analyzers, validation, and example outputs are working.
+Package is still at **v0.4.0**. The project now has a working scanner, CLI, MCP server, analyzers, validation layer, challenge-repo regression coverage, and a small public smoke matrix.
 
-Pre-`1.0.0` version labels in this repository are internal planning markers only. No public package releases are planned before `1.0.0`.
+That is **not** the same thing as being near a public `1.0.0`.
 
-## Broad path to 1.0.0
+The immediate roadmap target is **`0.5.0`**:
 
-### Foundation hardening
+- internal hardening baseline
+- actionable and validated against the current codebase
+- strong enough to support future autonomous documentation/context workflows
+- still **not** a public release
 
-- Freeze CLI command names and MCP tool names.
-- Keep result payloads additive-only; no intentional key removals or renames.
-- Make generation responses report `resolved_output_dir`.
-- Align MCP tool schemas with actual accepted arguments.
-- Ensure MCP server metadata reports package version, not SDK/library internals.
-- Keep package metadata clean enough for future publishing: homepage, repository, issue tracker, changelog links.
-- Keep installed-artifact smoke coverage for wheel and sdist so release mechanics are never a last-minute surprise.
+`1.0.0` remains the first public release and stays outside this roadmap pass.
 
-### Operational maturity
+## Active path to 0.5.0
 
-- Add Dependabot for Python deps and GitHub Actions.
-- Add CodeQL workflow for Python.
-- Pin GitHub Actions more deliberately than floating legacy refs.
-- Validate committed example outputs in CI.
-- Assert CLI smoke commands do not dirty tracked repo state unexpectedly.
-- Rewrite maintainer docs and user docs to match actual behavior:
-  - release checklist
-  - output confinement behavior
-  - install paths
-  - contract expectations
+### 1. Control-plane hardening
 
-### Real-repo confidence
+- Keep CLI command names and MCP tool names stable.
+- Keep JSON result contracts additive-only; no silent key removals or renames.
+- Preserve `resolved_output_dir` and other explicit run metadata.
+- Keep scanner, analyzers, renderers, and validation on clean boundaries so the Python control plane can survive future lower-level backend work.
+- Reduce contract ambiguity between human-facing docs and machine-facing results.
 
-- Run fixed public smoke set and capture results:
-  - Python: `pallets/click`
-  - Node/TypeScript: `sindresorhus/ky`
-  - Go: `spf13/cobra`
-  - Rust: `serde-rs/json`
-- For each repo: run `detect`, `generate`, `validate`, record warnings, scan stats, and notable limitations.
-- Keep Java and .NET on fixture coverage until a blocker appears or the release sprint expands scope.
+### 2. Unattended-operation readiness
 
-### Feature completion toward 1.0.0
+- Treat every run as something future automation will call repeatedly, without an LLM cleaning up after it.
+- Keep commands deterministic, bounded, and explicit about degraded states.
+- Make repo-dirty side effects unacceptable unless intentionally documented.
+- Strengthen honesty around skipped files, truncated scans, unsupported stacks, and inference strength.
+- Tighten self-test, generate, and validate behavior so they are safe building blocks for scheduled or trigger-driven use later.
 
-- Continue feature and quality work without publishing.
-- Keep public-surface discipline so `1.0.0` does not require a late contract cleanup.
-- Only introduce breaking changes intentionally and document them as pre-`1.0.0` repo changes, not public release promises.
+### 3. Real-world correctness on hostile repositories
 
-### 0.9.5 release sprint
+- Continue hardening against ugly local repos, especially:
+  - mixed-language monorepos
+  - vendor/generated flood
+  - deeply nested manifests and entry points
+  - large docs trees
+  - nested ignore rules
+  - fixture/demo pollution
+- Treat challenge-repo truthfulness as a core quality bar, not an optional confidence pass.
+- Keep public smoke coverage for Python, Node/TypeScript, Go, and Rust.
+- Keep Java and .NET explicitly below the bar until their results are trustworthy enough for the same standard.
 
-Use `0.9.5` as the dedicated release-preparation sprint. At that point:
+### 4. Machine-actionable output and validation
 
-- `uv run python -m compileall src tests`
-- `uv run ruff check .`
-- `uv run ruff format --check .`
-- `uv run mypy src`
-- `uv run pytest -q`
-- `uv build`
-- `uv run context-crafter-mcp doctor`
-- `uv run context-crafter-mcp self-test .`
-- `uv run context-crafter-mcp generate . --output .tmp/generated --profile standard --json`
-- `uv run context-crafter-mcp validate docs/generated --repo . --json`
-- installed wheel smoke passes
-- installed sdist smoke passes
-- roadmap, limitations, output contract, README, security docs, and manual steps contain no stale claims
-- public smoke matrix is executed and captured
-- release notes, packaging metadata, and examples are in final public form
+- Improve outputs so they are not only readable, but reliable inputs for future autonomous maintenance workflows.
+- Keep validation conservative and honest; do not hide uncertainty behind “pass” states.
+- Prefer explicit unknown/unsupported/degraded reporting over optimistic summaries.
+- Continue reducing coupling between ranking heuristics and correctness decisions where that coupling weakens trust.
 
-### 1.0.0 first public release
+### 5. Documentation truth and internal audit discipline
 
-- First published release happens here, not earlier.
-- Release should follow the full manual checklist and public-repo confidence matrix.
-- Public compatibility expectations begin here.
+- Keep public docs conservative and code-grounded.
+- Use `docs/internal/observed_issues.md` for candid internal notes and scary findings that should not become public claims.
+- Remove roadmap entries that are already done and unlikely to matter again before the next major quality-gate phase.
+- Keep this roadmap focused on what still blocks a credible `0.5.0`.
 
-## Deferred until after 1.0.0
+## 0.5.0 exit criteria
 
-- Broader real-world matrix for Java and .NET
-- Any major public contract redesign
-- Automated publish workflow
+`0.5.0` is done only when all of these are true:
+
+- CLI and MCP contracts are stable enough for future automation to depend on them.
+- Current docs match real behavior and do not overclaim maturity.
+- Challenge-repo output is not merely valid, but strategically useful and truthful.
+- Public smoke matrix remains green with only documented, accepted limitations.
+- The codebase reads as a durable Python control plane rather than a throwaway single-purpose MCP utility.
+- Known scary issues are either resolved, explicitly accepted, or tracked as blockers in internal notes.
+
+## Not part of this roadmap pass
+
+- Public release preparation
+- publish automation
+- `1.0.0` release polish
+- Rust/C++ backend implementation
+- broad feature expansion beyond what is needed to make the current foundation trustworthy
