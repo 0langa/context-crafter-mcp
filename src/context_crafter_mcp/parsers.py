@@ -33,7 +33,7 @@ def _tree_sitter_parse(source: bytes, language: Any) -> Any | None:
 
         parser = Parser(Language(language()))
         return parser.parse(source)
-    except Exception:
+    except (ImportError, ModuleNotFoundError, OSError, ValueError, TypeError, RuntimeError):
         return None
 
 
@@ -76,7 +76,7 @@ def parse_javascript(path: Path) -> ParsedModule | None:
     """Parse a JavaScript file with tree-sitter."""
     try:
         from tree_sitter_javascript import language as js_lang
-    except Exception:
+    except (ImportError, ModuleNotFoundError):
         return None
 
     try:
@@ -146,7 +146,7 @@ def parse_typescript(path: Path) -> ParsedModule | None:
     """Parse a TypeScript file with tree-sitter."""
     try:
         from tree_sitter_typescript import language_typescript as ts_lang
-    except Exception:
+    except (ImportError, ModuleNotFoundError):
         return None
 
     try:
@@ -214,7 +214,7 @@ def parse_java(path: Path) -> ParsedModule | None:
     """Parse a Java file with javalang."""
     try:
         import javalang  # type: ignore[import-untyped]
-    except Exception:
+    except (ImportError, ModuleNotFoundError):
         return None
 
     try:
@@ -225,7 +225,7 @@ def parse_java(path: Path) -> ParsedModule | None:
     try:
         tree = javalang.parse.parse(source)
     except Exception as exc:
-        return ParsedModule(parser_used="javalang", error=str(exc))
+        return ParsedModule(parser_used="javalang", error=f"{type(exc).__name__}: {exc}")
 
     result = ParsedModule(parser_used="javalang")
 
@@ -270,7 +270,7 @@ def parse_go(path: Path) -> ParsedModule | None:
     """Parse a Go file with tree-sitter."""
     try:
         from tree_sitter_go import language as go_lang
-    except Exception:
+    except (ImportError, ModuleNotFoundError):
         return None
 
     try:
@@ -323,7 +323,7 @@ def parse_rust(path: Path) -> ParsedModule | None:
     """Parse a Rust file with tree-sitter."""
     try:
         from tree_sitter_rust import language as rust_lang
-    except Exception:
+    except (ImportError, ModuleNotFoundError):
         return None
 
     try:
@@ -385,7 +385,7 @@ def parse_csharp(path: Path) -> ParsedModule | None:
     """Parse a C# file with tree-sitter."""
     try:
         from tree_sitter_c_sharp import language as cs_lang
-    except Exception:
+    except (ImportError, ModuleNotFoundError):
         return None
 
     try:

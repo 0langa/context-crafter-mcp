@@ -218,6 +218,7 @@ class BoundedScanSummary:
     dirs_skipped: int = 0
     budget_exhausted: bool = False
     skipped_reasons: dict[str, int] = field(default_factory=dict)
+    category_counts: dict[str, int] = field(default_factory=dict)
 
 
 @dataclass
@@ -239,6 +240,8 @@ class NodePackage:
     local_deps: list[str] = field(default_factory=list)
     likely_entry_points: list[str] = field(default_factory=list)
     package_type: str | None = None  # module | commonjs | unknown
+    package_graph: list[tuple[str, str]] = field(default_factory=list)
+    monorepo_tool: str | None = None
 
 
 @dataclass
@@ -251,6 +254,8 @@ class DotNetProject:
     output_type: str | None = None
     assembly_name: str | None = None
     classes: list[str] = field(default_factory=list)
+    namespaces: list[str] = field(default_factory=list)
+    project_graph: list[tuple[str, str]] = field(default_factory=list)
 
 
 @dataclass
@@ -268,6 +273,8 @@ class RustCrate:
     entry_points: list[str] = field(default_factory=list)
     traits: list[str] = field(default_factory=list)
     impls: list[str] = field(default_factory=list)
+    trait_impls: list[tuple[str, str]] = field(default_factory=list)
+    workspace_members: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -279,6 +286,8 @@ class GoModule:
     entry_points: list[str] = field(default_factory=list)
     structs: list[str] = field(default_factory=list)
     interfaces: list[str] = field(default_factory=list)
+    package_graph: list[tuple[str, str]] = field(default_factory=list)
+    interface_impls: list[tuple[str, str]] = field(default_factory=list)
 
 
 @dataclass
@@ -292,6 +301,9 @@ class JavaProject:
     entry_points: list[str] = field(default_factory=list)
     methods: list[str] = field(default_factory=list)
     annotations: list[str] = field(default_factory=list)
+    package_graph: list[tuple[str, str]] = field(default_factory=list)
+    class_hierarchy: list[tuple[str, str]] = field(default_factory=list)
+    frameworks: list[str] = field(default_factory=list)
 
 
 @dataclass

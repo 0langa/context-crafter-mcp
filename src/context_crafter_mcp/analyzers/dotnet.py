@@ -145,9 +145,30 @@ def analyze_dotnet(
             analyzer="dotnet",
         )
 
-    # Entry points + class scanning
+    # Build project graph from solution + project references
+    proj_name_map: dict[str, DotNetProject] = {p.name: p for p in projects}
     for p in projects:
-        if p.output_type == "Exe":
+        for pref in p.project_refs:
+            pref_name = Path(pref).stem
+            if pref_name in proj_name_map:
+                p.project_graph.append((p.name, pref_name))
+    for sol in solutions:
+        for proj_rel in sol.projects:
+            proj_name = Path(proj_rel).stem
+            if proj_name in proj_name_map:
+                for other in sol.projects:
+                    other_name = Path(other).stem
+                    if other_name != proj_name and other_name in proj_name_map:
+                        edge = (proj_name, other_name)
+                        if edge not in proj_name_map[proj_name].project_graph:
+                            proj_name_map[proj_name].project_graph.append(edge)
+
+    # Entry points + class scanning + namespace extraction
+    for p in projects:
+        proj_dir = Path(p.rel_path).parent
+        cs_files = list((path / proj_dir).rglob("*.cs")) if (path / proj_dir).is_dir() else []
+        has_source = bool(cs_files)
+        if p.output_type == "Exe" and has_source:
             result.likely_entry_points.append(p.rel_path)
             ev.add(
                 EvidenceKind.INFERRED,
@@ -155,7 +176,6 @@ def analyze_dotnet(
                 source_path=p.rel_path,
                 analyzer="dotnet",
             )
-        proj_dir = Path(p.rel_path).parent
         program_file = path / proj_dir / "Program.cs"
         if program_file.exists():
             result.likely_entry_points.append(str((proj_dir / "Program.cs").as_posix()))
@@ -166,7 +186,6 @@ def analyze_dotnet(
                 analyzer="dotnet",
             )
         # Scan .cs files with tree-sitter or regex
-        cs_files = list((path / proj_dir).rglob("*.cs")) if (path / proj_dir).is_dir() else []
         for cs_file in cs_files[:20]:
             parsed = parse_csharp(cs_file)
             if parsed and parsed.parser_used != "none":
@@ -178,12 +197,21 @@ def analyze_dotnet(
                 if src:
                     for m in DOTNET_CLASS_RE.finditer(src):
                         p.classes.append(m.group(1))
+                    for m in DOTNET_NAMESPACE_RE.finditer(src):
+                        ns = m.group(1)
+                        if ns not in p.namespaces:
+                            p.namespaces.append(ns)
+
+    for p in projects:
+        p.project_graph = sorted(set(p.project_graph))
+        p.namespaces = sorted(set(p.namespaces))
 
     if projects and any(p.classes for p in projects):
         total_classes = sum(len(p.classes) for p in projects)
+        total_namespaces = sum(len(p.namespaces) for p in projects)
         ev.add(
             EvidenceKind.OBSERVED if parser_used != "regex" else EvidenceKind.INFERRED,
-            f".NET classes via {parser_used}: {total_classes} class(es)",
+            f".NET classes via {parser_used}: {total_classes} class(es), {total_namespaces} namespace(s)",
             analyzer="dotnet",
         )
 

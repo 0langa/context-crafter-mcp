@@ -15,6 +15,7 @@ from context_crafter_mcp.renderers.markdown import (
     render_architecture_summary,
     render_project_overview,
     render_repo_map,
+    render_run_state,
     render_scan_report,
     render_validation_report,
 )
@@ -104,6 +105,20 @@ def node_render_outputs(state: RepoState) -> dict[str, object]:
     elif val_result.error:
         state.errors.append(val_result.error)
 
+    # Machine-actionable run-state for autonomous scheduling/trigger workflows
+    run_state_result = render_run_state(
+        state.repo_path,
+        state.detect_result,
+        state.analysis,
+        state.output_dir,
+        written_files=written,
+        errors=state.errors,
+    )
+    if run_state_result.ok:
+        written.extend(run_state_result.written)
+    elif run_state_result.error:
+        state.errors.append(run_state_result.error)
+
     state.written = written
     return {"written": written}
 
@@ -129,17 +144,18 @@ def build_graph() -> CompiledStateGraph:
 
 
 def _run_analysis(repo_path: str, config: ScanConfig | None = None) -> tuple[DetectResult, AnalysisResult | None]:
-    """Run detection and analysis for a single tool call."""
-    detect = detect_project(repo_path)
-    if not detect.exists:
-        return detect, None
-    cfg = config or ScanConfig()
-    analysis = analyze_generic(repo_path, config=cfg)
-    for ptype in detect.project_types:
-        if ptype == "generic":
-            continue
-        analysis = analyze_for_type(ptype, repo_path, analysis, cfg)
-    return detect, analysis
+    """Run detection and analysis for a single tool call.
+
+    Reuses the same node functions as the full graph pipeline to avoid
+    duplicating detect / analyze flow.
+    """
+    state = RepoState(repo_path=repo_path, scan_config=config or ScanConfig())
+    node_detect_project(state)
+    if not state.ok or state.detect_result is None:
+        return state.detect_result or DetectResult(repo_path=repo_path, exists=False), None
+    node_scan_files(state)
+    node_run_analyzers(state)
+    return state.detect_result, state.analysis
 
 
 def run_generate_all(

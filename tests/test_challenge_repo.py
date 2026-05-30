@@ -6,6 +6,8 @@ import tempfile
 from pathlib import Path
 
 from context_crafter_mcp.detectors import detect_project
+from context_crafter_mcp.analyzers.dotnet import analyze_dotnet
+from context_crafter_mcp.analyzers.java import analyze_java
 from context_crafter_mcp.analyzers.node import analyze_node
 from context_crafter_mcp.analyzers.python import analyze_python
 
@@ -174,3 +176,24 @@ def test_workspace_packages_detected() -> None:
         assert any("apps/*/*" in w for w in result.workspace_packages), (
             f"workspace patterns missing: {result.workspace_packages}"
         )
+
+
+def test_java_classes_found_at_deep_maven_depth() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td, "challenge")
+        root.mkdir()
+        _make_challenge_like_repo(root)
+        result = analyze_java(str(root))
+        total_classes = sum(len(p.classes) for p in result.java_projects)
+        assert total_classes > 0, f"expected Java classes found, got {total_classes} classes in {result.java_projects}"
+
+
+def test_dotnet_empty_project_not_an_entry_point() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td, "challenge")
+        root.mkdir()
+        _make_challenge_like_repo(root)
+        result = analyze_dotnet(str(root))
+        # legacy-dotnet has a .csproj with OutputType=Exe but zero .cs files
+        csproj_entry_points = [ep for ep in result.likely_entry_points if ep.endswith(".csproj")]
+        assert not csproj_entry_points, f"empty .csproj should not be an entry point: {csproj_entry_points}"

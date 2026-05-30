@@ -141,6 +141,7 @@ def analyze_generic(
         dirs_skipped=snapshot.stats.dirs_skipped,
         budget_exhausted=snapshot.stats.budget_exhausted,
         skipped_reasons=snapshot.stats.skipped_reasons,
+        category_counts=snapshot.stats.category_counts,
     )
     result.docs_files = sorted(set(docs_files))[: get_profile_limit(cfg.profile, "docs_files")]
     result.config_files = sorted(set(config_files))[: get_profile_limit(cfg.profile, "config_files")]

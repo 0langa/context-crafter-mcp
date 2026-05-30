@@ -204,9 +204,14 @@ def render_project_overview(
         "",
     ]
 
-    # Show more detailed source layout for Python
+    # Source directories for all stacks
+    lines.append(_join(analysis.source_directories[: get_profile_limit(analysis.profile, "source_dirs")]))
+    lines.append("")
+
+    # Python module detail as subsection
     if analysis.python_modules:
-        # Build a module tree
+        lines.append("### Python modules")
+        lines.append("")
         source_modules = [m for m in analysis.python_modules if not _is_test_or_temp(m.rel_path)]
         pkg_tree: dict[str, list[str]] = {}
         for m in source_modules:
@@ -229,9 +234,6 @@ def render_project_overview(
             if len(files) > limit:
                 lines.append(f"  - ... and {len(files) - limit} more")
             lines.append("")
-    else:
-        lines += _join(analysis.source_directories[: get_profile_limit(analysis.profile, "source_dirs")])
-        lines.append("")
 
     lines += [
         "## Entry Points",
@@ -866,6 +868,20 @@ def render_architecture_summary(
             f"- Scanner budget exhausted or heavily constrained: {total_skipped} file(s) skipped. "
             "Conclusions are based on a bounded sample."
         )
+    if ss.category_counts:
+        product_count = ss.category_counts.get("product", 0)
+        unknown_count = ss.category_counts.get("unknown", 0)
+        vendor_count = (
+            ss.category_counts.get("vendor", 0)
+            + ss.category_counts.get("generated", 0)
+            + ss.category_counts.get("fixture", 0)
+        )
+        total_scanned = ss.files_scanned
+        if total_scanned > 0 and (product_count + unknown_count) < total_scanned * 0.2:
+            lines.append(
+                f"- Scan composition is mostly vendor/generated/tooling ({vendor_count} of {total_scanned} files). "
+                "Primary product surface may be smaller than file count suggests."
+            )
     if analysis.errors:
         lines.append("- Some files could not be parsed; see analysis errors.")
     if not has_patterns and not any(
@@ -1062,7 +1078,23 @@ def render_agent_brief(
             f"- Scan budget pressure: {total_skipped} file(s) skipped. "
             "Output is based on a bounded sample, not an exhaustive scan."
         )
-    if not analysis.errors and not (ss.budget_exhausted or total_skipped > 100):
+    vendor_heavy = False
+    if ss.category_counts:
+        product_count = ss.category_counts.get("product", 0)
+        unknown_count = ss.category_counts.get("unknown", 0)
+        vendor_count = (
+            ss.category_counts.get("vendor", 0)
+            + ss.category_counts.get("generated", 0)
+            + ss.category_counts.get("fixture", 0)
+        )
+        total_scanned = ss.files_scanned
+        if total_scanned > 0 and (product_count + unknown_count) < total_scanned * 0.2:
+            vendor_heavy = True
+            lines.append(
+                f"- Vendor/generated files dominate scan ({vendor_count} of {total_scanned}). "
+                "Primary product surface may be smaller than it appears."
+            )
+    if not analysis.errors and not (ss.budget_exhausted or total_skipped > 100) and not vendor_heavy:
         lines.append("- None.")
     lines.append("")
 
@@ -1230,33 +1262,44 @@ def render_scan_report(
 
     # Honest bounded-scan summary
     ss = analysis.scan_summary
-    if ss.budget_exhausted or ss.skipped_reasons:
-        lines += [
-            "## Scan bounds",
-            "",
-        ]
-        if ss.budget_exhausted:
-            lines.append(
-                "- **Scanner budget exhausted.** Some files were skipped due to `max_files` or `max_files_per_dir` caps. "
-                "Output is based on a bounded sample, not an exhaustive scan."
-            )
+    lines += [
+        "## Scan bounds",
+        "",
+    ]
+    if ss.budget_exhausted:
+        lines.append(
+            "- **Scanner budget exhausted.** Some files were skipped due to `max_files` or `max_files_per_dir` caps. "
+            "Output is based on a bounded sample, not an exhaustive scan."
+        )
+    if ss.skipped_reasons:
         for reason, count in sorted(ss.skipped_reasons.items(), key=lambda x: -x[1]):
             lines.append(f"- Skipped (`{reason}`): {count}")
+    if not ss.budget_exhausted and not ss.skipped_reasons:
+        lines.append("_All reachable files within depth and size limits were scanned._")
+
+    # Scan composition honesty
+    if ss.category_counts:
+        lines += ["", "### Scan composition", ""]
+        for cat, count in sorted(ss.category_counts.items(), key=lambda x: -x[1]):
+            lines.append(f"- {cat}: {count}")
+        product_count = ss.category_counts.get("product", 0)
+        unknown_count = ss.category_counts.get("unknown", 0)
+        total_scanned = ss.files_scanned
+        if total_scanned > 0 and (product_count + unknown_count) < total_scanned * 0.2:
+            lines.append(
+                "- **Warning:** Most scanned files are vendor, generated, or tooling. "
+                "Primary product surface may be under-represented."
+            )
         lines.append("")
     else:
-        lines += [
-            "## Scan bounds",
-            "",
-            "_All reachable files within depth and size limits were scanned._",
-            "",
-        ]
+        lines.append("")
 
     lines += [
         "## Skipped / Ignored",
         "",
         "- Symlinks: not followed",
         "- Hidden files: excluded by default",
-        "- Ignored directories: .git, node_modules, venv, __pycache__, dist, build, target, bin, obj, .next, .turbo, .cache, .mypy_cache, .pytest_cache, .ruff_cache",
+        "- Ignored directories: .git, node_modules, venv, __pycache__, dist, build, target, bin, obj, .next, .turbo, .cache, .mypy_cache, .pytest_cache, .ruff_cache, vendor, vendors, third_party, generated, gen, autogen",
         "",
     ]
     if analysis.errors:
@@ -1288,6 +1331,48 @@ def render_scan_report(
     ]
 
     path.write_text("\n".join(lines), encoding="utf-8")
+    return RenderResult(
+        ok=True,
+        written=[str(path)],
+        files_scanned=analysis.files_scanned,
+        project_types=detect.project_types,
+        resolved_output_dir=str(out),
+    )
+
+
+def render_run_state(
+    repo_path: str,
+    detect: DetectResult,
+    analysis: AnalysisResult,
+    output_dir: str,
+    written_files: list[str],
+    errors: list[str],
+) -> RenderResult:
+    """Render a machine-actionable JSON run-state file."""
+    out = safe_output_path(Path(repo_path), output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    path = out / "RUN_STATE.json"
+
+    state = {
+        "version": __version__,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "repo_path": repo_path,
+        "project_types": detect.project_types,
+        "profile": analysis.profile,
+        "scan_config": {
+            "max_depth": analysis.scan_summary.files_scanned,
+            "max_files_per_dir": 0,
+            "max_file_bytes": 0,
+        },
+        "files_scanned": analysis.files_scanned,
+        "analyzers_run": detect.project_types,
+        "output_files": [str(Path(w).name) for w in written_files],
+        "errors": errors,
+    }
+
+    import json
+
+    path.write_text(json.dumps(state, indent=2), encoding="utf-8")
     return RenderResult(
         ok=True,
         written=[str(path)],

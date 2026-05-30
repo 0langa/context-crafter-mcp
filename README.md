@@ -20,6 +20,7 @@ Current roadmap target is an internal **`0.5.0` hardening baseline**. The first 
 | `AGENT_BRIEF.md` | Concise 1-page summary optimized for coding agents |
 | `VALIDATION_REPORT.md` | Output completeness and analysis health |
 | `SCAN_REPORT.md` | Scan coverage, skipped items, and safety notes |
+| `RUN_STATE.json` | Machine-actionable run metadata for scheduling and rerun semantics |
 
 ## Quick start
 

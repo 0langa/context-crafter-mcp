@@ -17,6 +17,8 @@ GO_IMPORT_RE = re.compile(r'^\s*import\s+(?:\(\s*([^)]*)\s*\)|"([^"]+)")', re.MU
 GO_FUNC_RE = re.compile(r"^func\s+(?:\([^)]*\)\s+)?(\w+)\s*\(", re.MULTILINE)
 GO_STRUCT_RE = re.compile(r"^type\s+(\w+)\s+struct\b", re.MULTILINE)
 GO_INTERFACE_RE = re.compile(r"^type\s+(\w+)\s+interface\b", re.MULTILINE)
+GO_INTERFACE_ASSERT_RE = re.compile(r"var\s+_\s+(\w+)\s*=\s*\(?\*?(\w+)\)?")
+GO_METHOD_RECEIVER_RE = re.compile(r"^func\s+\((?:\w+\s+)?\*?(\w+)\)\s+(\w+)", re.MULTILINE)
 
 
 def analyze_go(
@@ -167,6 +169,54 @@ def analyze_go(
                 for m in GO_INTERFACE_RE.finditer(src):
                     best_mod.interfaces.append(f"{pkg_dir or 'main'}.{m.group(1)}")
 
+    # Pass 3: detect interface assertions and build package graph
+    all_structs: set[str] = set()
+    all_interfaces: set[str] = set()
+    for mod in modules.values():
+        all_structs.update(s.split(".")[-1] for s in mod.structs)
+        all_interfaces.update(i.split(".")[-1] for i in mod.interfaces)
+
+    for fi in go_files:
+        src = safe_read_text(fi.path, max_bytes=500_000)
+        if not src:
+            continue
+        file_dir = Path(fi.rel_path).parent.as_posix()
+        pkg_dir = file_dir if file_dir != "." else "main"
+        best_mod = modules[path]
+        for root, mod in modules.items():
+            if root == path:
+                continue
+            try:
+                Path(fi.path).parent.relative_to(root)
+                best_mod = mod
+            except ValueError:
+                continue
+
+        for m in GO_INTERFACE_ASSERT_RE.finditer(src):
+            iface = m.group(1)
+            struct_name = m.group(2)
+            if iface in all_interfaces and struct_name in all_structs:
+                best_mod.interface_impls.append((iface, struct_name))
+                ev.add(
+                    EvidenceKind.OBSERVED,
+                    f"Go interface assertion: `{struct_name}` implements `{iface}`",
+                    source_path=fi.rel_path,
+                    analyzer="go",
+                )
+
+        # Build package graph from local imports
+        for m in GO_IMPORT_RE.finditer(src):
+            block = m.group(1)
+            single = m.group(2)
+            imp = single or (block.splitlines()[0].strip().strip('"') if block else "")
+            if imp and not imp.startswith(".") and "/" in imp:
+                # Map import to module
+                for mod in modules.values():
+                    if mod.name and imp.startswith(mod.name):
+                        edge = (pkg_dir, mod.name)
+                        if edge not in best_mod.package_graph:
+                            best_mod.package_graph.append(edge)
+
     # Deduplicate and sort, drop empty fallback if real modules exist
     for mod in modules.values():
         mod.packages = sorted(set(mod.packages))
@@ -174,6 +224,8 @@ def analyze_go(
         mod.interfaces = sorted(set(mod.interfaces))
         mod.dependencies = sorted(set(mod.dependencies))
         mod.entry_points = sorted(set(mod.entry_points))
+        mod.interface_impls = sorted(set(mod.interface_impls))
+        mod.package_graph = sorted(set(mod.package_graph))
 
     result.go_modules = [
         m for m in modules.values() if m.rel_path != "." or m.packages or m.dependencies or m.entry_points
@@ -182,10 +234,11 @@ def analyze_go(
 
     total_structs = sum(len(m.structs) for m in result.go_modules)
     total_interfaces = sum(len(m.interfaces) for m in result.go_modules)
+    total_impls = sum(len(m.interface_impls) for m in result.go_modules)
     if total_structs or total_interfaces:
         ev.add(
             EvidenceKind.OBSERVED if parser_used != "regex" else EvidenceKind.INFERRED,
-            f"Go symbols via {parser_used}: {total_structs} struct(s), {total_interfaces} interface(s)",
+            f"Go symbols via {parser_used}: {total_structs} struct(s), {total_interfaces} interface(s), {total_impls} interface impl(s)",
             analyzer="go",
         )
 

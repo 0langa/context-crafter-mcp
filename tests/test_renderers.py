@@ -7,6 +7,7 @@ from pathlib import Path
 
 from context_crafter_mcp.analyzers.generic import analyze_generic
 from context_crafter_mcp.detectors import detect_project
+from context_crafter_mcp.models import PythonModule
 from context_crafter_mcp.renderers.markdown import (
     render_architecture_summary,
     render_project_overview,
@@ -27,6 +28,40 @@ def test_render_project_overview() -> None:
         assert Path(result.written[0]).exists()
         text = Path(result.written[0]).read_text()
         assert "GENERATED" in text
+
+
+def test_render_project_overview_shows_all_source_dirs_with_python() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        # Python source
+        (root / "src" / "app.py").parent.mkdir(parents=True)
+        (root / "src" / "app.py").write_text("print(1)\n")
+        # Non-Python source directories
+        (root / "apps" / "web" / "src" / "index.ts").parent.mkdir(parents=True)
+        (root / "apps" / "web" / "src" / "index.ts").write_text("export {}\n")
+        (root / "lib" / "helpers.py").parent.mkdir(parents=True)
+        (root / "lib" / "helpers.py").write_text("def helper(): pass\n")
+
+        detect = detect_project(td)
+        analysis = analyze_generic(td)
+        # Inject Python module to trigger the polyglot path
+        analysis.python_modules = [
+            PythonModule(
+                rel_path="src/app.py",
+                module_name="app",
+                classes=["App"],
+                functions=["main"],
+            ),
+        ]
+        result = render_project_overview(td, detect, analysis, "docs")
+        assert result.ok
+        text = Path(result.written[0]).read_text()
+        # Source Layout should show ALL directories, not just Python ones
+        assert "apps/web/src" in text, f"missing non-Python source dir in output: {text[:1000]}"
+        assert "lib" in text, f"missing lib source dir in output: {text[:1000]}"
+        # Python module detail should also appear
+        assert "Python modules" in text, f"missing Python modules subsection: {text[:1000]}"
+        assert "src/app.py" in text, f"missing Python module in output: {text[:1000]}"
 
 
 def test_render_repo_map() -> None:

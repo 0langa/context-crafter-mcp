@@ -17,7 +17,7 @@ snapshot = scanner.scan("/path/to/repo", ScannerOptions(max_depth=6, max_files=5
 - `SnapshotDirectory`: `rel_path`
 - `SkippedEntry`: `rel_path`, `reason`
 - `ScanError`: `rel_path`, `message`
-- `ScanStats`: `files_scanned`, `dirs_scanned`, `files_skipped`, `dirs_skipped`, `budget_exhausted`, `errors`
+- `ScanStats`: `files_scanned`, `dirs_scanned`, `files_skipped`, `dirs_skipped`, `budget_exhausted`, `skipped_reasons`, `category_counts`, `errors`
 - `GitMetadata`: `commit`, `branch`, `dirty`
 
 ## Defaults
@@ -35,7 +35,7 @@ snapshot = scanner.scan("/path/to/repo", ScannerOptions(max_depth=6, max_files=5
 
 ## Skipped directories
 
-.git, .hg, .svn, .venv, venv, env, __pycache__, .pytest_cache, .mypy_cache, .ruff_cache, node_modules, dist, build, out, target, bin, obj, .next, .turbo, .cache
+.git, .hg, .svn, .venv, venv, env, __pycache__, .pytest_cache, .mypy_cache, .ruff_cache, node_modules, dist, build, out, target, bin, obj, .next, .turbo, .cache, vendor, vendors, third_party, thirdparty, 3rdparty, aa_vendor_mirror, vendor_mirror, mirrors, mirror, generated, gen, autogen
 
 ## .gitignore support
 
