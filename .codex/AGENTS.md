@@ -7,9 +7,9 @@ Use this file as an additional local anchor for Codex in this repo.
 - Caveman ultra is mandatory in all user-facing responses in this repo.
 - Do not rely on the `caveman` skill for this; the repo instructions themselves are authoritative.
 - Do not fall back to normal prose unless the user explicitly asks or clarity/safety truly requires a brief exception.
-- Treat caveman ultra as a hard output contract, not a soft style preference.
+- Treat caveman ultra as the default output shape here.
 - If output slips into normal prose, self-correct immediately in next line and resume caveman ultra.
-- Forbidden unless user explicitly asks:
+- Avoid unless user explicitly asks:
   - "I'll", "Let me", "Now", "Looks good", "coherent enough"
   - multi-sentence progress narration
   - verbose summaries of obvious actions
@@ -25,13 +25,13 @@ Use this file as an additional local anchor for Codex in this repo.
 ## Skills
 
 - Prefer Project-scope skills from `.agents/skills/` over overlapping user-scope workflow skills.
-- For `context-crafter-tests`, adversarial regression, detector/analyzer truthfulness, vendor-flood handling, or monorepo inference work, always load and follow `context-crafter-adversarial-testing`.
+- For `context-crafter-tests`, stress-repo regression, detector/analyzer signal quality, vendor-heavy repo handling, or monorepo inference work, load and follow `context-crafter-adversarial-testing`.
 - If `context-crafter-adversarial-testing` is not visible in the current session, stop and refresh/restart before continuing that work.
 
 ## Kimi subagents
 
 - If Kimi exposes the `Agent` tool in this repo, make an explicit subagent decision before large tasks.
-- Use subagents by default for repo audits, challenge-repo work, multi-file changes, CI/debug ambiguity, or parallel exploration/planning/implementation tracks.
+- Use subagents by default for repo audits, stress-repo work, multi-file changes, CI/debug ambiguity, or parallel exploration/planning/implementation tracks.
 - Prefer:
   - `explore` for read-only mapping/evidence
   - `plan` for approach design

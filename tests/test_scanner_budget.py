@@ -114,11 +114,11 @@ def test_important_files_retained_deterministically_under_per_dir_cap() -> None:
 def test_priority_reserve_protects_product_dirs() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
-        # Low-priority dir with many files
-        vendor = root / "vendor"
-        vendor.mkdir()
+        # Low-priority dir with many files (use zz_noise instead of vendor because vendor is now ignored)
+        noise = root / "zz_noise"
+        noise.mkdir()
         for i in range(60):
-            (vendor / f"v{i}.txt").write_text("x")
+            (noise / f"v{i}.txt").write_text("x")
         # High-priority dir with many files
         src = root / "src"
         src.mkdir()
@@ -126,7 +126,7 @@ def test_priority_reserve_protects_product_dirs() -> None:
             (src / f"s{i}.txt").write_text("x")
 
         scanner = Scanner()
-        # Global budget = 80. Without reserve, vendor (walked after src due to priority,
+        # Global budget = 80. Without reserve, noise (walked after src due to priority,
         # but alphabetically before src in raw os.walk) could consume all budget.
         # With reserve, at least 20% (16 files) are preserved for src.
         snapshot = scanner.scan(root, ScannerOptions(max_depth=2, max_files=80, max_files_per_dir=0))
@@ -162,3 +162,43 @@ def test_tiered_entrypoint_priority() -> None:
         assert "src/main.py" in rels, "tier 1 entrypoint should be retained"
         assert "src/worker.py" in rels, "tier 2 entrypoint should be retained"
         assert "src/noise.txt" not in rels, "noise should be skipped under cap"
+
+
+def test_vendor_dirs_are_skipped_entirely() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        vendor = root / "vendor"
+        vendor.mkdir()
+        for i in range(50):
+            (vendor / f"v{i}.txt").write_text("x")
+        src = root / "src"
+        src.mkdir()
+        for i in range(10):
+            (src / f"s{i}.txt").write_text("x")
+
+        scanner = Scanner()
+        snapshot = scanner.scan(root, ScannerOptions(max_depth=2, max_files=100))
+
+        vendor_files = [f for f in snapshot.files if f.rel_path.startswith("vendor/")]
+        assert len(vendor_files) == 0, f"vendor dir should be skipped entirely, got {len(vendor_files)}"
+        src_files = [f for f in snapshot.files if f.rel_path.startswith("src/")]
+        assert len(src_files) == 10, f"src should get all files, got {len(src_files)}"
+
+
+def test_category_counts_tracked() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        src = root / "src"
+        src.mkdir()
+        (src / "main.py").write_text("pass\n")
+        tests = root / "tests"
+        tests.mkdir()
+        (tests / "test_main.py").write_text("pass\n")
+
+        scanner = Scanner()
+        snapshot = scanner.scan(root, ScannerOptions(max_depth=2, max_files=100))
+
+        assert "product" in snapshot.stats.category_counts, "product category should be counted"
+        assert "test" in snapshot.stats.category_counts, "test category should be counted"
+        assert snapshot.stats.category_counts["product"] >= 1
+        assert snapshot.stats.category_counts["test"] >= 1

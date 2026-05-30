@@ -44,7 +44,7 @@ def analyze_rust(
     if text:
         try:
             data = tomllib.loads(text)
-        except Exception as exc:
+        except tomllib.TOMLDecodeError as exc:
             result.errors.append(f"Cargo.toml parse error: {exc}")
             ev.add(
                 EvidenceKind.ERROR,
@@ -67,6 +67,17 @@ def analyze_rust(
             ev.add(
                 EvidenceKind.OBSERVED,
                 f"Rust dependency `{dep}` from `Cargo.toml`",
+                source_path="Cargo.toml",
+                analyzer="rust",
+            )
+        # Workspace members
+        workspace = data.get("workspace", {})
+        members = workspace.get("members", []) if isinstance(workspace, dict) else []
+        if members:
+            crate.workspace_members = list(members)
+            ev.add(
+                EvidenceKind.OBSERVED,
+                f"Rust workspace with {len(members)} member(s)",
                 source_path="Cargo.toml",
                 analyzer="rust",
             )
@@ -106,6 +117,10 @@ def analyze_rust(
                     crate.traits.append(trait)
                 for impl in parsed.impls:
                     crate.impls.append(impl)
+                # Correlate trait impls where parser gives both trait and type
+                if parsed.traits and parsed.impls and len(parsed.traits) == len(parsed.impls):
+                    for trait, impl_type in zip(parsed.traits, parsed.impls):
+                        crate.trait_impls.append((trait, impl_type))
             else:
                 # Regex fallback
                 src = safe_read_text(fi.path, max_bytes=500_000)

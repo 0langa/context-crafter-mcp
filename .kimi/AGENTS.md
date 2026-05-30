@@ -6,9 +6,9 @@ Use this file as a Kimi-specific routing anchor inside this repo.
 
 - Caveman ultra mandatory in all user-facing responses for this repo.
 - Do not rely on caveman skill for this; repo instructions already authoritative.
-- Treat caveman ultra as a hard output contract, not style preference.
+- Treat caveman ultra as the default output shape here.
 - If you produce normal prose, self-correct immediately in the next line and resume caveman ultra.
-- Forbidden unless user explicitly asks:
+- Avoid unless user explicitly asks:
   - "I'll", "Let me", "Now", "Looks good", "coherent enough"
   - multi-sentence progress narration
   - verbose summaries of obvious actions
@@ -29,9 +29,9 @@ Use this file as a Kimi-specific routing anchor inside this repo.
   - `explore` for read-only repo mapping, detector/output inspection, evidence gathering
   - `plan` for architecture/tradeoff analysis before editing
   - `coder` for isolated implementation slices
-- Launch subagents when task involves repo-wide understanding, challenge-repo work, multi-file refactors, CI/debug ambiguity, or independent tracks that can run in parallel.
+- Launch subagents when task involves repo-wide understanding, stress-repo work, multi-file refactors, CI/debug ambiguity, or independent tracks that can run in parallel.
 - Skip subagents only for trivial tasks. If skipping on a large task, have a concrete reason.
 
 ## Project skill
 
-- For `context-crafter-tests`, adversarial regression, vendor-flood handling, detector/analyzer truthfulness, or monorepo inference work, always load and follow `context-crafter-adversarial-testing`.
+- For `context-crafter-tests`, stress-repo regression, vendor-heavy repo handling, detector/analyzer signal quality, or monorepo inference work, load and follow `context-crafter-adversarial-testing`.

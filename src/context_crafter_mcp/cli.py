@@ -109,7 +109,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
         ver = getattr(mcp, "__version__", None)
         print(f"mcp SDK: installed{' (' + ver + ')' if ver else ''}")
-    except Exception as exc:
+    except (ImportError, ModuleNotFoundError) as exc:
         print(f"mcp SDK: MISSING ({exc})")
         issues.append(f"mcp SDK missing: {exc}")
         ok = False
@@ -119,7 +119,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
         ver = getattr(pydantic, "__version__", None)
         print(f"pydantic: installed{' (' + ver + ')' if ver else ''}")
-    except Exception as exc:
+    except (ImportError, ModuleNotFoundError) as exc:
         print(f"pydantic: MISSING ({exc})")
         issues.append(f"pydantic missing: {exc}")
         ok = False
@@ -129,7 +129,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
         ver = getattr(langgraph, "__version__", None)
         print(f"langgraph: installed{' (' + ver + ')' if ver else ''}")
-    except Exception as exc:
+    except (ImportError, ModuleNotFoundError) as exc:
         print(f"langgraph: MISSING ({exc})")
         issues.append(f"langgraph missing: {exc}")
         ok = False
@@ -149,7 +149,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         else:
             print("CLI entrypoint: unexpected output")
             issues.append("CLI entrypoint check failed")
-    except Exception as exc:
+    except (OSError, subprocess.SubprocessError) as exc:
         print(f"CLI entrypoint: error ({exc})")
         issues.append(f"CLI entrypoint error: {exc}")
 
@@ -162,7 +162,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
             test_path.write_text("ok", encoding="utf-8")
             assert test_path.read_text(encoding="utf-8") == "ok"
         print("Temp output write: ok")
-    except Exception as exc:
+    except (OSError, AssertionError) as exc:
         print(f"Temp output write: error ({exc})")
         issues.append(f"Temp output write error: {exc}")
         ok = False

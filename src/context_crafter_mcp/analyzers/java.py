@@ -24,6 +24,15 @@ JAVA_METHOD_RE = re.compile(
     r"\b(public|protected|private)\s+(?:static\s+)?(?:final\s+)?[\w<>,\[\]\s]+\s+(\w+)\s*\(", re.MULTILINE
 )
 JAVA_ANNOTATION_RE = re.compile(r"@(\w+)")
+JAVA_EXTENDS_RE = re.compile(r"\bclass\s+\w+\s+extends\s+(\w+)")
+JAVA_IMPLEMENTS_RE = re.compile(r"\bclass\s+\w+\s+implements\s+([\w,\s]+)")
+_JAVA_FRAMEWORKS: dict[str, set[str]] = {
+    "spring": {"spring", "springboot", "spring-boot", "springframework"},
+    "jakarta-ee": {"jakarta", "javax.enterprise", "jakartaee"},
+    "micronaut": {"micronaut"},
+    "quarkus": {"quarkus"},
+    "hibernate": {"hibernate", "jpa"},
+}
 
 
 def parse_pom(path: Path) -> JavaProject:
@@ -89,7 +98,7 @@ def analyze_java(
     java_files: list = []
     count = 0
 
-    for fi in safe_scan(path, max_depth=cfg.max_depth + 2, max_files_per_dir=cfg.max_files_per_dir):
+    for fi in safe_scan(path, max_depth=cfg.max_depth + 4, max_files_per_dir=cfg.max_files_per_dir):
         if fi.is_dir:
             continue
         if _is_fixture_path(fi.rel_path):
@@ -187,10 +196,10 @@ def analyze_java(
                         source_path=fi.rel_path,
                         analyzer="java",
                     )
+                pkg_match = JAVA_PACKAGE_RE.search(src)
+                pkg = pkg_match.group(1) + "." if pkg_match else ""
                 for m in JAVA_CLASS_RE.finditer(src):
                     class_name = m.group(3)
-                    pkg_match = JAVA_PACKAGE_RE.search(src)
-                    pkg = pkg_match.group(1) + "." if pkg_match else ""
                     best_proj.classes.append(pkg + class_name)
                 for m in JAVA_IMPORT_RE.finditer(src):
                     imp = m.group(1)
@@ -200,6 +209,34 @@ def analyze_java(
                     best_proj.methods.append(m.group(2))
                 for m in JAVA_ANNOTATION_RE.finditer(src):
                     best_proj.annotations.append(m.group(1))
+                for m in JAVA_EXTENDS_RE.finditer(src):
+                    best_proj.class_hierarchy.append((pkg + m.group(0).split()[1], m.group(1)))
+                for m in JAVA_IMPLEMENTS_RE.finditer(src):
+                    cls = pkg + m.group(0).split()[1]
+                    for iface in m.group(1).split(","):
+                        best_proj.class_hierarchy.append((cls, iface.strip()))
+
+    # Pass 3: build package graph and detect frameworks
+    for proj in modules.values():
+        all_imports = [d for d in proj.dependencies if "." in d]
+        pkg_deps: set[str] = set()
+        for imp in all_imports:
+            pkg = ".".join(imp.split(".")[:-1]) if "." in imp else imp
+            if pkg and pkg != proj.name:
+                pkg_deps.add(pkg)
+        for pkg in pkg_deps:
+            proj.package_graph.append((proj.name or proj.rel_path or "?", pkg))
+        # Framework detection
+        dep_str = " ".join(proj.dependencies).lower()
+        for fw_name, indicators in _JAVA_FRAMEWORKS.items():
+            if any(ind in dep_str for ind in indicators):
+                if fw_name not in proj.frameworks:
+                    proj.frameworks.append(fw_name)
+                    ev.add(
+                        EvidenceKind.INFERRED,
+                        f"Java framework `{fw_name}` inferred from dependencies",
+                        analyzer="java",
+                    )
 
     # Deduplicate and sort, drop empty fallback if real modules exist
     for proj in modules.values():
@@ -208,6 +245,7 @@ def analyze_java(
         proj.annotations = sorted(set(proj.annotations))
         proj.dependencies = sorted(set(proj.dependencies))
         proj.entry_points = sorted(set(proj.entry_points))
+        proj.package_graph = sorted(set(proj.package_graph))
 
     result.java_projects = [
         p for p in modules.values() if p.rel_path != "." or p.classes or p.methods or p.dependencies
@@ -216,10 +254,11 @@ def analyze_java(
 
     total_classes = sum(len(p.classes) for p in result.java_projects)
     total_methods = sum(len(p.methods) for p in result.java_projects)
+    total_frameworks = sum(len(p.frameworks) for p in result.java_projects)
     if total_classes or total_methods:
         ev.add(
             EvidenceKind.OBSERVED if parser_used != "regex" else EvidenceKind.INFERRED,
-            f"Java symbols via {parser_used}: {total_classes} class(es), {total_methods} method(s)",
+            f"Java symbols via {parser_used}: {total_classes} class(es), {total_methods} method(s), {total_frameworks} framework(s)",
             analyzer="java",
         )
 

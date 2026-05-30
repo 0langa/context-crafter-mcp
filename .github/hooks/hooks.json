@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "hooks": [
+    {
+      "name": "check-stdio-quiet",
+      "description": "Block obvious stdout/logging noise in MCP server path.",
+      "trigger": "PreToolUse",
+      "matcher": {
+        "tools": ["functions.apply_patch", "functions.create_file"]
+      },
+      "command": "uv run python .github/hooks/check_stdio_quiet.py"
+    },
+    {
+      "name": "check-mcp-contract-sync",
+      "description": "Warn on obvious CLI and MCP surface drift.",
+      "trigger": "PostToolUse",
+      "matcher": {
+        "tools": ["functions.apply_patch", "functions.create_file"]
+      },
+      "command": "uv run python .github/hooks/check_mcp_contract_sync.py"
+    },
+    {
+      "name": "check-generated-contract",
+      "description": "Verify required generated-doc contract markers still present.",
+      "trigger": "PostToolUse",
+      "matcher": {
+        "tools": ["functions.apply_patch", "functions.create_file"]
+      },
+      "command": "uv run python .github/hooks/check_generated_contract.py"
+    }
+  ]
+}

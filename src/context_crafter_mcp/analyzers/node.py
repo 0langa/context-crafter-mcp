@@ -226,9 +226,11 @@ def analyze_node(
 
     # Discover workspace definitions
     workspaces: list[str] = []
+    monorepo_tool: str | None = None
     pnpm_ws = path / "pnpm-workspace.yaml"
     pnpm_text = safe_read_text(pnpm_ws)
     if pnpm_text:
+        monorepo_tool = "pnpm"
         for line in pnpm_text.splitlines():
             line = line.strip()
             if line.startswith("- "):
@@ -255,6 +257,17 @@ def analyze_node(
                     workspaces.extend(pkg_workspaces.get("packages", []))
             except json.JSONDecodeError:
                 pass
+
+    # Detect other monorepo tools
+    if (path / "turbo.json").exists():
+        monorepo_tool = monorepo_tool or "turbo"
+        ev.add(EvidenceKind.OBSERVED, "Turbo monorepo detected", source_path="turbo.json", analyzer="node")
+    if (path / "nx.json").exists():
+        monorepo_tool = monorepo_tool or "nx"
+        ev.add(EvidenceKind.OBSERVED, "Nx monorepo detected", source_path="nx.json", analyzer="node")
+    if (path / "lerna.json").exists():
+        monorepo_tool = monorepo_tool or "lerna"
+        ev.add(EvidenceKind.OBSERVED, "Lerna monorepo detected", source_path="lerna.json", analyzer="node")
 
     result.workspace_packages = sorted(set(workspaces))
 
@@ -313,11 +326,26 @@ def analyze_node(
                 for m in NODE_FUNC_RE.finditer(text):
                     pkg.functions.append(f"{fi.rel_path}:{m.group(1)}")
 
-    # Compute local package dependencies
+    # Compute local package dependencies and build package graph
     local_pkg_names = {p.name for p in pkg_json_map.values() if p.name}
+    name_to_pkg: dict[str, NodePackage] = {p.name: p for p in pkg_json_map.values() if p.name}
     for pkg in pkg_json_map.values():
         all_deps = set(pkg.dependencies or []) | set(pkg.peer_dependencies or [])
         pkg.local_deps = sorted(all_deps & local_pkg_names)
+        pkg.monorepo_tool = monorepo_tool
+        # Build package graph from local deps
+        for dep in pkg.local_deps:
+            pkg.package_graph.append((pkg.name or pkg.rel_path or "?", dep))
+        # Build package graph from internal file imports
+        for _file, imp in pkg.import_edges:
+            if imp.startswith("."):
+                # Relative import → local package
+                continue
+            first = imp.split("/")[0]
+            if first in name_to_pkg and first != pkg.name:
+                edge = (pkg.name or pkg.rel_path or "?", first)
+                if edge not in pkg.package_graph:
+                    pkg.package_graph.append(edge)
 
     # Finalize packages: deduplicate, sort, drop empty vendor packages
     final_packages: list[NodePackage] = []

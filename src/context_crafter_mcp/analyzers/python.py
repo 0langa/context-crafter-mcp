@@ -66,7 +66,7 @@ def analyze_python_file(path: Path, rel_path: str, repo_path: Path) -> PythonMod
         if isinstance(node, ast.If):
             try:
                 test_src = ast.unparse(node.test)
-            except Exception:
+            except (ValueError, TypeError):
                 continue
             if "__name__" in test_src and '"__main__"' in test_src:
                 mod.is_entry_point = True
@@ -129,7 +129,7 @@ def _read_pyproject_at(pp: Path) -> dict[str, Any]:
         return {}
     try:
         return tomllib.loads(text)
-    except Exception:
+    except tomllib.TOMLDecodeError:
         return {}
 
 
@@ -232,7 +232,7 @@ def _read_setup_py(repo_path: Path) -> tuple[list[str], list[str], str | None]:
                             dev_deps.append(dep)
                         else:
                             deps.append(dep)
-    except Exception as exc:
+    except (OSError, ValueError, _re.error) as exc:
         return [], [], f"setup.py regex extraction failed: {exc}"
 
     return deps, dev_deps, None
@@ -249,7 +249,7 @@ def _read_pipfile(repo_path: Path) -> tuple[list[str], list[str], str | None]:
         return [], [], None
     try:
         data = tomllib.loads(text)
-    except Exception as exc:
+    except tomllib.TOMLDecodeError as exc:
         return [], [], f"Pipfile parse error: {exc}"
     deps: list[str] = []
     dev_deps: list[str] = []

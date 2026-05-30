@@ -9,8 +9,8 @@
 - Drop articles, filler, hedging. Fragments OK. Abbreviate (DB/auth/config/req/res/fn/impl). Arrows for causality (X → Y). One word when enough.
 - Auto-clarity exception: security warnings, irreversible actions, multi-step sequences where fragment order risks misread, or when user asks to clarify. Resume caveman after clear part done.
 - "stop caveman" / "normal mode" to revert.
-- Treat caveman ultra as an **output contract**. If response is not caveman ultra, self-correct immediately in next line.
-- Forbidden in user-facing responses unless user explicitly asks:
+- Treat caveman ultra as the default output shape here. If response drifts, self-correct in the next line.
+- Avoid these response shapes unless user explicitly asks:
   - normal conversational prose
   - self-referential filler like "I'll", "Let me", "Now", "Looks good", "coherent enough"
   - multi-sentence progress narration
@@ -34,15 +34,12 @@
 
 ## Local instruction anchors
 
-- Root file [C:\Users\juliu\source\repos\context-crafter-mcp\AGENTS.md](C:/Users/juliu/source/repos/context-crafter-mcp/AGENTS.md) is authoritative.
-- When using Kimi Code on this repo, also read and follow:
-  - [C:\Users\juliu\source\repos\context-crafter-mcp\.kimi\AGENTS.md](C:/Users/juliu/source/repos/context-crafter-mcp/.kimi/AGENTS.md)
-- When using Codex on this repo, also read and follow:
-  - [C:\Users\juliu\source\repos\context-crafter-mcp\.codex\AGENTS.md](C:/Users/juliu/source/repos/context-crafter-mcp/.codex/AGENTS.md)
-- If those files are present, do not ignore them just because they are hidden directories. Load them by the absolute paths above.
-- Do not cross-load hidden agent anchors across tools:
-  - Kimi Code should not read `.codex/AGENTS.md` unless root instructions explicitly say otherwise for a special task.
-  - Codex should not read `.kimi/AGENTS.md` unless root instructions explicitly say otherwise for a special task.
+- Root `AGENTS.md` is authoritative.
+- Tool-specific local anchors may exist for the active tool.
+- Keep tool boundaries clean:
+  - Kimi Code uses its own local anchor when present.
+  - Codex uses its own local anchor when present.
+  - Do not cross-load the other tool's local anchor unless the user explicitly asks.
 
 ## Kimi Code / Agent tool and subagents
 
@@ -54,7 +51,7 @@
   - `coder` = focused implementation or fix work
 - Launch at least one subagent before major work when any of these are true:
   - repo audit / “get full context” / “understand current state”
-  - challenge-repo or adversarial regression work
+  - stress-repo or regression work
   - multi-file feature or refactor touching multiple subsystems
   - CI/debug work with more than one plausible root cause
   - separate exploration + implementation tracks would help
@@ -78,9 +75,9 @@
 - Check available skills before starting tasks; load and apply any that match the current work (debugging, testing, security, docs, CI, etc.).
 - Do not skip skill usage unless explicitly told to ignore them.
 - Kimi Code auto-discovers project-scoped skills from `.agents/skills/` in this repo; prefer those when present because they are repo-specific.
-- When the task involves `context-crafter-tests`, adversarial regression, ugly local repo validation, detector/analyzer truthfulness under vendor flood, or challenge-repo hardening, **always load and follow** the project skill `context-crafter-adversarial-testing` before making changes.
-- For those challenge-repo tasks, do not proceed if the current session cannot see `context-crafter-adversarial-testing` in the available Project-scope skills. Refresh/restart session first, then continue.
-- For those challenge-repo tasks, prefer the project skill over overlapping generic skills; use generic test/debug skills only as supplements, not replacements.
+- When the task involves `context-crafter-tests`, stress-repo regression, ugly local repo validation, detector/analyzer signal quality under vendor-heavy trees, or mixed-repo hardening, load and follow the project skill `context-crafter-adversarial-testing` before making changes.
+- For those stress-repo tasks, if the current session cannot see `context-crafter-adversarial-testing`, refresh/restart session before continuing.
+- For those stress-repo tasks, prefer the project skill over overlapping generic skills; use generic test/debug skills only as supplements, not replacements.
 
 ## Project identity
 

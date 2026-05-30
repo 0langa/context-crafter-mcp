@@ -100,6 +100,18 @@ PRODUCT_SEGMENTS: set[str] = {
     "runtime",
     "product",
     "crates",
+    "components",
+    "modules",
+    "projects",
+    "microservices",
+    "gateways",
+    "handlers",
+    "controllers",
+    "repositories",
+    "entities",
+    "usecases",
+    "interactors",
+    "presenters",
 }
 
 TEST_SEGMENTS: set[str] = {
@@ -165,7 +177,11 @@ def classify_path(rel_path: str) -> PathCategory:
     parts = Path(lower).parts
     name = Path(lower).name
 
-    # Fixture check — only when under test/example/demo context
+    # Fixture check — explicit policy:
+    # - fixtures/ under test/demo/example → FIXTURE (untrustworthy)
+    # - fixtures/ under product dirs (src/fixtures, lib/fixtures) → PRODUCT (trustworthy)
+    # - root-level fixtures/ → falls through to later rules (typically UNKNOWN)
+    # This policy is intentional: product fixture dirs are treated as primary surface.
     if any(p in ("fixtures", "fixture") for p in parts):
         if any(p in TEST_SEGMENTS for p in parts) or any(p in ("examples", "demo", "demo-repo") for p in parts):
             return PathCategory.FIXTURE

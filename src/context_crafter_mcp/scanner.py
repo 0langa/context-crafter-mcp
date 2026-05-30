@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pathspec
 
+from context_crafter_mcp.ranking import classify_path
+
 
 DEFAULT_IGNORED_DIRS = {
     ".git",
@@ -30,6 +32,19 @@ DEFAULT_IGNORED_DIRS = {
     ".next",
     ".turbo",
     ".cache",
+    # vendor / third-party / generated
+    "vendor",
+    "vendors",
+    "third_party",
+    "thirdparty",
+    "3rdparty",
+    "aa_vendor_mirror",
+    "vendor_mirror",
+    "mirrors",
+    "mirror",
+    "generated",
+    "gen",
+    "autogen",
 }
 
 
@@ -358,6 +373,7 @@ class ScanStats:
     dirs_skipped: int = 0
     budget_exhausted: bool = False
     skipped_reasons: dict[str, int] = field(default_factory=dict)
+    category_counts: dict[str, int] = field(default_factory=dict)
     errors: list[ScanError] = field(default_factory=list)
 
 
@@ -785,8 +801,13 @@ class Scanner:
                 )
                 if dirty.returncode == 0 and dirty.stdout.strip():
                     git.dirty = True
-            except Exception:
+            except (OSError, subprocess.SubprocessError):
                 pass
+
+        category_counts: dict[str, int] = {}
+        for f in files:
+            cat = classify_path(f.rel_path).value
+            category_counts[cat] = category_counts.get(cat, 0) + 1
 
         return RepoSnapshot(
             root=root_path,
@@ -800,6 +821,7 @@ class Scanner:
                 dirs_skipped=len([s for s in skipped if "max_depth" in s.reason or "ignored_dir" in s.reason]),
                 budget_exhausted=budget_exhausted,
                 skipped_reasons=skipped_reasons,
+                category_counts=category_counts,
                 errors=errors,
             ),
             git=git,

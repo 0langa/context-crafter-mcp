@@ -19,7 +19,7 @@ def _markdown_to_html(markdown_text: str) -> str:
                 extensions=["tables", "fenced_code", "toc"],
             )
         )
-    except Exception:
+    except (ImportError, ModuleNotFoundError):
         return _stdlib_markdown_to_html(markdown_text)
 
 
