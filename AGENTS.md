@@ -74,10 +74,9 @@
 - When working on this repo, **always consider using relevant skills** from that directory.
 - Check available skills before starting tasks; load and apply any that match the current work (debugging, testing, security, docs, CI, etc.).
 - Do not skip skill usage unless explicitly told to ignore them.
-- Kimi Code auto-discovers project-scoped skills from `.agents/skills/` in this repo; prefer those when present because they are repo-specific.
-- When the task involves `context-crafter-tests`, stress-repo regression, ugly local repo validation, detector/analyzer signal quality under vendor-heavy trees, or mixed-repo hardening, load and follow the project skill `context-crafter-adversarial-testing` before making changes.
-- For those stress-repo tasks, if the current session cannot see `context-crafter-adversarial-testing`, refresh/restart session before continuing.
-- For those stress-repo tasks, prefer the project skill over overlapping generic skills; use generic test/debug skills only as supplements, not replacements.
+- Repo-scoped skills may exist locally outside git. Use them when available, but do not assume this repository checkout contains tracked skill files.
+- When the task involves `context-crafter-tests`, stress-repo regression, ugly local repo validation, detector/analyzer signal quality under vendor-heavy trees, or mixed-repo hardening, prefer a relevant adversarial-testing or regression skill when one is available.
+- If no repo-specific adversarial-testing skill is available in the current session, continue with the closest generic testing/debugging skill instead of blocking.
 
 ## Project identity
 

@@ -13,6 +13,17 @@ build/
 # Generated documentation (regenerate on demand)
 docs/generated/
 
+# Local agent / maintainer artifacts
+.agents/
+.codex/
+.kimi/
+.github/agents/
+.github/hooks/
+.github/instructions/
+.github/prompts/
+.github/skills/
+.github/README-customizations.md
+
 # IDE
 .idea/
 .vscode/

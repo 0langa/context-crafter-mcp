@@ -1,6 +1,6 @@
 # Real Repo Smoke Matrix
 
-Maintainer-facing `0.5.0` hardening confidence set. These repos are not vendored into this repository.
+Maintainer-facing hardening confidence set for unreleased `main` work. These repos are not vendored into this repository.
 
 ## Fixed smoke set
 
@@ -41,4 +41,4 @@ These warnings came from `detect_project` reporting unsupported/non-matching sta
 
 - No command crashes.
 - Output files are generated and validate cleanly or with documented non-blocking warnings.
-- Any warning that undermines core trust becomes a `0.5.0` blocker or a documented limitation.
+- Any warning that undermines core trust becomes a blocker for the next tagged release or a documented limitation.

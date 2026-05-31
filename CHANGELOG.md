@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Package metadata URLs for homepage, repository, issues, and changelog.
 - Dependabot config for Python dependencies and GitHub Actions.
 - CodeQL workflow for Python.
-- Public real-repo smoke matrix document for pre-`1.0.0` confidence tracking.
+- Public real-repo smoke matrix document for unreleased hardening confidence tracking.
 
 ### Changed
 
@@ -41,8 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MCP server now reports the package version in server metadata.
 - MCP tool schemas now match actual supported arguments more closely.
 - CI now validates committed example outputs, checks CLI smoke commands for unexpected repo dirtiness, and smoke-tests installed wheel and sdist artifacts.
-- Roadmap rewritten around a realistic `0.5.0` internal hardening baseline, with `1.0.0` still reserved for the first public release.
+- Release-planning docs now describe unreleased hardening work without implying untagged `0.5.0`/`0.6.0` releases.
 - README, output contract, limitations, MCP client docs, security policy, and manual steps updated to reflect current release policy and output confinement behavior.
+- Removed tracked local agent/customization artifacts and private session exports from the repository.
+- Replaced the stale implementation report with a short archive note keyed to actual git/tag history.
 
 ## [0.4.0] - 2026-05-29
 
@@ -171,7 +173,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Evidence model**: Added `observed/inferred/unknown` evidence levels to `DetectResult` and generated docs.
 - **Repo cleanliness**: Removed 72 accidentally committed generated files from fixture directories.
 
-## [0.2.0] - 2025-05-29
+## [0.2.0] - 2026-05-11
 
 ### Added
 
