@@ -75,3 +75,15 @@ python_version = "3.11"
 warn_return_any = true
 warn_unused_ignores = true
 strict = false
+
+[[tool.mypy.overrides]]
+module = [
+    "tree_sitter",
+    "tree_sitter.*",
+    "tree_sitter_javascript",
+    "tree_sitter_typescript",
+    "tree_sitter_go",
+    "tree_sitter_rust",
+    "tree_sitter_c_sharp",
+]
+ignore_missing_imports = true
