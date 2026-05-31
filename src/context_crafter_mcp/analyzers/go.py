@@ -137,7 +137,13 @@ def analyze_go(
                 best_mod.interfaces.append(f"{pkg_dir or 'main'}.{iface}")
             # Convert absolute paths from parser to relative
             for ep in parsed.entry_points:
-                rel = str(Path(ep).relative_to(path)) if Path(ep).is_absolute() else ep
+                # parser returns "" when the file contains main(); map to file path
+                if ep == "":
+                    rel = fi.rel_path
+                elif Path(ep).is_absolute():
+                    rel = str(Path(ep).relative_to(path))
+                else:
+                    rel = ep
                 if rel not in best_mod.entry_points:
                     best_mod.entry_points.append(rel)
                     ev.add(
