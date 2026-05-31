@@ -21,14 +21,21 @@ Graph Pipeline (LangGraph)
     |-- render_outputs
     |
     v
-Analyzer Registry
-    |-- Python (stdlib AST)
-    |-- Node/JS (tree-sitter AST + regex fallback)
-    |-- .NET (tree-sitter C# AST + XML + regex fallback)
-    |-- Rust (tree-sitter Rust AST + regex fallback)
-    |-- Go (tree-sitter Go AST + regex fallback)
-    |-- Java (javalang AST + regex fallback)
-    |-- Generic (fallback)
+AnalyzerRegistry
+    |-- register(spec, fn)
+    |-- detect(snapshot) -> DetectedProject[]
+    |-- analyze(snapshot, detected) -> AnalysisResult
+    |-- merge(results) -> AnalysisResult
+    |
+    v
+Language Analyzers + ParserBackend
+    |-- Python (stdlib AST via PythonAstBackend)
+    |-- Node/JS (tree-sitter AST via TreeSitterBackend + regex fallback)
+    |-- .NET (tree-sitter C# AST via TreeSitterBackend + XML + regex fallback)
+    |-- Rust (tree-sitter AST via TreeSitterBackend + regex fallback)
+    |-- Go (tree-sitter AST via TreeSitterBackend + regex fallback)
+    |-- Java (javalang via JavalangBackend + regex fallback)
+    |-- Generic (RegexFallbackBackend)
     |
     v
 Signal Ranking
@@ -64,6 +71,17 @@ The scanner is a strict replaceable boundary. Everything above it consumes `Repo
 
 Result: compact/standard/deep produce measurably different output on substantial repositories.
 
+## Parser Abstraction
+
+Analyzers do not depend on concrete parser implementations. They consume a `ParserBackend` protocol:
+
+- `TreeSitterBackend` — lazy-imports tree-sitter grammars for JS, TS, Go, Rust, C#
+- `JavalangBackend` — wraps `javalang` for Java
+- `PythonAstBackend` — stdlib `ast` for Python
+- `RegexFallbackBackend` — no-op returning `None`, triggering heuristic analysis
+
+Tree-sitter support is optional. Install with `uv sync --extra parsers`. Without it, analyzers degrade gracefully to regex/heuristic evidence.
+
 ## Safety Model
 
 - Static-only analysis
@@ -74,3 +92,4 @@ Result: compact/standard/deep produce measurably different output on substantial
 - Output confined to repo root
 - MCP stdio protected from stdout pollution
 - Resource registry blocks arbitrary local path reads
+- Basic secret awareness flags potential secret files in scan reports

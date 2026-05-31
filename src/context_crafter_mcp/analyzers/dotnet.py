@@ -17,7 +17,7 @@ from context_crafter_mcp.models import (
     EvidenceKind,
     ScanConfig,
 )
-from context_crafter_mcp.parsers import parse_csharp
+from context_crafter_mcp.parsers import get_parser_backend
 
 DOTNET_CLASS_RE = re.compile(r"\bclass\s+(\w+)")
 DOTNET_NAMESPACE_RE = re.compile(r"\bnamespace\s+([\w.]+)")
@@ -187,8 +187,14 @@ def analyze_dotnet(
             )
         # Scan .cs files with tree-sitter or regex
         for cs_file in cs_files[:20]:
-            parsed = parse_csharp(cs_file)
-            if parsed and parsed.parser_used != "none":
+            backend = get_parser_backend("csharp")
+            try:
+                source = cs_file.read_bytes()
+            except OSError:
+                parsed = None
+            else:
+                parsed = backend.parse(source, "csharp")
+            if parsed and getattr(parsed, "parser_used", "none") != "none":
                 parser_used = parsed.parser_used
                 for cls in parsed.classes:
                     p.classes.append(cls)

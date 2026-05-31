@@ -9,7 +9,7 @@ from context_crafter_mcp.analyzers import register_analyzer, register_analyzer_s
 from context_crafter_mcp.detectors import _is_fixture_path
 from context_crafter_mcp.filesystem import safe_read_text, safe_scan, validate_repo_path
 from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, EvidenceKind, GoModule, ScanConfig
-from context_crafter_mcp.parsers import parse_go
+from context_crafter_mcp.parsers import get_parser_backend
 
 GO_MOD_MODULE_RE = re.compile(r"^module\s+(\S+)", re.MULTILINE)
 GO_MOD_REQUIRE_RE = re.compile(r"^require\s+\(?\s*(\S+)", re.MULTILINE)
@@ -118,8 +118,14 @@ def analyze_go(
         best_mod.packages.append(pkg_dir or "main")
 
         # Try tree-sitter first
-        parsed = parse_go(fi.path)
-        if parsed and parsed.parser_used != "none":
+        backend = get_parser_backend("go")
+        try:
+            source = fi.path.read_bytes()
+        except OSError:
+            parsed = None
+        else:
+            parsed = backend.parse(source, "go")
+        if parsed and getattr(parsed, "parser_used", "none") != "none":
             parser_used = parsed.parser_used
             for imp in parsed.imports:
                 best_mod.dependencies.append(imp)

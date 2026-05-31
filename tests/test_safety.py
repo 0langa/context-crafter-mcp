@@ -205,3 +205,24 @@ class TestGenerationSafety:
             assert "urllib" not in source or "#" in source.split("urllib")[0].split("\n")[-1]
             assert "requests.get" not in source
             assert "httpx" not in source
+
+
+class TestSecretAwareness:
+    """Basic secret file detection."""
+
+    def test_secret_file_warns(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            Path(td, "secrets.json").write_text('{"api_key": "123"}\n')
+            state = run_generate_all(td, "out")
+            assert state.ok
+            scan_report = Path(td, "out", "SCAN_REPORT.md").read_text()
+            assert "Potential secret files detected" in scan_report
+            assert "secrets.json" in scan_report
+
+    def test_no_secret_file_clean(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            Path(td, "main.py").write_text("print(1)\n")
+            state = run_generate_all(td, "out")
+            assert state.ok
+            scan_report = Path(td, "out", "SCAN_REPORT.md").read_text()
+            assert "No obvious secret files detected" in scan_report

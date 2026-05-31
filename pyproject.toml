@@ -29,13 +29,6 @@ dependencies = [
     "pathspec",
     "javalang",
     "markdown",
-    "tree-sitter",
-    "tree-sitter-javascript",
-    "tree-sitter-typescript",
-    "tree-sitter-java",
-    "tree-sitter-go",
-    "tree-sitter-rust",
-    "tree-sitter-c-sharp",
 ]
 
 [project.urls]
@@ -49,6 +42,15 @@ dev = [
     "pytest",
     "ruff",
     "mypy",
+]
+parsers = [
+    "tree-sitter",
+    "tree-sitter-javascript",
+    "tree-sitter-typescript",
+    "tree-sitter-java",
+    "tree-sitter-go",
+    "tree-sitter-rust",
+    "tree-sitter-c-sharp",
 ]
 
 [project.scripts]

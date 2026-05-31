@@ -2,7 +2,7 @@
 
 Steps that remain intentionally manual for release and repository stewardship.
 
-Roadmap note: the current working milestone is the internal `0.5.0` hardening baseline. This file still describes what remains manual for the eventual first public release at `1.0.0`.
+Roadmap note: the current working milestone is a pre-`1.0.0` pin-worthiness hardening pass. This file describes what remains manual for the eventual first public release at `1.0.0`.
 
 ## Repository settings
 
@@ -27,8 +27,8 @@ Run this checklist before cutting any release tag.
    - `uv build`
    - `uv run context-crafter-mcp doctor`
    - `uv run context-crafter-mcp self-test .`
-   - `uv run context-crafter-mcp generate . --output .tmp/generated --profile standard --json`
-   - `uv run context-crafter-mcp validate docs/generated --repo . --json`
+   - `uv run context-crafter-mcp generate . --output docs/generated --profile standard --json`
+   - `uv run context-crafter-mcp validate docs/generated --json`
    - `uv run context-crafter-mcp validate examples/outputs --repo examples/demo-repo --json`
 4. Smoke installed artifacts:
    - install wheel in fresh venv
@@ -36,8 +36,8 @@ Run this checklist before cutting any release tag.
    - run `context-crafter-mcp --help`
    - run `context-crafter-mcp doctor`
    - run `context-crafter-mcp detect . --json`
-   - run `context-crafter-mcp generate . --output .tmp/generated --profile compact --json`
-   - run `context-crafter-mcp validate docs/generated --repo . --json`
+   - run `context-crafter-mcp generate . --output docs/generated --profile standard --json`
+   - run `context-crafter-mcp validate docs/generated --json`
 5. Run and update the public matrix in `docs/REAL_REPO_SMOKE_MATRIX.md`.
 6. Regenerate any intentionally committed example output and verify it still matches policy.
 7. Review `git status --short` and ensure only intentional tracked changes remain.

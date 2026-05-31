@@ -284,13 +284,6 @@ dependencies = [
     { name = "mcp", extra = ["cli"] },
     { name = "pathspec" },
     { name = "pydantic" },
-    { name = "tree-sitter" },
-    { name = "tree-sitter-c-sharp" },
-    { name = "tree-sitter-go" },
-    { name = "tree-sitter-java" },
-    { name = "tree-sitter-javascript" },
-    { name = "tree-sitter-rust" },
-    { name = "tree-sitter-typescript" },
     { name = "uuid-utils" },
 ]
 
@@ -299,6 +292,15 @@ dev = [
     { name = "mypy" },
     { name = "pytest" },
     { name = "ruff" },
+]
+parsers = [
+    { name = "tree-sitter" },
+    { name = "tree-sitter-c-sharp" },
+    { name = "tree-sitter-go" },
+    { name = "tree-sitter-java" },
+    { name = "tree-sitter-javascript" },
+    { name = "tree-sitter-rust" },
+    { name = "tree-sitter-typescript" },
 ]
 
 [package.metadata]
@@ -312,16 +314,16 @@ requires-dist = [
     { name = "pydantic" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "ruff", marker = "extra == 'dev'" },
-    { name = "tree-sitter" },
-    { name = "tree-sitter-c-sharp" },
-    { name = "tree-sitter-go" },
-    { name = "tree-sitter-java" },
-    { name = "tree-sitter-javascript" },
-    { name = "tree-sitter-rust" },
-    { name = "tree-sitter-typescript" },
-    { name = "uuid-utils", specifier = "<0.15" },
+    { name = "tree-sitter", marker = "extra == 'parsers'" },
+    { name = "tree-sitter-c-sharp", marker = "extra == 'parsers'" },
+    { name = "tree-sitter-go", marker = "extra == 'parsers'" },
+    { name = "tree-sitter-java", marker = "extra == 'parsers'" },
+    { name = "tree-sitter-javascript", marker = "extra == 'parsers'" },
+    { name = "tree-sitter-rust", marker = "extra == 'parsers'" },
+    { name = "tree-sitter-typescript", marker = "extra == 'parsers'" },
+    { name = "uuid-utils", specifier = "<0.17" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["dev", "parsers"]
 
 [[package]]
 name = "cryptography"

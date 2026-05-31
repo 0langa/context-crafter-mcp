@@ -2,10 +2,32 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from context_crafter_mcp.filesystem import safe_output_path
 from context_crafter_mcp.models import AnalysisResult, DetectResult, RenderResult
+
+
+_CODE_FENCE_RE = re.compile(r"(```[\s\S]*?```)")
+_CODE_SPAN_RE = re.compile(r"(`[^`]+`)")
+
+
+def _escape_html_outside_code(md_text: str) -> str:
+    """Escape < and > outside markdown code fences and inline code spans."""
+    parts = _CODE_FENCE_RE.split(md_text)
+    result: list[str] = []
+    for i, part in enumerate(parts):
+        if i % 2 == 1:
+            result.append(part)
+            continue
+        inline_parts = _CODE_SPAN_RE.split(part)
+        for j, inline_part in enumerate(inline_parts):
+            if j % 2 == 1:
+                result.append(inline_part)
+            else:
+                result.append(inline_part.replace("<", "&lt;").replace(">", "&gt;"))
+    return "".join(result)
 
 
 def _markdown_to_html(markdown_text: str) -> str:
@@ -13,9 +35,10 @@ def _markdown_to_html(markdown_text: str) -> str:
     try:
         import markdown  # type: ignore[import-untyped]
 
+        safe_md = _escape_html_outside_code(markdown_text)
         return str(
             markdown.markdown(
-                markdown_text,
+                safe_md,
                 extensions=["tables", "fenced_code", "toc"],
             )
         )

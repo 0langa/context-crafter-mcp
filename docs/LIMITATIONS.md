@@ -11,13 +11,31 @@
 - .NET: `tree-sitter-c-sharp` for `.cs` plus XML parsing for project files, with regex fallback where needed.
 - Generic: directory and filename heuristics only.
 
+## Parser support matrix
+
+| Language | Metadata Detection | Syntax-Aware Parsing | AST Backend | Fallback | Extra Required |
+|----------|-------------------|----------------------|-------------|----------|----------------|
+| Python | `pyproject.toml`, `requirements.txt`, `setup.py`, `*.py` | Yes | stdlib `ast` | N/A (always available) | — |
+| Node/TS | `package.json`, `tsconfig.json`, `*.js`, `*.ts` | Yes | `tree-sitter-javascript` / `tree-sitter-typescript` | Regex/heuristics | `parsers` |
+| .NET | `*.sln`, `*.csproj` | Yes | `tree-sitter-c-sharp` | Regex/XML | `parsers` |
+| Rust | `Cargo.toml`, `*.rs` | Yes | `tree-sitter-rust` | Regex/heuristics | `parsers` |
+| Go | `go.mod`, `*.go` | Yes | `tree-sitter-go` | Regex/heuristics | `parsers` |
+| Java | `pom.xml`, `build.gradle`, `*.java` | Yes | `javalang` | Regex/heuristics | — |
+| Generic | Directory/filename heuristics | No | None | N/A | — |
+
+Install the `parsers` extra to enable Tree-sitter backends:
+
+```bash
+uv sync --extra parsers
+```
+
 ## Fallback behavior
 
 Non-Python analyzers are intended to degrade gracefully when parser support is unavailable or parsing fails. Result quality can drop from AST-backed evidence to regex/heuristic evidence without becoming a hard crash.
 
 ## Known gaps
 
-- No secret redaction; review generated output before sharing.
+- Basic secret awareness flags potential secret files (`.env`, `secrets.json`, `credentials.json`) in scan reports, but secret redaction is not implemented; review generated output before sharing.
 - No deep semantic call graph construction.
 - No runtime dependency resolution.
 - HTML rendering uses the `markdown` package when available, with stdlib fallback otherwise.
@@ -29,4 +47,4 @@ Non-Python analyzers are intended to degrade gracefully when parser support is u
 
 ## Roadmap-scope note
 
-For the current `0.5.0` hardening target, real-world smoke coverage is focused on Python, Node/TypeScript, Go, and Rust. Java now supports nested multi-module discovery (all `pom.xml` / `build.gradle` files), but its analysis depth is still not at the same trust bar. .NET remains primarily fixture-backed until it is hardened enough for the same standard.
+For the current pre-`1.0.0` hardening target, real-world smoke coverage is focused on Python, Node/TypeScript, Go, and Rust. Java now supports nested multi-module discovery (all `pom.xml` / `build.gradle` files), but its analysis depth is still not at the same trust bar. .NET remains primarily fixture-backed until it is hardened enough for the same standard.

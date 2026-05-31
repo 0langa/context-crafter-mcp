@@ -21,6 +21,7 @@ class RepoState:
     written: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     ok: bool = True
+    generated_at: str | None = None
 
     def to_tool_result(self) -> dict[str, Any]:
         return {

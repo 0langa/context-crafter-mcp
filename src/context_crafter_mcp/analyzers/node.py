@@ -10,7 +10,7 @@ from context_crafter_mcp.analyzers import register_analyzer, register_analyzer_s
 from context_crafter_mcp.detectors import _is_fixture_path
 from context_crafter_mcp.filesystem import safe_read_text, safe_scan, validate_repo_path
 from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, EvidenceKind, NodePackage, ScanConfig
-from context_crafter_mcp.parsers import parse_javascript, parse_typescript
+from context_crafter_mcp.parsers import get_parser_backend
 from context_crafter_mcp.ranking import is_vendor_path, PathCategory, PRODUCT_SEGMENTS
 
 _IMPORT_PATTERNS = [
@@ -296,10 +296,14 @@ def analyze_node(
 
         # Try tree-sitter first
         parsed = None
-        if name.endswith((".ts", ".tsx")):
-            parsed = parse_typescript(fi.path)
+        lang = "typescript" if name.endswith((".ts", ".tsx")) else "javascript"
+        backend = get_parser_backend(lang)
+        try:
+            source = fi.path.read_bytes()
+        except OSError:
+            parsed = None
         else:
-            parsed = parse_javascript(fi.path)
+            parsed = backend.parse(source, lang)
 
         if parsed and parsed.parser_used != "none":
             parser_used = parsed.parser_used

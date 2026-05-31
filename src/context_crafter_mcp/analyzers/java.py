@@ -10,7 +10,7 @@ from context_crafter_mcp.analyzers import register_analyzer, register_analyzer_s
 from context_crafter_mcp.detectors import _is_fixture_path
 from context_crafter_mcp.filesystem import safe_read_text, safe_scan, validate_repo_path
 from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, EvidenceKind, JavaProject, ScanConfig
-from context_crafter_mcp.parsers import parse_java
+from context_crafter_mcp.parsers import get_parser_backend
 
 GRADLE_NAME_RE = re.compile(r'rootProject\.name\s*=\s*["\']([^"\']+)["\']')
 GRADLE_DEP_RE = re.compile(
@@ -170,8 +170,14 @@ def analyze_java(
                 continue
 
         # Try javalang first
-        parsed = parse_java(fi.path)
-        if parsed and parsed.parser_used != "none" and not parsed.error:
+        backend = get_parser_backend("java")
+        try:
+            source = fi.path.read_bytes()
+        except OSError:
+            parsed = None
+        else:
+            parsed = backend.parse(source, "java")
+        if parsed and getattr(parsed, "parser_used", "none") != "none" and not getattr(parsed, "error", None):
             parser_used = parsed.parser_used
             for cls in parsed.classes:
                 best_proj.classes.append(cls)
@@ -182,13 +188,19 @@ def analyze_java(
             for imp in parsed.imports:
                 if not imp.startswith("java.") and not imp.startswith("javax."):
                     best_proj.dependencies.append(imp)
-            if parsed.entry_points:
-                best_proj.entry_points.extend(parsed.entry_points)
+            if parsed.entry_points and fi.rel_path not in best_proj.entry_points:
+                best_proj.entry_points.append(fi.rel_path)
+                ev.add(
+                    EvidenceKind.OBSERVED,
+                    f"Java entry point `{fi.rel_path}` (`public static void main`)",
+                    source_path=fi.rel_path,
+                    analyzer="java",
+                )
         else:
             # Regex fallback
             src = safe_read_text(fi.path, max_bytes=500_000)
             if src:
-                if JAVA_MAIN_RE.search(src):
+                if JAVA_MAIN_RE.search(src) and fi.rel_path not in best_proj.entry_points:
                     best_proj.entry_points.append(fi.rel_path)
                     ev.add(
                         EvidenceKind.OBSERVED,

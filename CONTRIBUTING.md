@@ -18,6 +18,12 @@ uv run pytest -q
 uv run context-crafter-mcp self-test .
 ```
 
+For deeper parser support (Tree-sitter backends):
+
+```sh
+uv sync --extra parsers
+```
+
 ## Adding an analyzer
 
 1. Create a module under `src/context_crafter_mcp/analyzers/`.
@@ -25,6 +31,9 @@ uv run context-crafter-mcp self-test .
 3. Call `register_analyzer(project_type, fn)` and `register_analyzer_spec(AnalyzerSpec(...))` at module bottom.
 4. Add detection markers in `src/context_crafter_mcp/detectors.py`.
 5. Add tests with a fixture repo under `tests/fixtures/`.
+6. Add golden fixture assertions in `tests/test_golden_fixtures.py`.
+
+The `AnalyzerRegistry` class in `src/context_crafter_mcp/analyzers/registry.py` wraps registration, detection, analysis, and merging. Prefer using it over ad-hoc module-level calls in new code.
 
 ## Pull requests
 
