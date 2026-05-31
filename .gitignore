@@ -12,6 +12,7 @@ build/
 
 # Generated documentation (regenerate on demand)
 docs/generated/
+examples/demo-repo/docs/generated/
 
 # Local agent / maintainer artifacts
 .agents/

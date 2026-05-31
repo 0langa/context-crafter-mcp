@@ -1,7 +1,7 @@
 {
-  "version": "0.4.0",
-  "timestamp": "2026-05-30T22:39:46.785657+00:00",
-  "repo_path": "examples/demo-repo",
+  "version": "0.5.0",
+  "timestamp": "2026-05-31T21:42:32.360754+00:00",
+  "repo_path": "examples\\demo-repo",
   "project_types": [
     "generic",
     "python"

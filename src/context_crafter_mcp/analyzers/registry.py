@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Callable
 
-from context_crafter_mcp.detectors import detect_project
+from context_crafter_mcp.detectors import detect_project_from_snapshot
 from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, ScanConfig
 from context_crafter_mcp.scanner import RepoSnapshot
 
@@ -46,7 +46,7 @@ class AnalyzerRegistry:
 
     def detect(self, snapshot: RepoSnapshot) -> list[DetectedProject]:
         """Detect project types from a repository snapshot."""
-        result = detect_project(str(snapshot.root))
+        result = detect_project_from_snapshot(snapshot)
         detected: list[DetectedProject] = []
         for ptype in result.project_types:
             markers = result.markers.get(ptype, [])
@@ -58,8 +58,9 @@ class AnalyzerRegistry:
         """Run the registered analyzer for a detected project type."""
         fn = self._analyzers.get(detected.project_type)
         if fn is None:
-            return AnalysisResult(repo_path=str(snapshot.root))
-        return fn(str(snapshot.root), None, config)
+            return AnalysisResult(repo_path=str(snapshot.root), snapshot=snapshot)
+        base = AnalysisResult(repo_path=str(snapshot.root), snapshot=snapshot)
+        return fn(str(snapshot.root), base, config)
 
     def analyze_for_type(
         self,

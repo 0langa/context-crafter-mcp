@@ -2,11 +2,11 @@
 
 ## Current state
 
-Package version on `main` is **v0.4.0**.
+Package version on `main` is **v0.5.0**.
 
-Latest git tag on the public remote is **`0.4.0`**.
+Latest git tag on the public remote is **`0.5.0`**.
 
-Current `main` is the tagged `0.4.0` release line.
+Current `main` is the tagged `0.5.0` release line.
 
 ## Near-term priorities
 

@@ -6,8 +6,9 @@ import re
 import tomllib
 
 from context_crafter_mcp.analyzers import register_analyzer, register_analyzer_spec
+from context_crafter_mcp.analyzers.snapshot_utils import get_analysis_snapshot, iter_snapshot_files
 from context_crafter_mcp.detectors import _is_fixture_path
-from context_crafter_mcp.filesystem import safe_read_text, safe_scan, validate_repo_path
+from context_crafter_mcp.filesystem import safe_read_text, validate_repo_path
 from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, EvidenceKind, RustCrate, ScanConfig
 from context_crafter_mcp.parsers import get_parser_backend
 
@@ -32,6 +33,7 @@ def analyze_rust(
 
     cfg = config or ScanConfig()
     result = base_result or AnalysisResult(repo_path=str(path))
+    snapshot = get_analysis_snapshot(path, result, cfg)
     ev = result.evidence_set
     crate = RustCrate()
     modules: list[str] = []
@@ -88,20 +90,18 @@ def analyze_rust(
             analyzer="rust",
         )
 
-    for fi in safe_scan(path, max_depth=cfg.max_depth + 2, max_files_per_dir=cfg.max_files_per_dir):
-        if fi.is_dir:
+    for sf, file_path in iter_snapshot_files(snapshot):
+        if _is_fixture_path(sf.rel_path):
             continue
-        if _is_fixture_path(fi.rel_path):
-            continue
-        name = fi.path.name
+        name = file_path.name
         if name.endswith(".rs"):
             count += 1
-            modules.append(fi.rel_path)
+            modules.append(sf.rel_path)
 
             # Try tree-sitter first
             backend = get_parser_backend("rust")
             try:
-                source = fi.path.read_bytes()
+                source = file_path.read_bytes()
             except OSError:
                 parsed = None
             else:
@@ -111,12 +111,12 @@ def analyze_rust(
                 for imp in parsed.imports:
                     crate.dependencies.append(imp)
                 for mod_name in parsed.exports:
-                    mod_refs.append(f"{fi.rel_path}::mod::{mod_name}")
+                    mod_refs.append(f"{sf.rel_path}::mod::{mod_name}")
                 for func in parsed.functions:
                     if func == "main":
-                        crate.entry_points.append(fi.rel_path)
+                        crate.entry_points.append(sf.rel_path)
                 if name == "lib.rs":
-                    crate.entry_points.append(fi.rel_path)
+                    crate.entry_points.append(sf.rel_path)
                 for cls in parsed.classes:
                     crate.traits.append(cls)
                 for trait in parsed.traits:
@@ -129,26 +129,26 @@ def analyze_rust(
                         crate.trait_impls.append((trait, impl_type))
             else:
                 # Regex fallback
-                src = safe_read_text(fi.path, max_bytes=500_000)
+                src = safe_read_text(file_path, max_bytes=500_000)
                 if src:
                     if name == "main.rs" or RUST_FN_MAIN_RE.search(src):
-                        crate.entry_points.append(fi.rel_path)
+                        crate.entry_points.append(sf.rel_path)
                         ev.add(
                             EvidenceKind.OBSERVED,
-                            f"Rust entry point `{fi.rel_path}` (`fn main`)",
-                            source_path=fi.rel_path,
+                            f"Rust entry point `{sf.rel_path}` (`fn main`)",
+                            source_path=sf.rel_path,
                             analyzer="rust",
                         )
                     if name == "lib.rs":
-                        crate.entry_points.append(fi.rel_path)
+                        crate.entry_points.append(sf.rel_path)
                         ev.add(
                             EvidenceKind.OBSERVED,
-                            f"Rust library root `{fi.rel_path}`",
-                            source_path=fi.rel_path,
+                            f"Rust library root `{sf.rel_path}`",
+                            source_path=sf.rel_path,
                             analyzer="rust",
                         )
                     for m in RUST_MOD_RE.finditer(src):
-                        mod_refs.append(f"{fi.rel_path}::mod::{m.group(1)}")
+                        mod_refs.append(f"{sf.rel_path}::mod::{m.group(1)}")
                     for m in RUST_USE_RE.finditer(src):
                         use_path = m.group(1).split("::")[0].strip()
                         if use_path not in ("std", "core", "alloc", "crate", "self", "super"):

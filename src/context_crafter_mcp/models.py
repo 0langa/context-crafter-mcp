@@ -351,6 +351,7 @@ class AnalysisResult:
     profile: str = "standard"
     evidence_set: EvidenceSet = field(default_factory=EvidenceSet)
     scan_summary: BoundedScanSummary = field(default_factory=BoundedScanSummary)
+    snapshot: Any | None = field(default=None, repr=False, compare=False)
 
 
 @dataclass

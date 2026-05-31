@@ -12,9 +12,9 @@ That made the file read like release history when it was really a blend of relea
 
 ## Current truth
 
-- Package version in code: `0.4.0`
-- Latest public git tag: `0.4.0`
-- Current `main` corresponds to the tagged `0.4.0` release line
+- Package version in code: `0.5.0`
+- Latest public git tag: `0.5.0`
+- Current `main` corresponds to the tagged `0.5.0` release line
 
 ## Source of truth
 

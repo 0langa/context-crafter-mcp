@@ -7,14 +7,14 @@ from pathlib import Path
 from context_crafter_mcp.analyzers import register_analyzer, register_analyzer_spec
 from context_crafter_mcp.filesystem import (
     INTERESTING_ROOT_FILES,
-    list_directory_tree,
     list_root_files,
     validate_repo_path,
 )
 from context_crafter_mcp.detectors import _is_fixture_path
+from context_crafter_mcp.analyzers.snapshot_utils import build_analysis_snapshot
 from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, EvidenceKind, ScanConfig, get_profile_limit
 from context_crafter_mcp.ranking import is_vendor_path, score_path
-from context_crafter_mcp.scanner import Scanner, ScannerOptions
+from context_crafter_mcp.scanner import RepoSnapshot
 
 
 ENTRY_POINT_HINTS = {
@@ -58,6 +58,30 @@ CONFIG_HINTS = {
 }
 
 
+def _snapshot_directory_tree(snapshot: RepoSnapshot, max_depth: int) -> list[str]:
+    """Render a simple deterministic tree from an existing snapshot."""
+    entries: list[tuple[tuple[str, ...], bool, str]] = []
+    for sd in snapshot.directories:
+        if not sd.rel_path:
+            continue
+        depth = len(Path(sd.rel_path).parts)
+        if depth > max_depth:
+            continue
+        indent = "  " * depth
+        entries.append((Path(sd.rel_path).parts, True, f"{indent}{Path(sd.rel_path).name}/"))
+    for sf in snapshot.files:
+        depth = len(Path(sf.rel_path).parts)
+        if depth > max_depth:
+            continue
+        indent = "  " * (depth - 1)
+        entries.append((Path(sf.rel_path).parts, False, f"{indent}{Path(sf.rel_path).name}"))
+
+    lines = [f"{snapshot.root.name or '.'}/"]
+    entries.sort(key=lambda item: (item[0], 1 if item[1] else 0))
+    lines.extend(line for _, _, line in entries)
+    return lines
+
+
 def analyze_generic(
     repo_path: str,
     base_result: AnalysisResult | None = None,
@@ -72,7 +96,20 @@ def analyze_generic(
         )
 
     cfg = config or ScanConfig()
+    snapshot = build_analysis_snapshot(path, cfg)
+    return analyze_generic_snapshot(snapshot, base_result=base_result, config=cfg)
+
+
+def analyze_generic_snapshot(
+    snapshot: RepoSnapshot,
+    base_result: AnalysisResult | None = None,
+    config: ScanConfig | None = None,
+) -> AnalysisResult:
+    """Perform generic analysis from a shared repository snapshot."""
+    path = snapshot.root
+    cfg = config or ScanConfig()
     result = base_result or AnalysisResult(repo_path=str(path))
+    result.snapshot = snapshot
 
     # Adjust tree depth by profile
     tree_depth = cfg.max_depth
@@ -86,18 +123,7 @@ def analyze_generic(
     result.root_files = [f for f in all_root if f in INTERESTING_ROOT_FILES or f.endswith(tuple(CONFIG_HINTS))]
 
     # Directory tree
-    result.directory_tree = list_directory_tree(path, max_depth=tree_depth, max_files_per_dir=cfg.max_files_per_dir)
-
-    scanner = Scanner()
-    snapshot = scanner.scan(
-        path,
-        ScannerOptions(
-            max_depth=tree_depth + 1,
-            max_files=cfg.max_files_per_dir * 10,
-            max_file_bytes=cfg.max_file_bytes,
-            max_files_per_dir=cfg.max_files_per_dir,
-        ),
-    )
+    result.directory_tree = _snapshot_directory_tree(snapshot, max_depth=tree_depth)
 
     docs_files: list[str] = []
     config_files: list[str] = []

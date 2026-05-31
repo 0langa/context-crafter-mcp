@@ -2,15 +2,21 @@
 
 from __future__ import annotations
 
+import tempfile
+from pathlib import Path
+
 from context_crafter_mcp.analyzers import (
     ANALYZER_REGISTRY,
     ANALYZER_SPECS,
     AnalyzerRegistry,
+    DetectedProject,
     analyze_for_type,
     register_analyzer,
     register_analyzer_spec,
 )
+from context_crafter_mcp.detectors import detect_project_from_snapshot
 from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, ScanConfig
+from context_crafter_mcp.scanner import Scanner, ScannerOptions
 
 
 def test_registry_has_expected_types() -> None:
@@ -127,3 +133,25 @@ def test_analyzer_registry_merge_empty_list() -> None:
     registry = AnalyzerRegistry()
     merged = registry.merge([])
     assert merged.repo_path == ""
+
+
+def test_detect_project_from_snapshot() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        Path(td, "pyproject.toml").write_text("[project]\nname='demo'\n", encoding="utf-8")
+        Path(td, "main.py").write_text("print('hi')\n", encoding="utf-8")
+        snapshot = Scanner().scan(td, ScannerOptions(max_depth=3, max_files=500, max_files_per_dir=100))
+        result = detect_project_from_snapshot(snapshot)
+        assert result.exists
+        assert "python" in result.project_types
+        assert "generic" in result.project_types
+
+
+def test_analyzer_registry_analyze_uses_snapshot() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        Path(td, "pyproject.toml").write_text("[project]\nname='demo'\n", encoding="utf-8")
+        Path(td, "main.py").write_text("print('hi')\n", encoding="utf-8")
+        snapshot = Scanner().scan(td, ScannerOptions(max_depth=6, max_files=500, max_files_per_dir=100))
+        registry = AnalyzerRegistry.from_globals()
+        result = registry.analyze(snapshot, DetectedProject(project_type="python"), ScanConfig())
+        assert result.snapshot is snapshot
+        assert any(mod.rel_path == "main.py" for mod in result.python_modules)

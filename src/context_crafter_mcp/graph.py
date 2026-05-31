@@ -7,7 +7,7 @@ from langgraph.graph.state import CompiledStateGraph
 
 from context_crafter_mcp.analyzers import AnalyzerRegistry
 from context_crafter_mcp.analyzers.generic import analyze_generic
-from context_crafter_mcp.detectors import detect_project
+from context_crafter_mcp.detectors import detect_project, detect_project_from_snapshot
 from context_crafter_mcp.models import AnalysisResult, DetectResult, RenderResult, ScanConfig
 from context_crafter_mcp.renderers.markdown import (
     render_ai_context_index,
@@ -40,7 +40,11 @@ def node_detect_project(state: RepoState) -> dict[str, object]:
     """Detect project types."""
     if not state.ok:
         return {}
-    state.detect_result = detect_project(state.repo_path)
+    snapshot = state.analysis.snapshot if state.analysis is not None else None
+    if snapshot is not None:
+        state.detect_result = detect_project_from_snapshot(snapshot)
+    else:
+        state.detect_result = detect_project(state.repo_path)
     if not state.detect_result.exists:
         state.ok = False
         state.errors.append(state.detect_result.error or "Repository does not exist")
@@ -164,9 +168,9 @@ def build_graph() -> CompiledStateGraph:
     builder.add_node("render_outputs", node_render_outputs)
 
     builder.set_entry_point("validate_repo")
-    builder.add_edge("validate_repo", "detect_project")
-    builder.add_edge("detect_project", "scan_files")
-    builder.add_edge("scan_files", "run_analyzers")
+    builder.add_edge("validate_repo", "scan_files")
+    builder.add_edge("scan_files", "detect_project")
+    builder.add_edge("detect_project", "run_analyzers")
     builder.add_edge("run_analyzers", "render_outputs")
     builder.add_edge("render_outputs", END)
 
@@ -180,10 +184,10 @@ def _run_analysis(repo_path: str, config: ScanConfig | None = None) -> tuple[Det
     duplicating detect / analyze flow.
     """
     state = RepoState(repo_path=repo_path, scan_config=config or ScanConfig())
+    node_scan_files(state)
     node_detect_project(state)
     if not state.ok or state.detect_result is None:
         return state.detect_result or DetectResult(repo_path=repo_path, exists=False), None
-    node_scan_files(state)
     node_run_analyzers(state)
     return state.detect_result, state.analysis
 

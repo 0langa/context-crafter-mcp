@@ -8,9 +8,11 @@ from pathlib import Path
 from typing import Any
 
 from context_crafter_mcp.analyzers import register_analyzer, register_analyzer_spec
+from context_crafter_mcp.analyzers.snapshot_utils import get_analysis_snapshot, iter_snapshot_files
 from context_crafter_mcp.detectors import _is_fixture_path
-from context_crafter_mcp.filesystem import safe_read_text, safe_scan, validate_repo_path
+from context_crafter_mcp.filesystem import safe_read_text, validate_repo_path
 from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, EvidenceKind, PythonModule, ScanConfig
+from context_crafter_mcp.scanner import RepoSnapshot
 
 
 def guess_module_name(rel_path: str) -> str:
@@ -80,38 +82,54 @@ def analyze_python_file(path: Path, rel_path: str, repo_path: Path) -> PythonMod
     return mod
 
 
-def _discover_package_roots(modules: list[PythonModule], repo_path: Path) -> set[str]:
+def _discover_package_roots(
+    modules: list[PythonModule], repo_path: Path, snapshot: RepoSnapshot | None = None
+) -> set[str]:
     """Discover internal package roots from scanned modules and repo layout."""
     roots: set[str] = set()
 
-    # Direct top-level directories that contain Python files
-    for item in repo_path.iterdir():
-        if item.is_dir() and not item.name.startswith("."):
-            if _is_fixture_path(item.relative_to(repo_path).as_posix()):
+    if snapshot is not None:
+        top_level_with_py: set[str] = set()
+        source_layout_with_py: set[str] = set()
+        for sf in snapshot.files:
+            if _is_fixture_path(sf.rel_path) or not sf.rel_path.endswith(".py"):
                 continue
-            has_py = any(
-                f.suffix == ".py"
-                for f in item.rglob("*")
-                if f.is_file() and not _is_fixture_path(f.relative_to(repo_path).as_posix())
-            )
-            if has_py:
-                roots.add(item.name)
+            parts = Path(sf.rel_path).parts
+            if len(parts) > 1:
+                top_level_with_py.add(parts[0])
+            if len(parts) > 2 and parts[0] in ("src", "lib", "source", "sources"):
+                source_layout_with_py.add(parts[1])
+        roots.update(top_level_with_py)
+        roots.update(source_layout_with_py)
+    else:
+        # Direct top-level directories that contain Python files
+        for item in repo_path.iterdir():
+            if item.is_dir() and not item.name.startswith("."):
+                if _is_fixture_path(item.relative_to(repo_path).as_posix()):
+                    continue
+                has_py = any(
+                    f.suffix == ".py"
+                    for f in item.rglob("*")
+                    if f.is_file() and not _is_fixture_path(f.relative_to(repo_path).as_posix())
+                )
+                if has_py:
+                    roots.add(item.name)
 
-    # Common source layout: src/<pkg>, lib/<pkg>, etc.
-    for src_name in ("src", "lib", "source", "sources"):
-        src_dir = repo_path / src_name
-        if src_dir.is_dir():
-            for item in src_dir.iterdir():
-                if item.is_dir() and not item.name.startswith("."):
-                    if _is_fixture_path(item.relative_to(repo_path).as_posix()):
-                        continue
-                    has_py = any(
-                        f.suffix == ".py"
-                        for f in item.rglob("*")
-                        if f.is_file() and not _is_fixture_path(f.relative_to(repo_path).as_posix())
-                    )
-                    if has_py:
-                        roots.add(item.name)
+        # Common source layout: src/<pkg>, lib/<pkg>, etc.
+        for src_name in ("src", "lib", "source", "sources"):
+            src_dir = repo_path / src_name
+            if src_dir.is_dir():
+                for item in src_dir.iterdir():
+                    if item.is_dir() and not item.name.startswith("."):
+                        if _is_fixture_path(item.relative_to(repo_path).as_posix()):
+                            continue
+                        has_py = any(
+                            f.suffix == ".py"
+                            for f in item.rglob("*")
+                            if f.is_file() and not _is_fixture_path(f.relative_to(repo_path).as_posix())
+                        )
+                        if has_py:
+                            roots.add(item.name)
 
     # Also collect first segments from module paths (for packages at repo root)
     for mod in modules:
@@ -409,18 +427,17 @@ def analyze_python(
 
     cfg = config or ScanConfig()
     result = base_result or AnalysisResult(repo_path=str(path))
+    snapshot = get_analysis_snapshot(path, result, cfg)
     ev = result.evidence_set
     modules: list[PythonModule] = []
     count = 0
 
-    for fi in safe_scan(path, max_depth=cfg.max_depth + 2, max_files_per_dir=cfg.max_files_per_dir):
-        if fi.is_dir:
+    for sf, file_path in iter_snapshot_files(snapshot):
+        if _is_fixture_path(sf.rel_path):
             continue
-        if _is_fixture_path(fi.rel_path):
-            continue
-        if fi.path.name.endswith(".py"):
+        if file_path.name.endswith(".py"):
             count += 1
-            mod = analyze_python_file(fi.path, fi.rel_path, path)
+            mod = analyze_python_file(file_path, sf.rel_path, path)
             modules.append(mod)
             if mod.parse_error:
                 ev.add(
@@ -438,7 +455,7 @@ def analyze_python(
                 )
 
     # Discover package roots and re-classify imports
-    package_roots = _discover_package_roots(modules, path)
+    package_roots = _discover_package_roots(modules, path, snapshot)
     for mod in modules:
         internal: list[str] = []
         external: list[str] = []
@@ -458,16 +475,14 @@ def analyze_python(
 
     best_pyproject: Path | None = None
     best_score = -999.0
-    for fi in safe_scan(path, max_depth=cfg.max_depth + 2, max_files_per_dir=cfg.max_files_per_dir):
-        if fi.is_dir:
+    for sf, file_path in iter_snapshot_files(snapshot):
+        if _is_fixture_path(sf.rel_path):
             continue
-        if _is_fixture_path(fi.rel_path):
-            continue
-        if fi.path.name == "pyproject.toml":
-            sc = score_path(fi.rel_path, has_marker=True)
+        if file_path.name == "pyproject.toml":
+            sc = score_path(sf.rel_path, has_marker=True)
             if sc > best_score:
                 best_score = sc
-                best_pyproject = fi.path
+                best_pyproject = file_path
 
     pyproject_dir = best_pyproject.parent if best_pyproject else path
     pyproject_rel = str(best_pyproject.relative_to(path)) if best_pyproject else "pyproject.toml"

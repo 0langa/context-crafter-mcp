@@ -7,8 +7,9 @@ import re
 from pathlib import Path
 
 from context_crafter_mcp.analyzers import register_analyzer, register_analyzer_spec
+from context_crafter_mcp.analyzers.snapshot_utils import get_analysis_snapshot, iter_snapshot_files
 from context_crafter_mcp.detectors import _is_fixture_path
-from context_crafter_mcp.filesystem import safe_read_text, safe_scan, validate_repo_path
+from context_crafter_mcp.filesystem import safe_read_text, validate_repo_path
 from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, EvidenceKind, NodePackage, ScanConfig
 from context_crafter_mcp.parsers import get_parser_backend
 from context_crafter_mcp.ranking import is_vendor_path, PathCategory, PRODUCT_SEGMENTS
@@ -177,33 +178,32 @@ def analyze_node(
 
     cfg = config or ScanConfig()
     result = base_result or AnalysisResult(repo_path=str(path))
+    snapshot = get_analysis_snapshot(path, result, cfg)
     ev = result.evidence_set
     count = 0
     parser_used = "regex"
 
     # Discover all package.json files
     pkg_json_map: dict[str, NodePackage] = {}  # dir -> package
-    for fi in safe_scan(path, max_depth=cfg.max_depth + 2, max_files_per_dir=cfg.max_files_per_dir):
-        if fi.is_dir:
+    for sf, file_path in iter_snapshot_files(snapshot):
+        if _is_fixture_path(sf.rel_path):
             continue
-        if _is_fixture_path(fi.rel_path):
-            continue
-        if fi.path.name == "package.json" and not is_vendor_path(fi.rel_path):
-            text = safe_read_text(fi.path)
+        if file_path.name == "package.json" and not is_vendor_path(sf.rel_path):
+            text = safe_read_text(file_path)
             if not text:
                 continue
             try:
                 data = json.loads(text)
             except json.JSONDecodeError as exc:
-                result.errors.append(f"package.json parse error at {fi.rel_path}: {exc}")
+                result.errors.append(f"package.json parse error at {sf.rel_path}: {exc}")
                 ev.add(
                     EvidenceKind.ERROR,
-                    f"package.json parse error at `{fi.rel_path}`: {exc}",
-                    source_path=fi.rel_path,
+                    f"package.json parse error at `{sf.rel_path}`: {exc}",
+                    source_path=sf.rel_path,
                     analyzer="node",
                 )
                 continue
-            dir_path = Path(fi.rel_path).parent.as_posix()
+            dir_path = Path(sf.rel_path).parent.as_posix()
             if dir_path == ".":
                 dir_path = "."
             deps = list(data.get("dependencies", {}).keys())
@@ -211,7 +211,7 @@ def analyze_node(
             peer_deps = list(data.get("peerDependencies", {}).keys())
             pkg = NodePackage(
                 name=data.get("name"),
-                rel_path=fi.rel_path,
+                rel_path=sf.rel_path,
                 scripts=data.get("scripts", {}),
                 dependencies=deps,
                 dev_dependencies=dev_deps,
@@ -275,31 +275,29 @@ def analyze_node(
     pkg_dirs = set(pkg_json_map.keys())
 
     # Scan JS/TS files and assign to nearest package
-    for fi in safe_scan(path, max_depth=cfg.max_depth + 2, max_files_per_dir=cfg.max_files_per_dir):
-        if fi.is_dir:
+    for sf, file_path in iter_snapshot_files(snapshot):
+        if _is_fixture_path(sf.rel_path):
             continue
-        if _is_fixture_path(fi.rel_path):
+        if is_vendor_path(sf.rel_path):
             continue
-        if is_vendor_path(fi.rel_path):
-            continue
-        name = fi.path.name
+        name = file_path.name
         if not name.endswith((".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs")):
             continue
 
         count += 1
-        file_dir = Path(fi.rel_path).parent.as_posix()
+        file_dir = Path(sf.rel_path).parent.as_posix()
         nearest = _find_nearest_pkg_dir(file_dir, pkg_dirs)
         if nearest is None:
             continue
         pkg = pkg_json_map[nearest]
-        pkg.files.append(fi.rel_path)
+        pkg.files.append(sf.rel_path)
 
         # Try tree-sitter first
         parsed = None
         lang = "typescript" if name.endswith((".ts", ".tsx")) else "javascript"
         backend = get_parser_backend(lang)
         try:
-            source = fi.path.read_bytes()
+            source = file_path.read_bytes()
         except OSError:
             parsed = None
         else:
@@ -308,27 +306,27 @@ def analyze_node(
         if parsed and parsed.parser_used != "none":
             parser_used = parsed.parser_used
             for imp in parsed.imports:
-                pkg.import_edges.append((fi.rel_path, imp))
+                pkg.import_edges.append((sf.rel_path, imp))
             for exp in parsed.exports:
-                pkg.exports.append(f"{fi.rel_path}:{exp}")
+                pkg.exports.append(f"{sf.rel_path}:{exp}")
             for cls in parsed.classes:
-                pkg.classes.append(f"{fi.rel_path}:{cls}")
+                pkg.classes.append(f"{sf.rel_path}:{cls}")
             for func in parsed.functions:
-                pkg.functions.append(f"{fi.rel_path}:{func}")
+                pkg.functions.append(f"{sf.rel_path}:{func}")
         else:
             # Regex fallback
-            text = safe_read_text(fi.path, max_bytes=1_000_000)
+            text = safe_read_text(file_path, max_bytes=1_000_000)
             if text:
                 for m in IMPORT_RE.finditer(text):
                     target = m.group(1) or m.group(2) or m.group(3) or m.group(4)
                     if target:
-                        pkg.import_edges.append((fi.rel_path, target))
+                        pkg.import_edges.append((sf.rel_path, target))
                 for m in NODE_EXPORT_RE.finditer(text):
-                    pkg.exports.append(f"{fi.rel_path}:{m.group(1)}")
+                    pkg.exports.append(f"{sf.rel_path}:{m.group(1)}")
                 for m in NODE_CLASS_RE.finditer(text):
-                    pkg.classes.append(f"{fi.rel_path}:{m.group(1)}")
+                    pkg.classes.append(f"{sf.rel_path}:{m.group(1)}")
                 for m in NODE_FUNC_RE.finditer(text):
-                    pkg.functions.append(f"{fi.rel_path}:{m.group(1)}")
+                    pkg.functions.append(f"{sf.rel_path}:{m.group(1)}")
 
     # Compute local package dependencies and build package graph
     local_pkg_names = {p.name for p in pkg_json_map.values() if p.name}

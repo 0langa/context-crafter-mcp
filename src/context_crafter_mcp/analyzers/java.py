@@ -7,10 +7,12 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from context_crafter_mcp.analyzers import register_analyzer, register_analyzer_spec
+from context_crafter_mcp.analyzers.snapshot_utils import get_analysis_snapshot, iter_snapshot_files
 from context_crafter_mcp.detectors import _is_fixture_path
-from context_crafter_mcp.filesystem import safe_read_text, safe_scan, validate_repo_path
+from context_crafter_mcp.filesystem import safe_read_text, validate_repo_path
 from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, EvidenceKind, JavaProject, ScanConfig
 from context_crafter_mcp.parsers import get_parser_backend
+from context_crafter_mcp.scanner import SnapshotFile
 
 GRADLE_NAME_RE = re.compile(r'rootProject\.name\s*=\s*["\']([^"\']+)["\']')
 GRADLE_DEP_RE = re.compile(
@@ -90,28 +92,27 @@ def analyze_java(
 
     cfg = config or ScanConfig()
     result = base_result or AnalysisResult(repo_path=str(path))
+    snapshot = get_analysis_snapshot(path, result, cfg)
     ev = result.evidence_set
     parser_used = "regex"
 
     # Pass 1: discover build files and collect Java source paths
     build_files: list[tuple[Path, Path, str]] = []
-    java_files: list = []
+    java_files: list[tuple[SnapshotFile, Path]] = []
     count = 0
 
-    for fi in safe_scan(path, max_depth=cfg.max_depth + 4, max_files_per_dir=cfg.max_files_per_dir):
-        if fi.is_dir:
+    for sf, file_path in iter_snapshot_files(snapshot):
+        if _is_fixture_path(sf.rel_path):
             continue
-        if _is_fixture_path(fi.rel_path):
-            continue
-        name = fi.path.name
+        name = file_path.name
         if name == "pom.xml":
-            build_files.append((fi.path.parent, fi.path, "maven"))
+            build_files.append((file_path.parent, file_path, "maven"))
         elif name == "build.gradle":
-            build_files.append((fi.path.parent, fi.path, "gradle"))
+            build_files.append((file_path.parent, file_path, "gradle"))
         elif name == "build.gradle.kts":
-            build_files.append((fi.path.parent, fi.path, "gradle"))
+            build_files.append((file_path.parent, file_path, "gradle"))
         elif name.endswith(".java"):
-            java_files.append(fi)
+            java_files.append((sf, file_path))
             count += 1
 
     # Parse build files into projects keyed by module root
@@ -153,8 +154,8 @@ def analyze_java(
         modules[path] = fallback
 
     # Pass 2: assign each .java file to nearest module by path prefix
-    for fi in java_files:
-        file_dir = fi.path.parent
+    for sf, file_path in java_files:
+        file_dir = file_path.parent
         best_proj = modules[path]
         best_depth = -1
         for root, proj in modules.items():
@@ -172,7 +173,7 @@ def analyze_java(
         # Try javalang first
         backend = get_parser_backend("java")
         try:
-            source = fi.path.read_bytes()
+            source = file_path.read_bytes()
         except OSError:
             parsed = None
         else:
@@ -188,24 +189,24 @@ def analyze_java(
             for imp in parsed.imports:
                 if not imp.startswith("java.") and not imp.startswith("javax."):
                     best_proj.dependencies.append(imp)
-            if parsed.entry_points and fi.rel_path not in best_proj.entry_points:
-                best_proj.entry_points.append(fi.rel_path)
+            if parsed.entry_points and sf.rel_path not in best_proj.entry_points:
+                best_proj.entry_points.append(sf.rel_path)
                 ev.add(
                     EvidenceKind.OBSERVED,
-                    f"Java entry point `{fi.rel_path}` (`public static void main`)",
-                    source_path=fi.rel_path,
+                    f"Java entry point `{sf.rel_path}` (`public static void main`)",
+                    source_path=sf.rel_path,
                     analyzer="java",
                 )
         else:
             # Regex fallback
-            src = safe_read_text(fi.path, max_bytes=500_000)
+            src = safe_read_text(file_path, max_bytes=500_000)
             if src:
-                if JAVA_MAIN_RE.search(src) and fi.rel_path not in best_proj.entry_points:
-                    best_proj.entry_points.append(fi.rel_path)
+                if JAVA_MAIN_RE.search(src) and sf.rel_path not in best_proj.entry_points:
+                    best_proj.entry_points.append(sf.rel_path)
                     ev.add(
                         EvidenceKind.OBSERVED,
-                        f"Java entry point `{fi.rel_path}` (`public static void main`)",
-                        source_path=fi.rel_path,
+                        f"Java entry point `{sf.rel_path}` (`public static void main`)",
+                        source_path=sf.rel_path,
                         analyzer="java",
                     )
                 pkg_match = JAVA_PACKAGE_RE.search(src)

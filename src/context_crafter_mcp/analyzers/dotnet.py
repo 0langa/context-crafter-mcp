@@ -7,8 +7,9 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from context_crafter_mcp.analyzers import register_analyzer, register_analyzer_spec
+from context_crafter_mcp.analyzers.snapshot_utils import get_analysis_snapshot, iter_snapshot_files
 from context_crafter_mcp.detectors import _is_fixture_path
-from context_crafter_mcp.filesystem import safe_read_text, safe_scan, validate_repo_path
+from context_crafter_mcp.filesystem import safe_read_text, validate_repo_path
 from context_crafter_mcp.models import (
     AnalysisResult,
     AnalyzerSpec,
@@ -94,43 +95,42 @@ def analyze_dotnet(
 
     cfg = config or ScanConfig()
     result = base_result or AnalysisResult(repo_path=str(path))
+    snapshot = get_analysis_snapshot(path, result, cfg)
     ev = result.evidence_set
     solutions: list[DotNetSolution] = []
     projects: list[DotNetProject] = []
     count = 0
     parser_used = "regex"
 
-    for fi in safe_scan(path, max_depth=cfg.max_depth + 1, max_files_per_dir=cfg.max_files_per_dir):
-        if fi.is_dir:
+    for sf, file_path in iter_snapshot_files(snapshot):
+        if _is_fixture_path(sf.rel_path):
             continue
-        if _is_fixture_path(fi.rel_path):
-            continue
-        name = fi.path.name
+        name = file_path.name
         if name.endswith(".sln"):
             count += 1
-            sol = parse_solution(fi.path, fi.rel_path)
+            sol = parse_solution(file_path, sf.rel_path)
             solutions.append(sol)
             ev.add(
                 EvidenceKind.OBSERVED,
-                f".NET solution `{sol.name}` found at `{fi.rel_path}`",
-                source_path=fi.rel_path,
+                f".NET solution `{sol.name}` found at `{sf.rel_path}`",
+                source_path=sf.rel_path,
                 analyzer="dotnet",
             )
         elif name.endswith((".csproj", ".fsproj", ".vbproj")):
             count += 1
-            proj = parse_project(fi.path, fi.rel_path)
+            proj = parse_project(file_path, sf.rel_path)
             projects.append(proj)
             ev.add(
                 EvidenceKind.OBSERVED,
-                f".NET project `{proj.name}` found at `{fi.rel_path}` (targets: {', '.join(proj.target_frameworks) or 'unknown'})",
-                source_path=fi.rel_path,
+                f".NET project `{proj.name}` found at `{sf.rel_path}` (targets: {', '.join(proj.target_frameworks) or 'unknown'})",
+                source_path=sf.rel_path,
                 analyzer="dotnet",
             )
             for pkg in proj.package_refs:
                 ev.add(
                     EvidenceKind.OBSERVED,
-                    f".NET package reference `{pkg}` from `{fi.rel_path}`",
-                    source_path=fi.rel_path,
+                    f".NET package reference `{pkg}` from `{sf.rel_path}`",
+                    source_path=sf.rel_path,
                     analyzer="dotnet",
                 )
 
@@ -166,7 +166,13 @@ def analyze_dotnet(
     # Entry points + class scanning + namespace extraction
     for p in projects:
         proj_dir = Path(p.rel_path).parent
-        cs_files = list((path / proj_dir).rglob("*.cs")) if (path / proj_dir).is_dir() else []
+        cs_files = [
+            file_path
+            for sf, file_path in iter_snapshot_files(snapshot)
+            if file_path.suffix == ".cs"
+            and not _is_fixture_path(sf.rel_path)
+            and Path(sf.rel_path).is_relative_to(proj_dir)
+        ]
         has_source = bool(cs_files)
         if p.output_type == "Exe" and has_source:
             result.likely_entry_points.append(p.rel_path)

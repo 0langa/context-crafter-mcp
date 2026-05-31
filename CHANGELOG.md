@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No unreleased changes documented yet.
 
+## [0.5.0] - 2026-05-31
+
+### Added
+
+- **Shared analyzer snapshot flow**: graph analysis now builds one deep `RepoSnapshot` and reuses it across generic, Python, Node, .NET, Rust, Go, and Java analyzers instead of rescanning per analyzer.
+- **Snapshot-based detector API**: `detect_project_from_snapshot(snapshot)` lets the registry and graph detect stacks from an existing scan boundary.
+- **Snapshot-boundary regression proof**: new tests verify snapshot-based registry behavior and guard that a mixed Python+Node generation run performs exactly one scanner pass.
+
+### Changed
+
+- **Graph order**: pipeline now scans first, then detects from the shared snapshot, then runs language analyzers.
+- **Analyzer registry truthfulness**: `AnalyzerRegistry.detect()` and `AnalyzerRegistry.analyze()` now actually consume the provided `RepoSnapshot`.
+- **Language analyzers**: Python, Node, .NET, Rust, Go, and Java analyzers now iterate snapshot files instead of launching their own bounded directory walks.
+- Bumped version to `0.5.0`.
+
 ## [0.4.0] - 2026-05-31
 
 ### Added

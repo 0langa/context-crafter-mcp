@@ -6,10 +6,12 @@ import re
 from pathlib import Path
 
 from context_crafter_mcp.analyzers import register_analyzer, register_analyzer_spec
+from context_crafter_mcp.analyzers.snapshot_utils import get_analysis_snapshot, iter_snapshot_files
 from context_crafter_mcp.detectors import _is_fixture_path
-from context_crafter_mcp.filesystem import safe_read_text, safe_scan, validate_repo_path
+from context_crafter_mcp.filesystem import safe_read_text, validate_repo_path
 from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, EvidenceKind, GoModule, ScanConfig
 from context_crafter_mcp.parsers import get_parser_backend
+from context_crafter_mcp.scanner import SnapshotFile
 
 GO_MOD_MODULE_RE = re.compile(r"^module\s+(\S+)", re.MULTILINE)
 GO_MOD_REQUIRE_RE = re.compile(r"^require\s+\(?\s*(\S+)", re.MULTILINE)
@@ -35,24 +37,23 @@ def analyze_go(
 
     cfg = config or ScanConfig()
     result = base_result or AnalysisResult(repo_path=str(path))
+    snapshot = get_analysis_snapshot(path, result, cfg)
     ev = result.evidence_set
     parser_used = "regex"
 
     # Pass 1: discover go.mod files and collect Go source paths
     go_mod_files: list[Path] = []
-    go_files: list = []
+    go_files: list[tuple[SnapshotFile, Path]] = []
     count = 0
 
-    for fi in safe_scan(path, max_depth=cfg.max_depth + 2, max_files_per_dir=cfg.max_files_per_dir):
-        if fi.is_dir:
+    for sf, file_path in iter_snapshot_files(snapshot):
+        if _is_fixture_path(sf.rel_path):
             continue
-        if _is_fixture_path(fi.rel_path):
-            continue
-        name = fi.path.name
+        name = file_path.name
         if name == "go.mod":
-            go_mod_files.append(fi.path)
+            go_mod_files.append(file_path)
         elif name.endswith(".go"):
-            go_files.append(fi)
+            go_files.append((sf, file_path))
             count += 1
 
     # Parse each go.mod into a module keyed by directory
@@ -96,8 +97,8 @@ def analyze_go(
         modules[path] = fallback
 
     # Pass 2: assign each .go file to nearest module by path prefix
-    for fi in go_files:
-        file_dir = fi.path.parent
+    for sf, file_path in go_files:
+        file_dir = file_path.parent
         best_mod = modules[path]
         best_depth = -1
         for root, mod in modules.items():
@@ -112,7 +113,7 @@ def analyze_go(
             except ValueError:
                 continue
 
-        pkg_dir = str(Path(fi.rel_path).parent)
+        pkg_dir = str(Path(sf.rel_path).parent)
         if pkg_dir == ".":
             pkg_dir = ""
         best_mod.packages.append(pkg_dir or "main")
@@ -120,7 +121,7 @@ def analyze_go(
         # Try tree-sitter first
         backend = get_parser_backend("go")
         try:
-            source = fi.path.read_bytes()
+            source = file_path.read_bytes()
         except OSError:
             parsed = None
         else:
@@ -139,29 +140,29 @@ def analyze_go(
             for ep in parsed.entry_points:
                 # parser returns "" when the file contains main(); map to file path
                 if ep == "":
-                    rel = fi.rel_path
+                    entry_rel = sf.rel_path
                 elif Path(ep).is_absolute():
-                    rel = str(Path(ep).relative_to(path))
+                    entry_rel = str(Path(ep).relative_to(path))
                 else:
-                    rel = ep
-                if rel not in best_mod.entry_points:
-                    best_mod.entry_points.append(rel)
+                    entry_rel = str(ep)
+                if entry_rel not in best_mod.entry_points:
+                    best_mod.entry_points.append(entry_rel)
                     ev.add(
                         EvidenceKind.OBSERVED,
-                        f"Go entry point `{rel}` (package main)",
-                        source_path=rel,
+                        f"Go entry point `{entry_rel}` (package main)",
+                        source_path=entry_rel,
                         analyzer="go",
                     )
         else:
             # Regex fallback
-            src = safe_read_text(fi.path, max_bytes=500_000)
+            src = safe_read_text(file_path, max_bytes=500_000)
             if src:
                 if "package main" in src:
-                    best_mod.entry_points.append(fi.rel_path)
+                    best_mod.entry_points.append(sf.rel_path)
                     ev.add(
                         EvidenceKind.OBSERVED,
-                        f"Go entry point `{fi.rel_path}` (package main)",
-                        source_path=fi.rel_path,
+                        f"Go entry point `{sf.rel_path}` (package main)",
+                        source_path=sf.rel_path,
                         analyzer="go",
                     )
                 for m in GO_IMPORT_RE.finditer(src):
@@ -188,18 +189,18 @@ def analyze_go(
         all_structs.update(s.split(".")[-1] for s in mod.structs)
         all_interfaces.update(i.split(".")[-1] for i in mod.interfaces)
 
-    for fi in go_files:
-        src = safe_read_text(fi.path, max_bytes=500_000)
+    for sf, file_path in go_files:
+        src = safe_read_text(file_path, max_bytes=500_000)
         if not src:
             continue
-        file_dir = Path(fi.rel_path).parent.as_posix()
-        pkg_dir = file_dir if file_dir != "." else "main"
+        file_dir_rel = Path(sf.rel_path).parent.as_posix()
+        pkg_dir = file_dir_rel if file_dir_rel != "." else "main"
         best_mod = modules[path]
         for root, mod in modules.items():
             if root == path:
                 continue
             try:
-                Path(fi.path).parent.relative_to(root)
+                file_path.parent.relative_to(root)
                 best_mod = mod
             except ValueError:
                 continue
@@ -212,7 +213,7 @@ def analyze_go(
                 ev.add(
                     EvidenceKind.OBSERVED,
                     f"Go interface assertion: `{struct_name}` implements `{iface}`",
-                    source_path=fi.rel_path,
+                    source_path=sf.rel_path,
                     analyzer="go",
                 )
 

@@ -7,7 +7,7 @@ from pathlib import Path
 from context_crafter_mcp.filesystem import validate_repo_path
 from context_crafter_mcp.models import Confidence, DetectResult, EvidenceKind, EvidenceSet
 from context_crafter_mcp.ranking import is_vendor_path
-from context_crafter_mcp.scanner import Scanner, ScannerOptions
+from context_crafter_mcp.scanner import RepoSnapshot, Scanner, ScannerOptions
 
 
 # Paths that indicate test fixtures or examples, not primary project stacks
@@ -39,22 +39,9 @@ EXTENSIONS: dict[str, list[str]] = {
 }
 
 
-def detect_project(repo_path: str) -> DetectResult:
-    """Detect project types for a repository path."""
-    path = validate_repo_path(repo_path)
-    if path is None:
-        ev = EvidenceSet()
-        ev.add(EvidenceKind.ERROR, f"Path does not exist or is not a directory: {repo_path}")
-        return DetectResult(
-            repo_path=repo_path,
-            exists=False,
-            error=f"Path does not exist or is not a directory: {repo_path}",
-            evidence_set=ev,
-        )
-
-    scanner = Scanner()
-    snapshot = scanner.scan(path, ScannerOptions(max_depth=3, max_files=5_000, max_files_per_dir=200))
-
+def _detect_project_from_snapshot(snapshot: RepoSnapshot) -> DetectResult:
+    """Detect project types from an existing repository snapshot."""
+    path = snapshot.root
     project_types: list[str] = []
     markers: dict[str, list[str]] = {}
     ev = EvidenceSet()
@@ -166,3 +153,26 @@ def detect_project(repo_path: str) -> DetectResult:
         evidence=evidence,
         evidence_set=ev,
     )
+
+
+def detect_project_from_snapshot(snapshot: RepoSnapshot) -> DetectResult:
+    """Public snapshot-based detector used by the analyzer registry and graph."""
+    return _detect_project_from_snapshot(snapshot)
+
+
+def detect_project(repo_path: str) -> DetectResult:
+    """Detect project types for a repository path."""
+    path = validate_repo_path(repo_path)
+    if path is None:
+        ev = EvidenceSet()
+        ev.add(EvidenceKind.ERROR, f"Path does not exist or is not a directory: {repo_path}")
+        return DetectResult(
+            repo_path=repo_path,
+            exists=False,
+            error=f"Path does not exist or is not a directory: {repo_path}",
+            evidence_set=ev,
+        )
+
+    scanner = Scanner()
+    snapshot = scanner.scan(path, ScannerOptions(max_depth=3, max_files=5_000, max_files_per_dir=200))
+    return _detect_project_from_snapshot(snapshot)
