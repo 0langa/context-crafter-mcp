@@ -13,8 +13,8 @@ That made the file read like release history when it was really a blend of relea
 ## Current truth
 
 - Package version in code: `0.4.0`
-- Latest public git tag: `0.2.0`
-- Additional work exists on `main`, but it is unreleased until a real tag is cut
+- Latest public git tag: `0.4.0`
+- Current `main` corresponds to the tagged `0.4.0` release line
 
 ## Source of truth
 

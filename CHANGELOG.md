@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+No unreleased changes documented yet.
+
+## [0.4.0] - 2026-05-31
+
 ### Added
 
 - **Signal Ranking & Path Classification (`ranking.py`)**: New module classifies paths as product, tooling, vendor, generated, fixture, test, docs, or unknown, and scores importance by depth, category, markers, and entrypoints.
@@ -25,31 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Ranked Output**: Source directories, entry points, and package groups are now ordered by importance score rather than alphabetically.
 - **Category Tags**: `ARCHITECTURE_SUMMARY.md` and `AGENT_BRIEF.md` tag source directories and entry points with `[product]`, `[tooling]`, etc.
 - **Per-Language Dependency Sections**: `PROJECT_OVERVIEW.md` now shows runtime/development dependencies per language (Python, Node, Rust, Go, Java) instead of falling through to a single list.
-- `resolved_output_dir` in generation-style JSON results for CLI and MCP calls.
-- Package metadata URLs for homepage, repository, issues, and changelog.
-- Dependabot config for Python dependencies and GitHub Actions.
-- CodeQL workflow for Python.
-- Public real-repo smoke matrix document for unreleased hardening confidence tracking.
-
-### Changed
-
-- **Node Analyzer**: Now creates a `NodePackage` per discovered `package.json` instead of one mega-package; product packages are listed before tooling packages. Each package carries `role`, `frameworks`, `local_deps`, `likely_entry_points`, `package_type`, and `peer_dependencies`.
-- **Java & Go Nested Build Discovery**: Analyzers now scan up to depth 5 for `pom.xml` / `build.gradle` / `go.mod` instead of assuming root presence, eliminating false "not found" evidence on repos with nested build files.
-- **Renderer Honesty**: `AGENT_BRIEF.md` and `ARCHITECTURE_SUMMARY.md` now warn when scan budget is exhausted or many files are skipped. `PROJECT_OVERVIEW.md` only mentions Java build files (`pom.xml`, `build.gradle`) that were actually detected.
-- **Architecture Pattern De-overfit**: Removed "MCP stdio server" parenthetical from server-pattern detection; now emits generic "Server/API pattern detected."
-- **Detector Evidence**: Extension-inferred evidence is capped at 10 items with an overflow note to avoid flooding from large directories.
-- MCP server now reports the package version in server metadata.
-- MCP tool schemas now match actual supported arguments more closely.
-- CI now validates committed example outputs, checks CLI smoke commands for unexpected repo dirtiness, and smoke-tests installed wheel and sdist artifacts.
-- Release-planning docs now describe unreleased hardening work without implying untagged `0.5.0`/`0.6.0` releases.
-- README, output contract, limitations, MCP client docs, security policy, and manual steps updated to reflect current release policy and output confinement behavior.
-- Removed tracked local agent/customization artifacts and private session exports from the repository.
-- Replaced the stale implementation report with a short archive note keyed to actual git/tag history.
-
-## [0.4.0] - 2026-05-29
-
-### Added
-
 - **Evidence Model v1**: `EvidenceKind`, `Evidence`, `EvidenceSet` with `add`, `by_kind`, `by_analyzer`, `warnings` helpers.
 - **Rich evidence in analyzers**: All analyzers (Python, Node, Go, Rust, Java, .NET, Generic) now emit observed/inferred/unknown/unsupported/error evidence.
 - **Evidence in generated docs**: `PROJECT_OVERVIEW.md` includes an Evidence section; `AGENT_BRIEF.md` lists Unknowns/Limitations.
@@ -61,14 +40,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Confidence levels**: `Evidence` carries `confidence` (high/medium/low) with defaults per `EvidenceKind`; `EvidenceSet.verify(repo_path)` checks source_path existence.
 - **Validation v2.1**: `generated_version_mismatch` and `compact_profile_too_large` checks.
 - **Tests**: `test_graph.py` (LangGraph pipeline), `test_cli.py` (CLI commands).
+- `resolved_output_dir` in generation-style JSON results for CLI and MCP calls.
+- Package metadata URLs for homepage, repository, issues, and changelog.
+- Dependabot config for Python dependencies and GitHub Actions.
+- CodeQL workflow for Python.
+- Public real-repo smoke matrix document for release confidence tracking.
 
 ### Changed
 
+- **Node Analyzer**: Now creates a `NodePackage` per discovered `package.json` instead of one mega-package; product packages are listed before tooling packages. Each package carries `role`, `frameworks`, `local_deps`, `likely_entry_points`, `package_type`, and `peer_dependencies`.
+- **Java & Go Nested Build Discovery**: Analyzers now scan up to depth 5 for `pom.xml` / `build.gradle` / `go.mod` instead of assuming root presence, eliminating false "not found" evidence on repos with nested build files.
+- **Renderer Honesty**: `AGENT_BRIEF.md` and `ARCHITECTURE_SUMMARY.md` now warn when scan budget is exhausted or many files are skipped. `PROJECT_OVERVIEW.md` only mentions Java build files (`pom.xml`, `build.gradle`) that were actually detected.
+- **Architecture Pattern De-overfit**: Removed "MCP stdio server" parenthetical from server-pattern detection; now emits generic "Server/API pattern detected."
+- **Detector Evidence**: Extension-inferred evidence is capped at 10 items with an overflow note to avoid flooding from large directories.
 - Bumped version to `0.4.0`.
+- MCP server now reports the package version in server metadata.
+- MCP tool schemas now match actual supported arguments more closely.
+- CI now validates committed example outputs, checks CLI smoke commands for unexpected repo dirtiness, and smoke-tests installed wheel and sdist artifacts.
 - `detectors.py` emits detailed `EvidenceSet` for every detected stack.
 - Validation source-reference regex expanded to cover `scripts/`, `docs/`, and more config files.
 - Demo examples regenerated with versioned headers.
 - Compact profile now always omits optional sections (no longer depends on repo file count).
+- README, output contract, limitations, MCP client docs, security policy, and manual steps updated to reflect current release policy and output confinement behavior.
+- Removed tracked local agent/customization artifacts and private session exports from the repository.
+- Replaced the stale implementation report with a short archive note keyed to actual git/tag history.
 
 ## [0.3.2] - 2026-05-29
 

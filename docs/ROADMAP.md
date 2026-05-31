@@ -4,16 +4,15 @@
 
 Package version on `main` is **v0.4.0**.
 
-Latest git tag on the public remote is **`0.2.0`**.
+Latest git tag on the public remote is **`0.4.0`**.
 
-There is additional unreleased work on `main`, but it is not a tagged `0.5.0` or `0.6.0` line. Treat it as hardening work in progress until a real release tag is cut.
+Current `main` is the tagged `0.4.0` release line.
 
 ## Near-term priorities
 
 ### 1. Release hygiene
 
-- Cut the next release from verified `main` and tag it coherently.
-- Keep `README.md`, `CHANGELOG.md`, example outputs, and package metadata aligned to the same version.
+- Keep `README.md`, `CHANGELOG.md`, example outputs, package metadata, and public tags aligned to the same version.
 - Keep local agent/customization artifacts out of git.
 
 ### 2. Product hardening

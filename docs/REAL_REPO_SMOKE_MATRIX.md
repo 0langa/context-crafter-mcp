@@ -1,6 +1,6 @@
 # Real Repo Smoke Matrix
 
-Maintainer-facing hardening confidence set for unreleased `main` work. These repos are not vendored into this repository.
+Maintainer-facing hardening confidence set for the current `0.4.0` release line. These repos are not vendored into this repository.
 
 ## Fixed smoke set
 
