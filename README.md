@@ -3,10 +3,9 @@
 [![CI](https://github.com/0langa/context-crafter-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/0langa/context-crafter-mcp/actions)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue)]
 
 Local-first MCP server that turns source repositories into compact AI-agent context: project overviews, repo maps, dependency graphs, architecture notes, and validation reports.
-
-Current roadmap target is an internal **`0.5.0` hardening baseline**. The first public release still remains `1.0.0`.
 
 ## What it generates
 
@@ -70,6 +69,12 @@ Generate context docs for any repository:
 uv run context-crafter-mcp generate /path/to/repo --output docs/generated --profile standard
 ```
 
+On Windows:
+
+```powershell
+uv run context-crafter-mcp generate C:\path\to\repo --output docs\generated --profile standard
+```
+
 Validate the generated output:
 
 ```sh
@@ -94,12 +99,54 @@ uv run context-crafter-mcp mcp-config --client kimi
 
 Supported clients: `claude-desktop`, `claude-code`, `kimi`, `cline`, `roo`, `vscode`, `codex`, `generic-stdio`.
 
+### Published package config
+
+All clients use the same stdio config when installed via `uvx`:
+
+```json
+{
+  "mcpServers": {
+    "context-crafter": {
+      "command": "uvx",
+      "args": ["context-crafter-mcp", "serve"]
+    }
+  }
+}
+```
+
+### Local development config
+
+Point to the repo checkout directly:
+
+```sh
+uv run context-crafter-mcp mcp-config --client claude-desktop --repo /path/to/this/repo
+```
+
+### Client placement
+
+| Client | Where to place the config |
+|--------|--------------------------|
+| claude-desktop | `claude_desktop_config.json` → `mcpServers` |
+| claude-code | `.mcp.json` in project root or `~/.claude-code/` |
+| kimi | Kimi Code settings → MCP servers |
+| cline | Cline settings → MCP servers (hot reload) |
+| roo | Roo settings → MCP servers |
+| vscode | `.vscode/mcp.json` or user settings |
+| codex | `codex.toml` or Codex settings |
+| generic-stdio | Any client that accepts stdio JSON |
+
 ### MCP Inspector
 
 Test the server with the [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
 
 ```sh
 npx @modelcontextprotocol/inspector uv run context-crafter-mcp serve
+```
+
+For local repo inspection:
+
+```sh
+npx @modelcontextprotocol/inspector uv --directory /path/to/this/repo run context-crafter-mcp serve
 ```
 
 ### MCP tools
@@ -129,6 +176,18 @@ Quick preview of `AGENT_BRIEF.md`:
 - **Stacks**: Python (MCP server, LangGraph pipeline, static analyzers)
 - **Key dependencies**: `mcp`, `langgraph`, `pydantic`
 
+## What makes this different
+
+| Capability | Context Crafter MCP | Generic AI context generators |
+|------------|---------------------|------------------------------|
+| Local-first | Runs entirely on your machine | Often cloud-based or API-dependent |
+| Static-only | No code execution, no network calls | May run code or call LLMs |
+| Deterministic | Same input → same output structure | Often non-deterministic |
+| No API keys | Zero external dependencies | Usually requires API keys |
+| MCP-native | First-class MCP server with tools, resources, prompts | Ad-hoc integration |
+| Validation | Built-in validation reports with machine-readable codes | Rarely validated |
+| Evidence model | Observed / inferred / unknown labels on every claim | Often overconfident |
+
 ## Safety model
 
 - **Read-only analysis** — never executes code in the target repository.
@@ -138,27 +197,35 @@ Quick preview of `AGENT_BRIEF.md`:
 - **Bounded scans** — depth, file count, and file size limits with safe defaults.
 - **No symlinks followed** — prevents infinite loops and directory escaping.
 - **No stdout logging in MCP mode** — stdio protocol is protected from corrupting output.
+- **Basic secret awareness** — flags potential secret files (`.env`, `credentials.json`) in scan reports.
 
 See [`SECURITY.md`](SECURITY.md) for the full threat model and reporting process.
 
 ## Supported stacks
 
-| Stack | Detection | Analysis depth |
-|-------|-----------|----------------|
-| Python | `pyproject.toml`, `requirements.txt`, `*.py` | stdlib AST (imports, classes, functions) |
-| Node/TypeScript | `package.json`, `tsconfig.json`, `*.js/ts` | tree-sitter AST + regex fallback |
-| .NET | `*.sln`, `*.csproj`, `*.cs` | tree-sitter C# AST + XML + regex fallback |
-| Rust | `Cargo.toml`, `*.rs` | tree-sitter Rust AST + regex fallback |
-| Go | `go.mod`, `*.go` | tree-sitter Go AST + regex fallback |
-| Java | `pom.xml`, `build.gradle`, `build.gradle.kts`, `*.java` | javalang AST + regex fallback (nested build files discovered) |
-| Generic | Any directory | Directory and filename heuristics |
+| Stack | Detection | Analysis depth | Optional extra |
+|-------|-----------|----------------|----------------|
+| Python | `pyproject.toml`, `requirements.txt`, `*.py` | stdlib AST (imports, classes, functions) | — |
+| Node/TypeScript | `package.json`, `tsconfig.json`, `*.js/ts` | tree-sitter AST + regex fallback | `parsers` |
+| .NET | `*.sln`, `*.csproj`, `*.cs` | tree-sitter C# AST + XML + regex fallback | `parsers` |
+| Rust | `Cargo.toml`, `*.rs` | tree-sitter Rust AST + regex fallback | `parsers` |
+| Go | `go.mod`, `*.go` | tree-sitter Go AST + regex fallback | `parsers` |
+| Java | `pom.xml`, `build.gradle`, `build.gradle.kts`, `*.java` | javalang AST + regex fallback (nested build files discovered) | `parsers` |
+| Generic | Any directory | Directory and filename heuristics | — |
+
+Install deeper parser support:
+
+```sh
+uv sync --extra parsers
+```
 
 ## Architecture
 
 - **Scanner boundary** — `Scanner.scan(root, options) -> RepoSnapshot`. Everything above the scanner consumes `RepoSnapshot`, making the scanner replaceable without changing analyzers.
 - **Python product layer** — MCP server, CLI, analyzers, and renderers are Python. A lower-level scanner (Rust/Go) is only considered if benchmarks prove Python traversal is the bottleneck.
 - **LangGraph pipeline** — `validate_repo -> detect -> scan -> analyze -> render`.
-- **Analyzer registry** — Language analyzers are registered and run based on detected project types.
+- **Analyzer registry** — `AnalyzerRegistry` with `register`, `detect`, `analyze`, `merge`. Language analyzers run based on detected project types.
+- **Parser abstraction** — `ParserBackend` protocol with concrete implementations (Tree-sitter, javalang, stdlib AST, regex fallback).
 - **Enriched snapshot** — `SnapshotFile` carries `extension`, `language_hint`, and `is_text` for richer analysis.
 
 See [`docs/adr/0001-python-product-layer-replaceable-scanner.md`](docs/adr/0001-python-product-layer-replaceable-scanner.md).
@@ -178,13 +245,17 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Limitations
 
-- Static analysis only; no runtime behavior or dynamic imports.
-- Non-Python analyzers use real AST parsers with regex fallback, not full semantic analysis.
-- HTML rendering uses the `markdown` library when available; stdlib fallback otherwise.
-- Secret redaction is not implemented; review generated output before sharing.
-- Nested `.gitignore` files are supported via `pathspec` with deepest-matching-wins semantics.
+| Limitation | Detail |
+|------------|--------|
+| Static analysis only | No runtime behavior, dynamic imports, or conditional architecture |
+| Non-Python depth | Real AST parsers with regex fallback, not full semantic analysis |
+| HTML rendering | Uses `markdown` library when available; stdlib fallback otherwise |
+| Secret redaction | Not implemented; review generated output before sharing |
+| Gitignore nesting | Supported via `pathspec` with deepest-matching-wins semantics |
+| Determinism | Timestamps vary between runs; content and ordering are stable |
+| Compact profile | Intentionally omits sections even when a small repo could fit more |
 
-See [`docs/REAL_REPO_SMOKE_MATRIX.md`](docs/REAL_REPO_SMOKE_MATRIX.md) for the current `0.5.0` hardening confidence set.
+See [`docs/REAL_REPO_SMOKE_MATRIX.md`](docs/REAL_REPO_SMOKE_MATRIX.md) for the current pre-`1.0.0` hardening confidence set.
 
 ## License
 

@@ -2,6 +2,8 @@
 
 Date: 2026-05-29
 
+> **Historical document.** This report captures the state at v0.3.2/v0.4.0. Current project state is significantly ahead (pre-1.0.0 hardening). For current release-readiness claims, trust source code, tests, `CHANGELOG.md`, and CI workflows — not this document.
+
 ## Current truth note
 
 This file contains historical implementation sections for prior milestones. For current release-readiness claims, trust:

@@ -20,7 +20,11 @@ def main() -> int:
     server_text = (repo / "src" / "context_crafter_mcp" / "server.py").read_text(encoding="utf-8")
     missing = [name for name in REQUIRED_DOCS if name not in server_text]
     if missing:
-        sys.stderr.write("Hook fail: required generated docs missing from server-facing contract -> " + ", ".join(sorted(missing)) + "\n")
+        sys.stderr.write(
+            "Hook fail: required generated docs missing from server-facing contract -> "
+            + ", ".join(sorted(missing))
+            + "\n"
+        )
         return 1
     return 0
 

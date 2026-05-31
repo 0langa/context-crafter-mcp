@@ -11,9 +11,7 @@ def main() -> int:
     noisy_markers = ["print(", "logging.basicConfig", "logger.info(", "logger.warning("]
     bad = [marker for marker in noisy_markers if marker in text]
     if bad:
-        sys.stderr.write(
-            "Hook fail: potential stdio noise markers in server.py -> " + ", ".join(bad) + "\n"
-        )
+        sys.stderr.write("Hook fail: potential stdio noise markers in server.py -> " + ", ".join(bad) + "\n")
         return 1
     return 0
 

@@ -10,7 +10,7 @@ def _extract_server_tools(server_text: str) -> set[str]:
 
 
 def _extract_cli_commands(cli_text: str) -> set[str]:
-    return set(re.findall(r'cmd_([a-z_]+)\(', cli_text))
+    return set(re.findall(r"cmd_([a-z_]+)\(", cli_text))
 
 
 def main() -> int:
@@ -21,7 +21,11 @@ def main() -> int:
     tools = _extract_server_tools(server_text)
     commands = _extract_cli_commands(cli_text)
 
-    expected_overlap = {"detect_project": "detect", "generate_context": "generate", "validate_generated_context": "validate"}
+    expected_overlap = {
+        "detect_project": "detect",
+        "generate_context": "generate",
+        "validate_generated_context": "validate",
+    }
     missing = []
     for tool_name, cli_name in expected_overlap.items():
         if tool_name not in tools:

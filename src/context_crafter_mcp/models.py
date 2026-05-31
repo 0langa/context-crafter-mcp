@@ -219,6 +219,10 @@ class BoundedScanSummary:
     budget_exhausted: bool = False
     skipped_reasons: dict[str, int] = field(default_factory=dict)
     category_counts: dict[str, int] = field(default_factory=dict)
+    max_files: int = 0
+    max_depth: int = 0
+    max_file_bytes: int = 0
+    git_commit: str | None = None
 
 
 @dataclass

@@ -202,8 +202,8 @@ Use `uv` for all project commands.
     uv run context-crafter-mcp --help
     uv run context-crafter-mcp doctor
     uv run context-crafter-mcp detect . --json
-    uv run context-crafter-mcp generate . --output .tmp/generated --profile standard --json
-    uv run context-crafter-mcp validate .tmp/generated --json
+    uv run context-crafter-mcp generate . --output docs/generated --profile standard --json
+    uv run context-crafter-mcp validate docs/generated --json
     uv run context-crafter-mcp self-test .
     uv run python scripts/bench_scan.py --files 1000 --depth 5 --max-files 2000
 

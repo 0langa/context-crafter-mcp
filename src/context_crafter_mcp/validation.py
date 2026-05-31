@@ -329,13 +329,13 @@ def _check_heading_hierarchy(content: str, file_name: str) -> ValidationCheck | 
 
 
 _EXPECTED_SECTIONS: dict[str, list[str]] = {
-    "AI_CONTEXT_INDEX.md": ["Project Overview", "Repository Map", "Architecture Summary"],
-    "PROJECT_OVERVIEW.md": ["Project Type", "Entry Points", "Dependencies"],
-    "REPO_MAP.md": ["Directory Tree", "Root Files"],
-    "ARCHITECTURE_SUMMARY.md": ["Components", "Dependencies"],
-    "AGENT_BRIEF.md": ["Quick Start", "Key Files"],
-    "SCAN_REPORT.md": ["Scan Summary", "Safety Notes"],
-    "VALIDATION_REPORT.md": ["Validation Result", "Checks"],
+    "AI_CONTEXT_INDEX.md": ["Generated Files", "Quick Navigation"],
+    "PROJECT_OVERVIEW.md": ["Project Metadata", "Entry Points", "Dependencies"],
+    "REPO_MAP.md": ["Directory Tree", "Important Config Files"],
+    "ARCHITECTURE_SUMMARY.md": ["Detected Stacks", "Risks / Unknowns"],
+    "AGENT_BRIEF.md": ["What this is", "Entry points", "Key dependencies"],
+    "SCAN_REPORT.md": ["Coverage", "Safety notes"],
+    "VALIDATION_REPORT.md": ["Output Files", "Result"],
 }
 
 

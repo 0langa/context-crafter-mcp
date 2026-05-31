@@ -5,7 +5,7 @@ from __future__ import annotations
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from context_crafter_mcp.analyzers import analyze_for_type
+from context_crafter_mcp.analyzers import AnalyzerRegistry
 from context_crafter_mcp.analyzers.generic import analyze_generic
 from context_crafter_mcp.detectors import detect_project
 from context_crafter_mcp.models import AnalysisResult, DetectResult, RenderResult, ScanConfig
@@ -62,10 +62,11 @@ def node_run_analyzers(state: RepoState) -> dict[str, object]:
     if state.detect_result is None:
         return {}
 
+    registry = AnalyzerRegistry.from_globals()
     for ptype in state.detect_result.project_types:
         if ptype == "generic":
             continue
-        state.analysis = analyze_for_type(ptype, state.repo_path, state.analysis, state.scan_config)
+        state.analysis = registry.analyze_for_type(ptype, state.repo_path, state.analysis, state.scan_config)
 
     return {"analysis": state.analysis}
 
@@ -79,14 +80,37 @@ def node_render_outputs(state: RepoState) -> dict[str, object]:
         state.errors.append("Missing analysis or detection result")
         return {"ok": False}
 
+    gen_at = state.generated_at
     results: list[RenderResult] = []
-    results.append(render_ai_context_index(state.repo_path, state.detect_result, state.analysis, state.output_dir))
-    results.append(render_project_overview(state.repo_path, state.detect_result, state.analysis, state.output_dir))
-    results.append(render_repo_map(state.repo_path, state.detect_result, state.analysis, state.output_dir))
-    results.append(render_dependency_graph(state.repo_path, state.detect_result, state.analysis, state.output_dir))
-    results.append(render_architecture_summary(state.repo_path, state.detect_result, state.analysis, state.output_dir))
-    results.append(render_agent_brief(state.repo_path, state.detect_result, state.analysis, state.output_dir))
-    results.append(render_scan_report(state.repo_path, state.detect_result, state.analysis, state.output_dir))
+    results.append(
+        render_ai_context_index(
+            state.repo_path, state.detect_result, state.analysis, state.output_dir, generated_at=gen_at
+        )
+    )
+    results.append(
+        render_project_overview(
+            state.repo_path, state.detect_result, state.analysis, state.output_dir, generated_at=gen_at
+        )
+    )
+    results.append(
+        render_repo_map(state.repo_path, state.detect_result, state.analysis, state.output_dir, generated_at=gen_at)
+    )
+    results.append(
+        render_dependency_graph(
+            state.repo_path, state.detect_result, state.analysis, state.output_dir, generated_at=gen_at
+        )
+    )
+    results.append(
+        render_architecture_summary(
+            state.repo_path, state.detect_result, state.analysis, state.output_dir, generated_at=gen_at
+        )
+    )
+    results.append(
+        render_agent_brief(state.repo_path, state.detect_result, state.analysis, state.output_dir, generated_at=gen_at)
+    )
+    results.append(
+        render_scan_report(state.repo_path, state.detect_result, state.analysis, state.output_dir, generated_at=gen_at)
+    )
 
     written: list[str] = []
     for r in results:
@@ -98,7 +122,12 @@ def node_render_outputs(state: RepoState) -> dict[str, object]:
 
     # Validation report needs the full written list
     val_result = render_validation_report(
-        state.repo_path, state.detect_result, state.analysis, state.output_dir, written_files=written
+        state.repo_path,
+        state.detect_result,
+        state.analysis,
+        state.output_dir,
+        written_files=written,
+        generated_at=gen_at,
     )
     if val_result.ok:
         written.extend(val_result.written)
@@ -113,6 +142,7 @@ def node_render_outputs(state: RepoState) -> dict[str, object]:
         state.output_dir,
         written_files=written,
         errors=state.errors,
+        generated_at=gen_at,
     )
     if run_state_result.ok:
         written.extend(run_state_result.written)
@@ -162,8 +192,13 @@ def run_generate_all(
     repo_path: str, output_dir: str = "docs/generated", scan_config: ScanConfig | None = None
 ) -> RepoState:
     """Run the full pipeline synchronously and return the final state."""
+    import os
+
     graph = build_graph()
     state = RepoState(repo_path=repo_path, output_dir=output_dir, scan_config=scan_config or ScanConfig())
+    frozen = os.environ.get("CONTEXT_CRAFTER_FROZEN_TIME")
+    if frozen:
+        state.generated_at = frozen
     result = graph.invoke(state)
     if isinstance(result, RepoState):
         return result

@@ -4,7 +4,7 @@
 
 ### Published package path
 
-Use `uvx` when the package is published and you want a zero-install client config:
+All supported clients use the same stdio config when the package is published:
 
 ```json
 {
@@ -19,10 +19,29 @@ Use `uvx` when the package is published and you want a zero-install client confi
 
 ### Local development path
 
-Use the repo checkout directly during development:
+Point to the repo checkout directly during development:
 
 ```sh
-uv run context-crafter-mcp mcp-config --client kimi --repo /path/to/this/repo
+uv run context-crafter-mcp mcp-config --client claude-desktop --repo /path/to/this/repo
+```
+
+This emits a client-specific config with the local directory:
+
+```json
+{
+  "mcpServers": {
+    "context-crafter": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/path/to/this/repo",
+        "run",
+        "context-crafter-mcp",
+        "serve"
+      ]
+    }
+  }
+}
 ```
 
 ### MCP Inspector
@@ -39,15 +58,16 @@ npx @modelcontextprotocol/inspector uv --directory /path/to/this/repo run contex
 
 ## Supported clients
 
-| Client | Config target | Verification level |
-|--------|--------------|--------------------|
-| claude-desktop | generic-stdio | manual smoke |
-| claude-code | generic-stdio | manual smoke |
-| kimi | generic-stdio | manual smoke |
-| cline | generic-stdio | manual smoke |
-| roo | generic-stdio | manual smoke |
-| vscode | generic-stdio | manual smoke |
-| codex | generic-stdio | manual smoke |
+| Client | Config placement | Notes |
+|--------|-----------------|-------|
+| claude-desktop | `claude_desktop_config.json` → `mcpServers` | Restart Claude Desktop after editing |
+| claude-code | `.mcp.json` in project root or `~/.claude-code/` | Per-project or global |
+| kimi | Kimi Code settings → MCP servers | GUI-based entry |
+| cline | Cline settings → MCP servers | Hot reloads without restart |
+| roo | Roo settings → MCP servers | GUI-based entry |
+| vscode | `.vscode/mcp.json` or user settings | Workspace-scoped or global |
+| codex | `codex.toml` or Codex settings | May require TOML translation |
+| generic-stdio | Any client accepting stdio JSON | Baseline stdio MCP config |
 
 ## Tools
 
@@ -81,4 +101,3 @@ After `generate_context`, generated files are registered as MCP resources:
 - no stdout logging in MCP mode
 - output confined to repository root
 - arbitrary path reads blocked by session-scoped registry
-

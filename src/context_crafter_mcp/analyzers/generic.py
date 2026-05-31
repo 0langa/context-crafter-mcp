@@ -142,6 +142,10 @@ def analyze_generic(
         budget_exhausted=snapshot.stats.budget_exhausted,
         skipped_reasons=snapshot.stats.skipped_reasons,
         category_counts=snapshot.stats.category_counts,
+        max_files=cfg.max_files_per_dir * 10,
+        max_depth=tree_depth + 1,
+        max_file_bytes=cfg.max_file_bytes,
+        git_commit=snapshot.git.commit,
     )
     result.docs_files = sorted(set(docs_files))[: get_profile_limit(cfg.profile, "docs_files")]
     result.config_files = sorted(set(config_files))[: get_profile_limit(cfg.profile, "config_files")]
@@ -175,6 +179,17 @@ def analyze_generic(
             EvidenceKind.OBSERVED,
             f"Config file `{cfg_file}` found",
             source_path=cfg_file,
+            analyzer="generic",
+        )
+
+    # Basic secret awareness
+    secret_patterns = (".env", "secrets", "credentials", "private_key", "id_rsa", "id_dsa")
+    secret_files = [sf.rel_path for sf in snapshot.files if any(p in sf.rel_path.lower() for p in secret_patterns)]
+    for secret_file in secret_files[:5]:
+        ev.add(
+            EvidenceKind.INFERRED,
+            f"Potential secret file `{secret_file}` detected; review before sharing generated output",
+            source_path=secret_file,
             analyzer="generic",
         )
 

@@ -11,7 +11,7 @@ from pathlib import Path
 from mcp.server import Server
 from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server.stdio import stdio_server
-from mcp.types import TextContent, Tool
+from mcp.types import GetPromptResult, PromptMessage, TextContent, Tool
 
 from context_crafter_mcp import __version__
 from context_crafter_mcp.graph import (
@@ -380,14 +380,31 @@ async def list_prompts() -> list:
 
 
 @app.get_prompt()
-async def get_prompt(name: str, arguments: dict | None) -> str:
+async def get_prompt(name: str, arguments: dict | None) -> GetPromptResult:
     """Return a prompt template."""
     if name == "generate_context":
-        return (
-            "Analyze the repository at the given path and generate the full context suite. "
-            "Use the generate_context tool with repo_path set to the absolute path."
+        return GetPromptResult(
+            messages=[
+                PromptMessage(
+                    role="user",
+                    content=TextContent(
+                        type="text",
+                        text=(
+                            "Analyze the repository at the given path and generate the full context suite. "
+                            "Use the generate_context tool with repo_path set to the absolute path."
+                        ),
+                    ),
+                )
+            ]
         )
-    return "Unknown prompt"
+    return GetPromptResult(
+        messages=[
+            PromptMessage(
+                role="user",
+                content=TextContent(type="text", text="Unknown prompt"),
+            )
+        ]
+    )
 
 
 async def main() -> None:

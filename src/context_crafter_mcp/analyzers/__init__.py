@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Callable
-
 from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, ScanConfig
+from context_crafter_mcp.analyzers.registry import AnalyzerRegistry as AnalyzerRegistry
+from context_crafter_mcp.analyzers.registry import AnalyzerFn, DetectedProject as DetectedProject
 
 # Registry of analyzer functions keyed by project type.
-AnalyzerFn = Callable[[str, AnalysisResult | None, ScanConfig], AnalysisResult]
-
 ANALYZER_REGISTRY: dict[str, AnalyzerFn] = {}
 
 # Registry of analyzer metadata specs keyed by project type.

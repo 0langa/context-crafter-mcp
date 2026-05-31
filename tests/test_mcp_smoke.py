@@ -8,7 +8,14 @@ from pathlib import Path
 
 import pytest
 
-from mcp.types import CallToolRequest, ListResourcesRequest, ListToolsRequest, ReadResourceRequest
+from mcp.types import (
+    CallToolRequest,
+    GetPromptRequest,
+    ListPromptsRequest,
+    ListResourcesRequest,
+    ListToolsRequest,
+    ReadResourceRequest,
+)
 
 from context_crafter_mcp import __version__
 from context_crafter_mcp.server import _REGISTERED_RESOURCES, app
@@ -203,6 +210,138 @@ async def test_explain_capabilities_includes_analyzers() -> None:
     text = result.content[0].text
     assert "analyzers" in text
     assert "python" in text
+
+
+@pytest.mark.anyio
+async def test_generate_repo_map_tool() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        Path(td, "main.py").write_text("print(1)\n")
+        req = CallToolRequest(
+            method="tools/call",
+            params={
+                "name": "generate_repo_map",
+                "arguments": {"repo_path": td, "output_dir": "out"},
+            },
+        )
+        server_result = await app.request_handlers[CallToolRequest](req)
+        result = server_result.root
+        assert len(result.content) == 1
+        assert result.content[0].type == "text"
+        data = json.loads(result.content[0].text)
+        assert data["ok"] is True
+
+
+@pytest.mark.anyio
+async def test_generate_dependency_graph_tool() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        Path(td, "main.py").write_text("import os\n")
+        req = CallToolRequest(
+            method="tools/call",
+            params={
+                "name": "generate_dependency_graph",
+                "arguments": {"repo_path": td, "output_dir": "out"},
+            },
+        )
+        server_result = await app.request_handlers[CallToolRequest](req)
+        result = server_result.root
+        assert len(result.content) == 1
+        assert result.content[0].type == "text"
+        data = json.loads(result.content[0].text)
+        assert data["ok"] is True
+        written = data.get("written", [])
+        assert any("DEPENDENCY_GRAPH.md" in w for w in written)
+
+
+@pytest.mark.anyio
+async def test_generate_architecture_summary_tool() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        Path(td, "main.py").write_text("print(1)\n")
+        req = CallToolRequest(
+            method="tools/call",
+            params={
+                "name": "generate_architecture_summary",
+                "arguments": {"repo_path": td, "output_dir": "out"},
+            },
+        )
+        server_result = await app.request_handlers[CallToolRequest](req)
+        result = server_result.root
+        assert len(result.content) == 1
+        assert result.content[0].type == "text"
+        data = json.loads(result.content[0].text)
+        assert data["ok"] is True
+
+
+@pytest.mark.anyio
+async def test_generate_project_overview_tool() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        Path(td, "main.py").write_text("print(1)\n")
+        req = CallToolRequest(
+            method="tools/call",
+            params={
+                "name": "generate_project_overview",
+                "arguments": {"repo_path": td, "output_dir": "out"},
+            },
+        )
+        server_result = await app.request_handlers[CallToolRequest](req)
+        result = server_result.root
+        assert len(result.content) == 1
+        assert result.content[0].type == "text"
+        data = json.loads(result.content[0].text)
+        assert data["ok"] is True
+
+
+@pytest.mark.anyio
+async def test_validate_generated_context_tool() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        Path(td, "main.py").write_text("print(1)\n")
+        gen_req = CallToolRequest(
+            method="tools/call",
+            params={
+                "name": "generate_context",
+                "arguments": {"repo_path": td, "output_dir": "out"},
+            },
+        )
+        gen_result = await app.request_handlers[CallToolRequest](gen_req)
+        gen_data = json.loads(gen_result.root.content[0].text)
+        assert gen_data["ok"] is True
+
+        val_req = CallToolRequest(
+            method="tools/call",
+            params={
+                "name": "validate_generated_context",
+                "arguments": {
+                    "repo_path": td,
+                    "output_dir": str((Path(td) / "out").resolve()),
+                },
+            },
+        )
+        val_result = await app.request_handlers[CallToolRequest](val_req)
+        result = val_result.root
+        assert len(result.content) == 1
+        assert result.content[0].type == "text"
+        data = json.loads(result.content[0].text)
+        assert data["ok"] is True
+
+
+@pytest.mark.anyio
+async def test_list_prompts() -> None:
+    req = ListPromptsRequest(method="prompts/list", params=None)
+    server_result = await app.request_handlers[ListPromptsRequest](req)
+    result = server_result.root
+    names = [p.name for p in result.prompts]
+    assert "generate_context" in names
+
+
+@pytest.mark.anyio
+async def test_get_generate_context_prompt() -> None:
+    req = GetPromptRequest(
+        method="prompts/get",
+        params={"name": "generate_context", "arguments": {}},
+    )
+    server_result = await app.request_handlers[GetPromptRequest](req)
+    result = server_result.root
+    assert result.messages
+    assert any("generate_context" in m.content.text for m in result.messages)
 
 
 def test_server_uses_package_version() -> None:

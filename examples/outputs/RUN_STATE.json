@@ -1,0 +1,32 @@
+{
+  "version": "0.4.0",
+  "timestamp": "2026-05-30T22:39:46.785657+00:00",
+  "repo_path": "examples/demo-repo",
+  "project_types": [
+    "generic",
+    "python"
+  ],
+  "profile": "standard",
+  "scan_config": {
+    "max_depth": 5,
+    "max_files_per_dir": 800,
+    "max_file_bytes": 5000000
+  },
+  "files_scanned": 10,
+  "analyzers_run": [
+    "generic",
+    "python"
+  ],
+  "output_files": [
+    "AI_CONTEXT_INDEX.md",
+    "PROJECT_OVERVIEW.md",
+    "REPO_MAP.md",
+    "DEPENDENCY_GRAPH.mmd",
+    "DEPENDENCY_GRAPH.md",
+    "ARCHITECTURE_SUMMARY.md",
+    "AGENT_BRIEF.md",
+    "SCAN_REPORT.md",
+    "VALIDATION_REPORT.md"
+  ],
+  "errors": []
+}
