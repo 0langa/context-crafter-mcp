@@ -51,7 +51,7 @@ def _find_children_by_type(node: Any, node_type: str) -> list[Any]:
 def _tree_sitter_parse(source: bytes, language: Any) -> Any | None:
     """Parse source bytes with tree-sitter."""
     try:
-        from tree_sitter import Language, Parser  # type: ignore[import-not-found]
+        from tree_sitter import Language, Parser
 
         parser = Parser(Language(language()))
         return parser.parse(source)
@@ -77,7 +77,7 @@ class TreeSitterBackend:
 
     def _parse_javascript(self, source: bytes) -> ParsedModule | None:
         try:
-            from tree_sitter_javascript import language as js_lang  # type: ignore[import-not-found]
+            from tree_sitter_javascript import language as js_lang
         except (ImportError, ModuleNotFoundError):
             return None
 
@@ -137,7 +137,7 @@ class TreeSitterBackend:
 
     def _parse_typescript(self, source: bytes) -> ParsedModule | None:
         try:
-            from tree_sitter_typescript import language_typescript as ts_lang  # type: ignore[import-not-found]
+            from tree_sitter_typescript import language_typescript as ts_lang
         except (ImportError, ModuleNotFoundError):
             return None
 
@@ -193,7 +193,7 @@ class TreeSitterBackend:
 
     def _parse_go(self, source: bytes) -> ParsedModule | None:
         try:
-            from tree_sitter_go import language as go_lang  # type: ignore[import-not-found]
+            from tree_sitter_go import language as go_lang
         except (ImportError, ModuleNotFoundError):
             return None
 
@@ -234,7 +234,7 @@ class TreeSitterBackend:
 
     def _parse_rust(self, source: bytes) -> ParsedModule | None:
         try:
-            from tree_sitter_rust import language as rust_lang  # type: ignore[import-not-found]
+            from tree_sitter_rust import language as rust_lang
         except (ImportError, ModuleNotFoundError):
             return None
 
@@ -283,7 +283,7 @@ class TreeSitterBackend:
 
     def _parse_csharp(self, source: bytes) -> ParsedModule | None:
         try:
-            from tree_sitter_c_sharp import language as cs_lang  # type: ignore[import-not-found]
+            from tree_sitter_c_sharp import language as cs_lang
         except (ImportError, ModuleNotFoundError):
             return None
 
