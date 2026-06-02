@@ -21,6 +21,8 @@ Run the full matrix automatically:
 uv run python scripts/smoke_repos.py
 ```
 
+Run it from the repository root. Invoking the script from other working directories can change the relative output path and is not the maintainer-supported release-check path.
+
 Options:
 - `--output <path>` — write JSON summary to a file (default: `docs/generated/smoke-results.json`)
 - `--keep-temps` — preserve cloned repositories in temp for debugging

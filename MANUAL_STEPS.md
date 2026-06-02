@@ -40,6 +40,7 @@ Run this checklist before cutting any release tag.
    - run `context-crafter-mcp validate docs/generated --json`
 5. Run real-repo smoke automation and update the public matrix (maintainer/optional if network unavailable):
    - `uv run python scripts/smoke_repos.py`
+   - Run that command from the repository root; it is the canonical maintainer invocation.
    - Update `docs/REAL_REPO_SMOKE_MATRIX.md` with results.
 6. Regenerate any intentionally committed example output and verify it still matches policy.
 7. Review `git status --short` and ensure only intentional tracked changes remain.
