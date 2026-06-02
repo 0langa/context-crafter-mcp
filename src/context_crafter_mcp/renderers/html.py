@@ -238,7 +238,7 @@ th {{ background: #f4f4f4; }}
     return RenderResult(
         ok=True,
         written=[str(html_path)],
-        files_scanned=analysis.files_scanned,
+        files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
     )

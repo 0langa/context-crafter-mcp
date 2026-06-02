@@ -24,6 +24,21 @@ class TestClassifyPath:
     def test_dist_classified_generated(self) -> None:
         assert classify_path("dist/bundle.js") == PathCategory.GENERATED
 
+    def test_out_classified_generated(self) -> None:
+        assert classify_path("out/build.js") == PathCategory.GENERATED
+
+    def test_output_classified_generated(self) -> None:
+        assert classify_path("output/bundle.js") == PathCategory.GENERATED
+
+    def test_generated_classified_generated(self) -> None:
+        assert classify_path("generated/schema.py") == PathCategory.GENERATED
+
+    def test_gen_classified_generated(self) -> None:
+        assert classify_path("gen/proto.ts") == PathCategory.GENERATED
+
+    def test_autogen_classified_generated(self) -> None:
+        assert classify_path("autogen/models.go") == PathCategory.GENERATED
+
     def test_src_classified_product(self) -> None:
         assert classify_path("src/app/main.py") == PathCategory.PRODUCT
 

@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-No unreleased changes documented yet.
+### Fixed
+
+- **Scan-count truth drift**: Language analyzers no longer inflate `AnalysisResult.files_scanned`. `files_scanned` now consistently reflects the scanner truth (`scan_summary.files_scanned`). Analyzer coverage is tracked separately in the new `analyzer_files_parsed` field.
+- **Doctor reliability**: `doctor` now correctly sets unhealthy status and returns exit code 1 when the CLI entrypoint check fails.
+- **Generated vs vendor classification**: `out`, `output`, `generated`, `gen`, and `autogen` segments are now classified as `PathCategory.GENERATED` instead of `VENDOR`, making the `GENERATED` branch reachable while preserving de-weighting behavior.
+
+### Added
+
+- **Metric consistency regression tests** (`test_metric_consistency.py`): Prove same generation run yields identical scan counts across all rendered docs and JSON surfaces; prove analyzers cannot inflate scanner count; prove mixed-language repos report stable counts.
+- **Doctor failure-path tests** (`test_cli.py`): Verify `cmd_doctor` returns nonzero exit and prints the issue when the CLI entrypoint check fails.
+- **Generated path classification tests** (`test_ranking.py`): Cover `out/`, `output/`, `generated/`, `gen/`, and `autogen/` → `GENERATED`.
+- **Stress fixture regression tests** (`test_stress_fixture.py`): 500-file mixed-stack deep repo with vendor-like noise; asserts generation completes without crash, scan counts remain bounded and stable, and generated directories are classified correctly.
 
 ## [0.5.0] - 2026-05-31
 

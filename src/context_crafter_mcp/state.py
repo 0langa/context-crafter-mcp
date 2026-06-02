@@ -33,7 +33,9 @@ class RepoState:
             ),
             "generated_files": self.written,
             "written": self.written,
-            "files_scanned": self.analysis.files_scanned if self.analysis else 0,
+            "files_scanned": self.analysis.scan_summary.files_scanned
+            if self.analysis and self.analysis.scan_summary
+            else 0,
             "project_types": self.detect_result.project_types if self.detect_result else [],
             "resolved_output_dir": self.resolved_output_dir,
             "warnings": [],

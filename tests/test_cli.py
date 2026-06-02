@@ -89,6 +89,37 @@ def test_cli_doctor() -> None:
     assert "healthy" in result.stdout
 
 
+def test_cli_doctor_failure_sets_unhealthy_and_nonzero_exit(monkeypatch) -> None:
+    """Doctor must set unhealthy status and nonzero exit when a real check fails."""
+    import subprocess
+
+    from context_crafter_mcp.cli import cmd_doctor
+
+    class FakeArgs:
+        pass
+
+    # Simulate CLI entrypoint returning bad output
+    def bad_run(*args, **kwargs):
+        return subprocess.CompletedProcess(args=args, returncode=1, stdout="bad", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", bad_run)
+
+    import io
+    import sys
+
+    captured = io.StringIO()
+    old_stdout = sys.stdout
+    sys.stdout = captured
+    try:
+        rc = cmd_doctor(FakeArgs())
+    finally:
+        sys.stdout = old_stdout
+
+    out = captured.getvalue()
+    assert rc == 1, f"Expected exit code 1, got {rc}"
+    assert "issues found" in out.lower() or "CLI entrypoint check failed" in out
+
+
 def test_cli_mcp_config_unknown_client() -> None:
     result = _run(["mcp-config", "--client", "nonexistent"])
     assert result.returncode == 1

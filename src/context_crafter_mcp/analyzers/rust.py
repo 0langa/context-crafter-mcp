@@ -163,7 +163,7 @@ def analyze_rust(
     crate.traits = sorted(set(crate.traits))
     crate.impls = sorted(set(crate.impls))
     result.rust_crates = [crate]
-    result.files_scanned += count
+    result.analyzer_files_parsed += count
 
     if crate.traits or crate.impls:
         ev.add(

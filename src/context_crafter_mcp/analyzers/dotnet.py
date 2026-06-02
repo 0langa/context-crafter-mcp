@@ -136,7 +136,7 @@ def analyze_dotnet(
 
     result.dotnet_solutions = solutions
     result.dotnet_projects = projects
-    result.files_scanned += count
+    result.analyzer_files_parsed += count
 
     if not projects and not solutions:
         ev.add(

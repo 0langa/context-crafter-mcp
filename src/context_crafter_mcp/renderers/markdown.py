@@ -508,7 +508,7 @@ def render_project_overview(
     return RenderResult(
         ok=True,
         written=[str(path)],
-        files_scanned=analysis.files_scanned,
+        files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
     )
@@ -568,7 +568,7 @@ def render_repo_map(
     return RenderResult(
         ok=True,
         written=[str(path)],
-        files_scanned=analysis.files_scanned,
+        files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
     )
@@ -950,7 +950,7 @@ def render_architecture_summary(
     return RenderResult(
         ok=True,
         written=[str(path)],
-        files_scanned=analysis.files_scanned,
+        files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
     )
@@ -1009,7 +1009,7 @@ def render_ai_context_index(
     return RenderResult(
         ok=True,
         written=[str(path)],
-        files_scanned=analysis.files_scanned,
+        files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
     )
@@ -1171,7 +1171,7 @@ def render_agent_brief(
     return RenderResult(
         ok=True,
         written=[str(path)],
-        files_scanned=analysis.files_scanned,
+        files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
     )
@@ -1245,7 +1245,7 @@ def render_validation_report(
     lines += [
         "## Analysis Health",
         "",
-        f"- Files scanned: {analysis.files_scanned}",
+        f"- Files scanned: {analysis.scan_summary.files_scanned}",
         f"- Errors: {len(analysis.errors)}",
         f"- Project types: {', '.join(detect.project_types)}",
         "",
@@ -1273,7 +1273,7 @@ def render_validation_report(
     return RenderResult(
         ok=True,
         written=[str(path)],
-        files_scanned=analysis.files_scanned,
+        files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
     )
@@ -1302,7 +1302,7 @@ def render_scan_report(
         "",
         "## Coverage",
         "",
-        f"- Files scanned: {analysis.files_scanned}",
+        f"- Files scanned: {analysis.scan_summary.files_scanned}",
         f"- Root files: {len(analysis.root_files)}",
         f"- Source directories: {len(analysis.source_directories)}",
         f"- Test directories: {len(analysis.test_directories)}",
@@ -1399,7 +1399,7 @@ def render_scan_report(
     return RenderResult(
         ok=True,
         written=[str(path)],
-        files_scanned=analysis.files_scanned,
+        files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
     )
@@ -1432,7 +1432,7 @@ def render_run_state(
             "max_files_per_dir": analysis.scan_summary.max_files,
             "max_file_bytes": analysis.scan_summary.max_file_bytes,
         },
-        "files_scanned": analysis.files_scanned,
+        "files_scanned": analysis.scan_summary.files_scanned,
         "analyzers_run": detect.project_types,
         "output_files": [str(Path(w).name) for w in written_files],
         "errors": errors,
@@ -1444,7 +1444,7 @@ def render_run_state(
     return RenderResult(
         ok=True,
         written=[str(path)],
-        files_scanned=analysis.files_scanned,
+        files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
     )

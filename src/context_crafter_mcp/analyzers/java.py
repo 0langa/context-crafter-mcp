@@ -263,7 +263,7 @@ def analyze_java(
     result.java_projects = [
         p for p in modules.values() if p.rel_path != "." or p.classes or p.methods or p.dependencies
     ]
-    result.files_scanned += count
+    result.analyzer_files_parsed += count
 
     total_classes = sum(len(p.classes) for p in result.java_projects)
     total_methods = sum(len(p.methods) for p in result.java_projects)

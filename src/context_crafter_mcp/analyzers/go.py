@@ -243,7 +243,7 @@ def analyze_go(
     result.go_modules = [
         m for m in modules.values() if m.rel_path != "." or m.packages or m.dependencies or m.entry_points
     ]
-    result.files_scanned += count
+    result.analyzer_files_parsed += count
 
     total_structs = sum(len(m.structs) for m in result.go_modules)
     total_interfaces = sum(len(m.interfaces) for m in result.go_modules)

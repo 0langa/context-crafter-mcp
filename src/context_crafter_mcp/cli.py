@@ -149,9 +149,11 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         else:
             print("CLI entrypoint: unexpected output")
             issues.append("CLI entrypoint check failed")
+            ok = False
     except (OSError, subprocess.SubprocessError) as exc:
         print(f"CLI entrypoint: error ({exc})")
         issues.append(f"CLI entrypoint error: {exc}")
+        ok = False
 
     # Temp output write check
     try:

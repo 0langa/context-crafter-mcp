@@ -468,7 +468,7 @@ def analyze_python(
         mod.internal_imports = internal
 
     result.python_modules = modules
-    result.files_scanned += count
+    result.analyzer_files_parsed += count
 
     # Discover the best pyproject.toml for metadata / deps / console scripts
     from context_crafter_mcp.ranking import score_path

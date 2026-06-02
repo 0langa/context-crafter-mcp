@@ -98,6 +98,7 @@ class AnalyzerRegistry:
             base.go_modules = base.go_modules + other.go_modules
             base.java_projects = base.java_projects + other.java_projects
             base.files_scanned = max(base.files_scanned, other.files_scanned)
+            base.analyzer_files_parsed = base.analyzer_files_parsed + other.analyzer_files_parsed
             base.errors = base.errors + other.errors
             base.python_dependencies = sorted(set(base.python_dependencies + other.python_dependencies))
             base.python_dev_dependencies = sorted(set(base.python_dev_dependencies + other.python_dev_dependencies))

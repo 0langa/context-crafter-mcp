@@ -374,7 +374,7 @@ def analyze_node(
 
     final_packages.sort(key=_pkg_sort_key)
     result.node_packages = final_packages
-    result.files_scanned += count
+    result.analyzer_files_parsed += count
 
     if final_packages:
         total_classes = sum(len(p.classes) for p in final_packages)
