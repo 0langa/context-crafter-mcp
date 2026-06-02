@@ -59,7 +59,7 @@ Explicit checklist for the first stable release (`1.0.0`).
   - `explain_capabilities`
 - [ ] Resource URI scheme `context-crafter://latest/<filename>` is stable
 - [ ] JSON result fields are additive-only (no removals without deprecation cycle)
-- [ ] `RUN_STATE.json` structure is stable enough for automation consumers
+- [ ] `RUN_STATE.json` fields evolve additively (no removals without deprecation cycle); automation consumers should parse defensively
 
 ## Release artifacts
 

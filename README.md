@@ -19,7 +19,7 @@ Local-first MCP server that turns source repositories into compact AI-agent cont
 | `AGENT_BRIEF.md` | Concise 1-page summary optimized for coding agents |
 | `VALIDATION_REPORT.md` | Output completeness and analysis health |
 | `SCAN_REPORT.md` | Scan coverage, skipped items, and safety notes |
-| `RUN_STATE.json` | Machine-actionable run metadata for scheduling and rerun semantics |
+| `RUN_STATE.json` | Machine-readable run metadata for downstream automation and tracking |
 
 ## Quick start
 

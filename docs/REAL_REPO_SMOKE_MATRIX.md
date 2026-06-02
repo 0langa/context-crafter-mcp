@@ -50,10 +50,10 @@ Run date: `2026-06-02`
 
 | Repository | Detect | Generate | Validate | Files scanned | Warnings | Notes |
 |------------|--------|----------|----------|---------------|----------|-------|
-| `pallets/click` | pass | pass | pass | 182 | unknown-stack warnings for non-Python stacks | detected `generic, python`; generated to repo-local `docs/generated` |
-| `sindresorhus/ky` | pass | pass | pass | 112 | unknown-stack warnings for non-Node stacks | detected `generic, node`; generated to repo-local `docs/generated` |
-| `spf13/cobra` | pass | pass | pass | 95 | unknown-stack warnings for non-Go stacks | detected `generic, go`; generated to repo-local `docs/generated` |
-| `serde-rs/json` | pass | pass | pass | 159 | unknown-stack warnings for non-Rust stacks | detected `generic, rust`; generated to repo-local `docs/generated` |
+| `pallets/click` | pass | pass | pass | ~133 | unknown-stack warnings for non-Python stacks | detected `generic, python`; counts vary by scanner config and repo state |
+| `sindresorhus/ky` | pass | pass | pass | ~60 | unknown-stack warnings for non-Node stacks | detected `generic, node`; counts vary by scanner config and repo state |
+| `spf13/cobra` | pass | pass | pass | ~59 | unknown-stack warnings for non-Go stacks | detected `generic, go`; counts vary by scanner config and repo state |
+| `serde-rs/json` | pass | pass | pass | ~88 | unknown-stack warnings for non-Rust stacks | detected `generic, rust`; counts vary by scanner config and repo state |
 
 These warnings came from `detect_project` reporting unsupported/non-matching stacks as `unknown`; they were not generation or validation failures.
 

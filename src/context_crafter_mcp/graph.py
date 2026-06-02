@@ -138,7 +138,7 @@ def node_render_outputs(state: RepoState) -> dict[str, object]:
     elif val_result.error:
         state.errors.append(val_result.error)
 
-    # Machine-actionable run-state for autonomous scheduling/trigger workflows
+    # Machine-readable run-state for downstream automation
     run_state_result = render_run_state(
         state.repo_path,
         state.detect_result,

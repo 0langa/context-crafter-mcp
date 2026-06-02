@@ -1421,7 +1421,7 @@ def render_run_state(
     errors: list[str],
     generated_at: str | None = None,
 ) -> RenderResult:
-    """Render a machine-actionable JSON run-state file."""
+    """Render a machine-readable JSON run-state file."""
     out = safe_output_path(Path(repo_path), output_dir)
     out.mkdir(parents=True, exist_ok=True)
     path = out / "RUN_STATE.json"

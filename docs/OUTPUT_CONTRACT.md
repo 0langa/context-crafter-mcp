@@ -35,7 +35,7 @@ Generation-style JSON results are additive-only and include:
 
 ## RUN_STATE.json
 
-`RUN_STATE.json` is a machine-actionable run metadata file written alongside the Markdown outputs. It contains:
+`RUN_STATE.json` is a machine-readable run metadata file written alongside the Markdown outputs. Its schema evolves additively; automation consumers should parse defensively. It contains:
 
 - `version`, `timestamp`, `repo_path`, `project_types`, `profile`, `scan_config`
 - `scan_summary` — canonical scanner metrics

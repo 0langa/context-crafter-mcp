@@ -122,3 +122,21 @@ def test_tool_result_has_scan_summary() -> None:
         ss = result["scan_summary"]
         assert ss["files_scanned"] == state.analysis.scan_summary.files_scanned
         assert result["analyzer_files_parsed"] == state.analysis.analyzer_files_parsed
+
+
+def test_run_state_backward_compat_values_match() -> None:
+    """Legacy top-level fields must equal their structured counterparts where applicable."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _build_mixed_repo(root)
+        state = run_generate_all(td, "out", ScanConfig(profile="standard", max_depth=4))
+        assert state.ok
+        assert state.analysis is not None
+
+        run_state_path = Path(td, "out", "RUN_STATE.json")
+        data = json.loads(run_state_path.read_text(encoding="utf-8"))
+
+        # Legacy files_scanned must equal canonical scan_summary.files_scanned
+        assert data["files_scanned"] == data["scan_summary"]["files_scanned"]
+        # Legacy analyzers_run must equal analyzer_summary.analyzers_run
+        assert data["analyzers_run"] == data["analyzer_summary"]["analyzers_run"]
