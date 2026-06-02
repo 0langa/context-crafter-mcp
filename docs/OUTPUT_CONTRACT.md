@@ -25,11 +25,27 @@ Generation-style JSON results are additive-only and include:
 - `errors`
 - `written`
 - `generated_files`
-- `files_scanned`
+- `files_scanned` (deprecated as standalone truth; prefer `scan_summary.files_scanned`)
+- `scan_summary` — canonical scanner metrics (files_scanned, dirs_scanned, files_skipped, dirs_skipped, budget_exhausted, skipped_reasons, category_counts)
+- `analyzer_files_parsed` — number of files successfully parsed by language analyzers (may be less than scanner truth)
 - `project_types`
 - `resolved_output_dir`
 
 `resolved_output_dir` is the actual directory used after output confinement is applied.
+
+## RUN_STATE.json
+
+`RUN_STATE.json` is a machine-actionable run metadata file written alongside the Markdown outputs. It contains:
+
+- `version`, `timestamp`, `repo_path`, `project_types`, `profile`, `scan_config`
+- `scan_summary` — canonical scanner metrics
+- `analyzer_summary` — analyzers_run and files_parsed
+- `validation_summary` — output_files_count, errors_count, warnings_count, bounded_scan
+- `evidence_counts` — counts by OBSERVED / INFERRED / UNKNOWN / UNSUPPORTED / ERROR
+- `warnings` — warning messages from analysis evidence
+- `output_files` and `errors`
+
+Legacy `files_scanned` and `analyzers_run` fields remain for backward compatibility.
 
 ## Output confinement
 

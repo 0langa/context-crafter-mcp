@@ -511,6 +511,7 @@ def render_project_overview(
         files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
+        scan_summary=analysis.scan_summary,
     )
 
 
@@ -571,6 +572,7 @@ def render_repo_map(
         files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
+        scan_summary=analysis.scan_summary,
     )
 
 
@@ -953,6 +955,7 @@ def render_architecture_summary(
         files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
+        scan_summary=analysis.scan_summary,
     )
 
 
@@ -1012,6 +1015,7 @@ def render_ai_context_index(
         files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
+        scan_summary=analysis.scan_summary,
     )
 
 
@@ -1174,6 +1178,7 @@ def render_agent_brief(
         files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
+        scan_summary=analysis.scan_summary,
     )
 
 
@@ -1276,6 +1281,7 @@ def render_validation_report(
         files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
+        scan_summary=analysis.scan_summary,
     )
 
 
@@ -1402,6 +1408,7 @@ def render_scan_report(
         files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
+        scan_summary=analysis.scan_summary,
     )
 
 
@@ -1421,6 +1428,9 @@ def render_run_state(
 
     timestamp = generated_at or datetime.now(timezone.utc).isoformat()
 
+    ss = analysis.scan_summary
+    total_skipped = sum(ss.skipped_reasons.values())
+    warnings = analysis.evidence_set.warnings()
     state = {
         "version": __version__,
         "timestamp": timestamp,
@@ -1428,13 +1438,40 @@ def render_run_state(
         "project_types": detect.project_types,
         "profile": analysis.profile,
         "scan_config": {
-            "max_depth": analysis.scan_summary.max_depth,
-            "max_files_per_dir": analysis.scan_summary.max_files,
-            "max_file_bytes": analysis.scan_summary.max_file_bytes,
+            "max_depth": ss.max_depth,
+            "max_files_per_dir": ss.max_files,
+            "max_file_bytes": ss.max_file_bytes,
         },
-        "files_scanned": analysis.scan_summary.files_scanned,
+        "files_scanned": ss.files_scanned,
+        "scan_summary": {
+            "files_scanned": ss.files_scanned,
+            "dirs_scanned": ss.dirs_scanned,
+            "files_skipped": ss.files_skipped,
+            "dirs_skipped": ss.dirs_skipped,
+            "budget_exhausted": ss.budget_exhausted,
+            "skipped_reasons": ss.skipped_reasons,
+            "category_counts": ss.category_counts,
+        },
+        "analyzer_summary": {
+            "analyzers_run": detect.project_types,
+            "files_parsed": analysis.analyzer_files_parsed,
+        },
+        "validation_summary": {
+            "output_files_count": len(written_files),
+            "errors_count": len(errors),
+            "warnings_count": len(warnings),
+            "bounded_scan": ss.budget_exhausted or total_skipped > 0,
+        },
+        "warnings": [e.message for e in warnings],
+        "evidence_counts": {
+            "observed": len(analysis.evidence_set.by_kind(EvidenceKind.OBSERVED)),
+            "inferred": len(analysis.evidence_set.by_kind(EvidenceKind.INFERRED)),
+            "unknown": len(analysis.evidence_set.by_kind(EvidenceKind.UNKNOWN)),
+            "unsupported": len(analysis.evidence_set.by_kind(EvidenceKind.UNSUPPORTED)),
+            "error": len(analysis.evidence_set.by_kind(EvidenceKind.ERROR)),
+        },
         "analyzers_run": detect.project_types,
-        "output_files": [str(Path(w).name) for w in written_files],
+        "output_files": [str(Path(w).name) for w in written_files] + ["RUN_STATE.json"],
         "errors": errors,
     }
 
@@ -1444,7 +1481,8 @@ def render_run_state(
     return RenderResult(
         ok=True,
         written=[str(path)],
-        files_scanned=analysis.scan_summary.files_scanned,
+        files_scanned=ss.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
+        scan_summary=ss,
     )

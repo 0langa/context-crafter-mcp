@@ -40,7 +40,8 @@ Non-Python analyzers are intended to degrade gracefully when parser support is u
 - No runtime dependency resolution.
 - HTML rendering uses the `markdown` package when available, with stdlib fallback otherwise.
 - Test/example/demo-context fixtures are excluded from primary project detection. Product-path fixtures (e.g., `src/fixtures/`) are included.
-- Vendor, generated, and autogen directories are hard-skipped during scanning and do not appear in scan statistics or generated output.
+- Directories named `vendor`, `vendors`, `node_modules`, `third_party`, `generated`, `gen`, `autogen`, `dist`, `build`, `out`, `target`, `bin`, `obj`, `.next`, `.turbo`, `.cache` and similar are hard-skipped during scanning and do not appear in scan statistics or generated output.
+- Some generated-like directories (e.g., `output/`) may still be scanned and classified as `[generated]` rather than omitted entirely.
 - Bounded scans may truncate files when `max_files` or `max_files_per_dir` caps are exceeded. Priority ordering ensures truncation hits lowest-signal files first.
 - Source-reference validation is conservative and backtick-oriented; bare prose paths are not validated.
 - Compact profile intentionally omits optional sections even when a small repo could technically fit more detail.

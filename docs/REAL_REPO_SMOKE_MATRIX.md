@@ -13,7 +13,27 @@ Maintainer-facing hardening confidence set for the current `0.5.0` release line.
 
 Java and .NET stay on fixture coverage until their results meet the same trust bar or a blocker forces earlier work.
 
-## Command set
+## Automation
+
+Run the full matrix automatically:
+
+```sh
+uv run python scripts/smoke_repos.py
+```
+
+Options:
+- `--output <path>` — write JSON summary to a file (default: `docs/generated/smoke-results.json`)
+- `--keep-temps` — preserve cloned repositories in temp for debugging
+
+The script:
+1. Clones each repo with `--depth 1` into a temp directory
+2. Runs `detect`, `generate`, and `validate` for each
+3. Writes a deterministic JSON summary to stdout and the output file
+4. Cleans up temp directories unless `--keep-temps` is passed
+
+If network is unavailable, the script prints a clear message and exits non-zero with a `network_unavailable` note.
+
+## Manual command set (fallback)
 
 For each repo:
 
@@ -26,7 +46,7 @@ uv run context-crafter-mcp validate <tmp-dir>/docs/generated --repo <tmp-dir> --
 
 ## Latest run
 
-Run date: `2026-05-30`
+Run date: `2026-06-02`
 
 | Repository | Detect | Generate | Validate | Files scanned | Warnings | Notes |
 |------------|--------|----------|----------|---------------|----------|-------|

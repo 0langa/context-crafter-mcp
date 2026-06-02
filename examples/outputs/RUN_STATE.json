@@ -1,7 +1,7 @@
 {
   "version": "0.5.0",
-  "timestamp": "2026-05-31T21:42:32.360754+00:00",
-  "repo_path": "examples\\demo-repo",
+  "timestamp": "2026-06-02T10:36:03.278140+00:00",
+  "repo_path": "examples/demo-repo",
   "project_types": [
     "generic",
     "python"
@@ -12,7 +12,43 @@
     "max_files_per_dir": 800,
     "max_file_bytes": 5000000
   },
-  "files_scanned": 10,
+  "files_scanned": 6,
+  "scan_summary": {
+    "files_scanned": 6,
+    "dirs_scanned": 6,
+    "files_skipped": 0,
+    "dirs_skipped": 0,
+    "budget_exhausted": false,
+    "skipped_reasons": {},
+    "category_counts": {
+      "unknown": 2,
+      "product": 3,
+      "test": 1
+    }
+  },
+  "analyzer_summary": {
+    "analyzers_run": [
+      "generic",
+      "python"
+    ],
+    "files_parsed": 4
+  },
+  "validation_summary": {
+    "output_files_count": 9,
+    "errors_count": 0,
+    "warnings_count": 1,
+    "bounded_scan": false
+  },
+  "warnings": [
+    "Deep semantic call graph and dynamic import analysis are not implemented."
+  ],
+  "evidence_counts": {
+    "observed": 11,
+    "inferred": 1,
+    "unknown": 0,
+    "unsupported": 1,
+    "error": 0
+  },
   "analyzers_run": [
     "generic",
     "python"
@@ -26,7 +62,8 @@
     "ARCHITECTURE_SUMMARY.md",
     "AGENT_BRIEF.md",
     "SCAN_REPORT.md",
-    "VALIDATION_REPORT.md"
+    "VALIDATION_REPORT.md",
+    "RUN_STATE.json"
   ],
   "errors": []
 }

@@ -24,7 +24,7 @@ class RepoState:
     generated_at: str | None = None
 
     def to_tool_result(self) -> dict[str, Any]:
-        return {
+        result: dict[str, Any] = {
             "ok": self.ok,
             "summary": (
                 f"Generated {len(self.written)} file(s) for {', '.join(self.detect_result.project_types if self.detect_result else [])}"
@@ -41,3 +41,16 @@ class RepoState:
             "warnings": [],
             "errors": self.errors,
         }
+        if self.analysis and self.analysis.scan_summary:
+            ss = self.analysis.scan_summary
+            result["scan_summary"] = {
+                "files_scanned": ss.files_scanned,
+                "dirs_scanned": ss.dirs_scanned,
+                "files_skipped": ss.files_skipped,
+                "dirs_skipped": ss.dirs_skipped,
+                "budget_exhausted": ss.budget_exhausted,
+                "skipped_reasons": ss.skipped_reasons,
+                "category_counts": ss.category_counts,
+            }
+            result["analyzer_files_parsed"] = self.analysis.analyzer_files_parsed
+        return result

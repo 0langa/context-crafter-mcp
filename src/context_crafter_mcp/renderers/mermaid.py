@@ -388,4 +388,5 @@ def render_dependency_graph(
         files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
+        scan_summary=analysis.scan_summary,
     )

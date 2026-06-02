@@ -213,6 +213,8 @@ See [`SECURITY.md`](SECURITY.md) for the full threat model and reporting process
 | Java | `pom.xml`, `build.gradle`, `build.gradle.kts`, `*.java` | javalang AST + regex fallback (nested build files discovered) | `parsers` |
 | Generic | Any directory | Directory and filename heuristics | — |
 
+> **Trust bar note:** Python, Node/TypeScript, Go, and Rust have the highest real-repo smoke coverage. Java and .NET are supported and tested on fixtures, but their analysis depth has not yet reached the same hardening standard.
+
 Install deeper parser support:
 
 ```sh

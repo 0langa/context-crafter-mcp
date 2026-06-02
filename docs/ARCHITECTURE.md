@@ -61,6 +61,12 @@ The scanner is a strict replaceable boundary. Everything above it consumes `Repo
 - Priority reserve: 20% of `max_files` (up to 1000) is reserved for product directories; vendor/build files cannot consume it
 - `ScanStats` tracks `skipped_reasons` and `budget_exhausted` for honest bounded-scan reporting
 
+### Metric naming
+
+- **Scanner truth** — `ScanStats.files_scanned` is the canonical count of files walked by the scanner.
+- **Analyzer coverage** — `analyzer_files_parsed` tracks how many of those files were successfully parsed by language-specific analyzers; it will often be smaller than scanner truth.
+- `AnalysisResult.files_scanned` is retained for backward compatibility but deprecated as a standalone source of truth.
+
 ## Profile Pipeline
 
 `ScanConfig.profile` flows through the pipeline:

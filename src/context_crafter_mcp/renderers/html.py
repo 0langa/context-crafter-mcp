@@ -241,4 +241,5 @@ th {{ background: #f4f4f4; }}
         files_scanned=analysis.scan_summary.files_scanned,
         project_types=detect.project_types,
         resolved_output_dir=str(out),
+        scan_summary=analysis.scan_summary,
     )

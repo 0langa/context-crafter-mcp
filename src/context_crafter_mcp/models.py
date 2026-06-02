@@ -342,7 +342,7 @@ class AnalysisResult:
     rust_crates: list[RustCrate] = field(default_factory=list)
     go_modules: list[GoModule] = field(default_factory=list)
     java_projects: list[JavaProject] = field(default_factory=list)
-    files_scanned: int = 0
+    files_scanned: int = 0  # Deprecated: use scan_summary.files_scanned for canonical scanner truth
     errors: list[str] = field(default_factory=list)
     metadata: ProjectMetadata = field(default_factory=ProjectMetadata)
     python_dependencies: list[str] = field(default_factory=list)
@@ -351,7 +351,9 @@ class AnalysisResult:
     profile: str = "standard"
     evidence_set: EvidenceSet = field(default_factory=EvidenceSet)
     scan_summary: BoundedScanSummary = field(default_factory=BoundedScanSummary)
-    analyzer_files_parsed: int = 0
+    analyzer_files_parsed: int = (
+        0  # Number of files successfully parsed by language analyzers; may be less than scanner truth
+    )
     snapshot: Any | None = field(default=None, repr=False, compare=False)
 
 
@@ -363,9 +365,10 @@ class RenderResult:
     project_types: list[str] = field(default_factory=list)
     resolved_output_dir: str | None = None
     error: str | None = None
+    scan_summary: BoundedScanSummary | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        d: dict[str, Any] = {
             "ok": self.ok,
             "summary": f"Generated {len(self.written)} file(s)" if self.ok else f"Generation failed: {self.error}",
             "generated_files": self.written,
@@ -376,6 +379,17 @@ class RenderResult:
             "warnings": [],
             "errors": [self.error] if self.error else [],
         }
+        if self.scan_summary is not None:
+            d["scan_summary"] = {
+                "files_scanned": self.scan_summary.files_scanned,
+                "dirs_scanned": self.scan_summary.dirs_scanned,
+                "files_skipped": self.scan_summary.files_skipped,
+                "dirs_skipped": self.scan_summary.dirs_skipped,
+                "budget_exhausted": self.scan_summary.budget_exhausted,
+                "skipped_reasons": self.scan_summary.skipped_reasons,
+                "category_counts": self.scan_summary.category_counts,
+            }
+        return d
 
 
 _PROFILE_LIMITS: dict[str, dict[str, int]] = {
