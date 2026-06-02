@@ -1,6 +1,7 @@
 {
   "version": "0.5.0",
-  "timestamp": "2026-06-02T10:36:03.278140+00:00",
+  "schema_mode": "additive",
+  "timestamp": "2026-06-02T15:01:19.603700+00:00",
   "repo_path": "examples/demo-repo",
   "project_types": [
     "generic",

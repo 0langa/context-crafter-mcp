@@ -34,6 +34,9 @@ def test_run_state_structure() -> None:
         assert run_state_path.exists()
         data = json.loads(run_state_path.read_text(encoding="utf-8"))
 
+        # Schema contract
+        assert data.get("schema_mode") == "additive"
+
         # Backward compat
         assert "files_scanned" in data
         assert "analyzers_run" in data

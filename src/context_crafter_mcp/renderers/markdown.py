@@ -1433,6 +1433,7 @@ def render_run_state(
     warnings = analysis.evidence_set.warnings()
     state = {
         "version": __version__,
+        "schema_mode": "additive",
         "timestamp": timestamp,
         "repo_path": repo_path,
         "project_types": detect.project_types,
