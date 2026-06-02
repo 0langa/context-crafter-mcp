@@ -1458,7 +1458,7 @@ def render_run_state(
             "files_parsed": analysis.analyzer_files_parsed,
         },
         "validation_summary": {
-            "output_files_count": len(written_files),
+            "output_files_count": len(written_files) + 1,
             "errors_count": len(errors),
             "warnings_count": len(warnings),
             "bounded_scan": ss.budget_exhausted or total_skipped > 0,

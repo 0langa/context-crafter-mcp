@@ -1,7 +1,7 @@
 {
   "version": "0.6.0",
   "schema_mode": "additive",
-  "timestamp": "2026-06-02T17:38:22.695840+00:00",
+  "timestamp": "2026-06-02T18:53:39.065518+00:00",
   "repo_path": "examples/demo-repo",
   "project_types": [
     "generic",
@@ -16,7 +16,7 @@
   "files_scanned": 6,
   "scan_summary": {
     "files_scanned": 6,
-    "dirs_scanned": 6,
+    "dirs_scanned": 5,
     "files_skipped": 0,
     "dirs_skipped": 0,
     "budget_exhausted": false,
@@ -35,7 +35,7 @@
     "files_parsed": 4
   },
   "validation_summary": {
-    "output_files_count": 9,
+    "output_files_count": 10,
     "errors_count": 0,
     "warnings_count": 1,
     "bounded_scan": false

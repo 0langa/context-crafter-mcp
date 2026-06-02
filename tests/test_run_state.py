@@ -143,3 +143,19 @@ def test_run_state_backward_compat_values_match() -> None:
         assert data["files_scanned"] == data["scan_summary"]["files_scanned"]
         # Legacy analyzers_run must equal analyzer_summary.analyzers_run
         assert data["analyzers_run"] == data["analyzer_summary"]["analyzers_run"]
+
+
+def test_run_state_output_files_count_matches_list() -> None:
+    """validation_summary.output_files_count must equal len(output_files), including RUN_STATE.json."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _build_mixed_repo(root)
+        state = run_generate_all(td, "out", ScanConfig(profile="standard", max_depth=4))
+        assert state.ok
+        assert state.analysis is not None
+
+        run_state_path = Path(td, "out", "RUN_STATE.json")
+        data = json.loads(run_state_path.read_text(encoding="utf-8"))
+
+        assert data["validation_summary"]["output_files_count"] == len(data["output_files"])
+        assert "RUN_STATE.json" in data["output_files"]
