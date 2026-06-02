@@ -326,7 +326,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command")
 
     # version handled via --version flag, but also as command for convenience
-    sub.add_parser("version", help="Show version.")
+    p_version = sub.add_parser("version", help="Show version.")
+    p_version.set_defaults(func=cmd_version)
 
     p_doctor = sub.add_parser("doctor", help="Check environment and package health.")
     p_doctor.set_defaults(func=cmd_doctor)

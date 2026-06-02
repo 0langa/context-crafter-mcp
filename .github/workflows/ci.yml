@@ -39,6 +39,9 @@ jobs:
       - name: Compile check
         run: uv run python -m compileall src tests
 
+      - name: Validate project state contract
+        run: python scripts/validate_project_state.py
+
       - name: Lint with ruff
         run: uv run ruff check .
 

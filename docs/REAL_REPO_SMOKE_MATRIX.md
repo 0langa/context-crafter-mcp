@@ -1,6 +1,6 @@
 # Real Repo Smoke Matrix
 
-Maintainer-facing hardening confidence set for the current `0.5.0` release line. These repos are not vendored into this repository.
+Maintainer-facing hardening confidence set for the current `0.6.0` hardening line on `main`. The latest public tag remains `0.5.0`. These repos are not vendored into this repository.
 
 ## Fixed smoke set
 

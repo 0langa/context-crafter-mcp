@@ -37,13 +37,15 @@ Generation-style JSON results are additive-only and include:
 
 `RUN_STATE.json` is a machine-readable run metadata file written alongside the Markdown outputs. Its schema evolves additively; automation consumers should parse defensively. It contains:
 
-- `version`, `timestamp`, `repo_path`, `project_types`, `profile`, `scan_config`
+- `version`, `schema_mode`, `timestamp`, `repo_path`, `project_types`, `profile`, `scan_config`
 - `scan_summary` — canonical scanner metrics
 - `analyzer_summary` — analyzers_run and files_parsed
 - `validation_summary` — output_files_count, errors_count, warnings_count, bounded_scan
 - `evidence_counts` — counts by OBSERVED / INFERRED / UNKNOWN / UNSUPPORTED / ERROR
 - `warnings` — warning messages from analysis evidence
 - `output_files` and `errors`
+
+`schema_mode` currently has the value `additive`, signaling that consumers should expect new keys to be added without assuming removals or positional structure.
 
 Legacy `files_scanned` and `analyzers_run` fields remain for backward compatibility.
 

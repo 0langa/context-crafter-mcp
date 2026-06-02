@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-02
+
 ### Fixed
 
 - **Scan-count truth drift**: Language analyzers no longer inflate `AnalysisResult.files_scanned`. `files_scanned` now consistently reflects the scanner truth (`scan_summary.files_scanned`). Analyzer coverage is tracked separately in the new `analyzer_files_parsed` field.
 - **Doctor reliability**: `doctor` now correctly sets unhealthy status and returns exit code 1 when the CLI entrypoint check fails.
 - **Generated vs vendor classification**: `out`, `output`, `generated`, `gen`, and `autogen` segments are now classified as `PathCategory.GENERATED` instead of `VENDOR`, making the `GENERATED` branch reachable while preserving de-weighting behavior.
+- **RUN_STATE wording drift**: docs and comments now consistently describe `RUN_STATE.json` as machine-readable automation metadata instead of overstating scheduling/trigger semantics.
+- **Smoke-matrix drift**: the public smoke matrix now reflects the current observed smoke counts more honestly and notes that counts vary with scanner config and repo state.
 
 ### Added
 
@@ -19,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Doctor failure-path tests** (`test_cli.py`): Verify `cmd_doctor` returns nonzero exit and prints the issue when the CLI entrypoint check fails.
 - **Generated path classification tests** (`test_ranking.py`): Cover `out/`, `output/`, `generated/`, `gen/`, and `autogen/` → `GENERATED`.
 - **Stress fixture regression tests** (`test_stress_fixture.py`): 500-file mixed-stack deep repo with vendor-like noise; asserts generation completes without crash, scan counts remain bounded and stable, and generated directories are classified correctly.
+- **Real-repo smoke automation** (`scripts/smoke_repos.py`, `.github/workflows/smoke-repos.yml`): clones the fixed public smoke set, runs `detect` / `generate` / `validate`, writes a deterministic JSON summary, and handles Windows cleanup safely.
+- **RUN_STATE diagnostics**: `RUN_STATE.json` now exposes canonical `scan_summary`, `analyzer_summary`, `validation_summary`, `evidence_counts`, and backward-compatible legacy fields for downstream automation.
+- **RUN_STATE schema marker**: `RUN_STATE.json` now includes `schema_mode: "additive"` to make the additive compatibility contract explicit for consumers.
+- **RUN_STATE regression tests** (`test_run_state.py`): cover structured fields, bounded-scan signaling, evidence counts, tool-result alignment, schema marker presence, and legacy-field compatibility.
+
+### Changed
+
+- **Docs truthfulness**: roadmap, smoke-matrix, output-contract, architecture, limitations, manual-release guidance, and implementation-report docs were updated to reflect the `0.6.0` hardening line rather than implying local `main` still matches the public `0.5.0` tag.
 
 ## [0.5.0] - 2026-05-31
 

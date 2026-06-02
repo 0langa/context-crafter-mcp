@@ -18,6 +18,7 @@ examples/demo-repo/docs/generated/
 .agents/
 .codex/
 .kimi/
+.kimi-code/
 .github/agents/
 .github/hooks/
 .github/instructions/

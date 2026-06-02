@@ -2,7 +2,7 @@
 
 Steps that remain intentionally manual for release and repository stewardship.
 
-Roadmap note: the current working milestone is a pre-`1.0.0` pin-worthiness hardening pass. This file describes what remains manual for the eventual first public release at `1.0.0`.
+Roadmap note: the current working milestone is the `0.6.0` hardening release. This file describes what remains manual for releases, including the eventual first public release at `1.0.0`.
 
 ## Repository settings
 
