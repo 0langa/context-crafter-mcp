@@ -13,12 +13,12 @@ That made the file read like release history when it was really a blend of relea
 ## Current truth
 
 - Package version in code: `0.6.0`
-- Latest public git tag: `0.5.0`
-- Current local `main` is ahead of the tagged `0.5.0` release line with the `0.6.0` hardening release
+- Latest public git tag: `0.6.0`
+- Current local `main` is aligned with the tagged `0.6.0` hardening baseline
 
 ## What shipped in `0.6.0`
 
-The `0.6.0` hardening release (not yet tagged on the public remote) contains:
+The `0.6.0` hardening release contains:
 
 - canonical scan-metric truth and analyzer coverage tracking
 - `doctor` failure-path correctness

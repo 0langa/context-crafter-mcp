@@ -36,7 +36,7 @@ uv run context-crafter-mcp --help
 
 ### From an installed artifact
 
-Current git tag is `0.5.0`; local `main` is preparing `0.6.0`. Until a package release is published to an installer-friendly index, install from a built wheel:
+Current git tag is `0.6.0`. Until a package release is published to an installer-friendly index, install from a built wheel:
 
 ```sh
 uv build

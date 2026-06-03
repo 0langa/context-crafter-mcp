@@ -1,605 +1,434 @@
-# Development Roadmap: `context-crafter-mcp` to Pin-Worthy Standard
+# Development Roadmap: `context-crafter-mcp` from `0.6.0` baseline to first stable release
 
-This roadmap is the implementation specification for turning the current early repo-docs MCP project into a polished local-first MCP server and CLI.
+This file is a forward-looking execution plan, not a history dump.
 
-Target project name: `context-crafter-mcp`
-
-Recommended public identity:
-
-| Surface | Name |
-|---|---|
-| GitHub repository | `context-crafter-mcp` |
-| Python distribution package | `context-crafter-mcp` |
-| Python import package | `context_crafter_mcp` |
-| CLI command | `context-crafter-mcp` |
-| MCP server display name | `context-crafter` |
-| Optional future scanner binary | `context-crafter-scan` |
+It is intentionally grounded in the current repository state as of the tagged `0.6.0` baseline.
+Anything already shipped is collapsed into a short baseline summary. The rest of this document is only about work that still needs to happen.
 
 Current local roadmap path:
 
     C:\Users\juliu\source\repos\context-crafter-mcp\DEVELOPMENT_ROADMAP for context-crafter-mcp.txt
 
-## 1. Final Product Shape
+## 1. Product target
 
-The final project is both:
+`context-crafter-mcp` is not aiming to be "yet another MCP server".
 
-| Surface | Purpose |
+The target is:
+
+> A stable, local-first, static-analysis system that can generate truthful, bounded, agent-usable repository context for real production codebases where 200k+ lines of code, deep nesting, mixed stacks, and monorepo noise are normal.
+
+The stable release must be strong in four areas at the same time:
+
+| Area | Stable-release bar |
 |---|---|
-| MCP server | Main product surface for coding clients and AI agents |
-| CLI app | Human/admin/debug surface for setup, diagnostics, manual generation, and config snippets |
+| Truthfulness | Generated claims stay conservative under bounded scans and partial understanding |
+| Scale behavior | Large, ugly repos complete without crashes and degrade honestly |
+| Contract stability | CLI, MCP, validation, and machine-readable outputs are safe to depend on |
+| Maintainer confidence | Release, smoke, artifact, and docs workflows are repeatable and verified |
 
-Product statement:
+## 2. Verified baseline at `0.6.0`
 
-> Context Crafter MCP turns source repositories into compact, source-grounded AI-agent context through a local-first MCP server and CLI.
+The following is already done and should not be replanned as future work:
 
-The v1 server is stdio-first. Docker and HTTP service modes are optional future work, not default v1 requirements.
+### Product surface already present
 
-Required CLI surface:
+- Python package and import layout standardized around `context-crafter-mcp` / `context_crafter_mcp`
+- CLI surface exists:
+  - `version`
+  - `doctor`
+  - `detect`
+  - `generate`
+  - `validate`
+  - `self-test`
+  - `mcp-config`
+  - `serve`
+- MCP stdio server exists with documented tool surface
+- Generated output suite exists, including `RUN_STATE.json`
+- Validation surface exists
+- Resources exist for generated outputs
 
-    context-crafter-mcp --help
-    context-crafter-mcp version
-    context-crafter-mcp doctor
-    context-crafter-mcp detect <repo_path> [--json]
-    context-crafter-mcp generate <repo_path> --output <output_dir> [--profile compact|standard|deep] [--json]
-    context-crafter-mcp validate <output_dir> [--json]
-    context-crafter-mcp self-test [repo_path]
-    context-crafter-mcp mcp-config --client <client> [--repo <path>]
-    context-crafter-mcp serve
+### Architecture and safety foundations already present
 
-Required MCP server style:
+- Scanner is a real boundary: `Scanner.scan(root, options) -> RepoSnapshot`
+- Deterministic scan ordering exists
+- Bounded scanning exists
+- Product-priority reserve exists under global scan pressure
+- Output confinement exists
+- Static-only analysis is the implemented model
+- No target-code execution is the implemented model
+- Real safety and scanner-budget tests exist
 
-    {
-      "mcpServers": {
-        "context-crafter": {
-          "command": "uvx",
-          "args": ["context-crafter-mcp", "serve"]
-        }
-      }
-    }
+### Confidence work already present
 
-## 2. Architecture Decision
+- Fixture coverage exists for Python, Node/TypeScript, .NET, Rust, Go, Java, generic, and mixed monorepo layouts
+- Real-repo smoke automation exists for Python / Node / Go / Rust
+- Installed wheel and sdist smoke is already part of release verification
+- `RUN_STATE.json` now includes additive-schema guidance and richer diagnostics
+- Canonical scan metrics vs analyzer coverage are separated
 
-Final decision:
+### Release truth already established
 
-> Keep Python for the MCP server, CLI, analyzer registry, renderers, validation reports, and package workflow. Design the filesystem scanner as a strict replaceable boundary. Add Tree-sitter for deeper parsing before considering a lower-level scanner. Only add Rust/Go after benchmarks prove Python traversal is the bottleneck.
+- `0.6.0` is tagged and pushed
+- Current code version is `0.6.0`
+- The canonical real-repo smoke invocation is:
 
-Rationale:
+    uv run python scripts/smoke_repos.py
 
-| Component | Decision | Rationale |
-|---|---|---|
-| MCP server | Python | Python is a first-class MCP SDK path and fits tool/resource/prompt servers |
-| CLI | Python | Text generation, JSON output, config generation, and Windows support are straightforward |
-| Analyzer registry | Python | Registry logic depends on contracts, models, fixtures, and tests more than raw speed |
-| Markdown/HTML rendering | Python | Rendering and validation are not performance-critical |
-| Safe filesystem scanner | Python first, replaceable later | Lower-level may help later, but only after benchmarks prove it |
-| Deep parsing | Tree-sitter first | Better correctness upgrade than rewriting the whole project |
-| Future scanner engine | Optional Rust/Go helper | Only if benchmark thresholds are crossed |
+- That invocation is expected to be run from the repository root
 
-Required ADR:
+## 3. What is not done yet
 
-    docs/adr/0001-python-product-layer-replaceable-scanner.md
+The remaining work is not basic MCP plumbing. It is stable-release hardening.
 
-Required scanner boundary:
+The current gaps are:
 
-    Scanner.scan(root, options) -> RepoSnapshot
-
-Everything above the scanner must consume `RepoSnapshot`, not raw ad-hoc filesystem traversal.
-
-## 3. Current State Assessment
-
-The project already has a useful core idea and should stay public if active, but it needs productization and proof before being a strong GitHub pin.
-
-Current strengths:
-
-| Area | Current state | Why it matters |
-|---|---|---|
-| Product idea | Local-first MCP server that generates repo docs/context | Strong CV signal for AI tooling and developer automation |
-| Structure | Python package, tests, workflow, `pyproject.toml`, lockfile | Already beyond a throwaway script |
-| Supported stacks | Python, Node/JS, .NET, Rust, Go, Java, generic | Good breadth if proven by fixtures |
-| Safety story | Static-only, bounded scan, no target execution | Excellent if backed by tests |
-| Tool surface | Detection and doc generation tools | Good base, but needs cleaner contracts |
-| Weak point | Early-stage public polish | Needs examples, install path, tests, docs, release story |
-
-Main gaps:
-
-| Gap | Fix |
+| Gap | Why it matters |
 |---|---|
-| Name/branding still transitioning | Standardize local package/repo/docs around `context-crafter-mcp` |
-| Python choice could look accidental | Add ADR and scanner boundary |
-| README not product-grade enough | Rewrite for quick understanding and proof |
-| No visible generated examples | Commit `examples/demo-repo` and `examples/outputs` |
-| Broad language claims need proof | Add fixture repos and golden tests |
-| MCP behavior needs proof | Add Inspector docs and JSON-RPC/SDK smoke tests |
-| Safety claims need proof | Add adversarial scanner/generation tests |
-| Output contract needs stabilization | Define generated files and metadata |
-| Release/install flow needs polish | Add console scripts, `uvx`/`pipx` docs, build checks |
-
-## 4. Non-Goals
-
-| Non-goal | Reason |
-|---|---|
-| Full documentation website generator | Dilutes MCP/context focus |
-| API-key/LLM generation | Weakens deterministic local-first story |
-| Executing target project code | Unsafe and unnecessary for static analysis |
-| Rust/Go rewrite | Premature unless benchmark gates fail |
-| Docker-first deployment | Unnecessary friction for v1 coding-client use |
-| Remote daemon/service mode | Not needed for local stdio MCP v1 |
-| Automatic publishing | Requires maintainer review |
-| Automatic remote repo rename | Manual GitHub action |
-
-## 5. Pin-Worthy Standard
-
-The repo is pin-ready when:
-
-| Requirement | Bar |
-|---|---|
-| Understandable | Recruiter/dev can understand the project in 30 seconds |
-| Runnable | Clean clone can run CLI in 2 minutes |
-| MCP-valid | Inspector or a real coding client can list/call tools |
-| Safe | Filesystem/security model is tested |
-| Proven | CI passes and verifies core flows |
-| Honest | README limitations match implementation |
-| Useful | Generated docs are actually helpful for an agent |
-| Maintained | Changelog, license, contributing, security, release notes exist |
-
-## 6. Roadmap Phases
-
-### v0.2.0 — Rename, Scope, and Repo Hygiene
-
-Goal: make the project identity intentional.
-
-| Task | Acceptance criteria |
-|---|---|
-| Standardize name to `context-crafter-mcp` | README, pyproject, docs, CLI, package metadata align |
-| Rename import package to `context_crafter_mcp` | Imports/tests work |
-| Keep optional `repo_docs_mcp` compatibility shim | Old imports do not immediately break if needed |
-| Add polished GitHub description | One-sentence value proposition ready |
-| Add topics list to docs/manual steps | Manual GitHub action documented |
-| Add license | Root `LICENSE` exists |
-| Add `CHANGELOG.md` | Contains unreleased section |
-| Add `SECURITY.md` | Threat model and safe defaults described |
-| Add `CONTRIBUTING.md` | Short practical contribution/dev guide |
-| Add issue templates | Bug and feature templates exist |
-| Add ADR | Python/scanner decision documented |
-| Add `MANUAL_STEPS.md` | Remote rename/publish/screenshot steps documented |
-
-GitHub description:
-
-> Local-first MCP server that turns source repositories into compact AI-agent context: project overviews, repo maps, dependency graphs, architecture notes, and validation reports.
-
-### v0.3.0 — CLI and Packaging
-
-Goal: make the tool usable outside source checkout internals.
-
-| Task | Acceptance criteria |
-|---|---|
-| Add console script | `uv run context-crafter-mcp --help` works |
-| Add `detect` | Returns human and JSON output |
-| Add `generate` | Writes generated context docs |
-| Add `validate` | Checks generated output |
-| Add `doctor` | Checks environment and package health |
-| Add `self-test` | Runs a small end-to-end local test |
-| Add `mcp-config` | Emits client config snippets |
-| Add `serve` | Starts MCP stdio server |
-| Add package build check | `uv build` works |
-| Add Windows examples | README uses correct quoted Windows paths |
-
-Supported config targets:
-
-    claude-desktop
-    claude-code
-    kimi
-    cline
-    roo
-    vscode
-    codex
-    generic-stdio
-
-### v0.4.0 — MCP Protocol Quality
-
-Goal: make the MCP layer clean and agent-friendly.
-
-Required MCP tools:
-
-| Tool | Purpose |
-|---|---|
-| `detect_project` | Fast detection and stack summary |
-| `generate_context` | Main one-shot context generation |
-| `generate_project_overview` | Targeted overview |
-| `generate_repo_map` | Targeted repo map |
-| `generate_dependency_graph` | Targeted Mermaid dependency graph |
-| `generate_architecture_summary` | Targeted architecture/risk summary |
-| `validate_generated_context` | Validate generated outputs |
-| `explain_capabilities` | Explain languages, outputs, limits, safety model |
-
-Additional MCP features:
-
-| Feature | Acceptance criteria |
-|---|---|
-| Resources | Generated docs can be exposed/read as MCP resources |
-| Prompts | Prompt templates exist if SDK integration is clean |
-| Structured return objects | Tool results are predictable and machine-readable |
-| Inspector docs | README gives tested Inspector command |
-| MCP smoke tests | tools/list and key tool calls tested |
-| stdout safety | no protocol-corrupting logs in stdio mode |
-
-### v0.4.5 — Scanner Boundary and `RepoSnapshot`
-
-Goal: make scanning safe, deterministic, and replaceable.
-
-Required models:
-
-    ScannerOptions
-    RepoSnapshot
-    SnapshotFile
-    SnapshotDirectory
-    SkippedEntry
-    ScanError
-    ScanStats
-    GitMetadata
-
-Required defaults:
-
-| Option | Default |
-|---|---|
-| `follow_symlinks` | false |
-| `respect_gitignore` | true if feasible |
-| `include_hidden` | false |
-| `include_tests` | true |
-| `max_files` | bounded |
-| `max_depth` | bounded |
-| `max_file_bytes` | bounded |
-
-Required skipped dirs:
-
-    .git
-    .hg
-    .svn
-    .venv
-    venv
-    env
-    __pycache__
-    .pytest_cache
-    .mypy_cache
-    .ruff_cache
-    node_modules
-    dist
-    build
-    out
-    target
-    bin
-    obj
-    .next
-    .turbo
-    .cache
-
-Required tests:
-
-| Test | Expected behavior |
-|---|---|
-| symlink loop | skipped/terminated safely |
-| binary file | skipped |
-| huge file | skipped |
-| invalid encoding | reported without crash |
-| ignored dir | skipped |
-| max files | graceful warning |
-| max depth | graceful warning |
-| deterministic order | stable output |
-| output traversal | blocked |
-
-Benchmark gate:
-
-    Do not build Rust/Go scanner unless:
-      - 100k-file scan with ignore rules takes >5 seconds on a normal dev machine, or
-      - memory exceeds 250 MB, or
-      - scanner complexity becomes harder to reason about than a small helper.
-
-### v0.5.0 — Analyzer Registry and Language Proof
-
-Goal: make language support credible.
-
-Required architecture:
-
-    AnalyzerRegistry
-      register(...)
-      detect(snapshot) -> DetectedProject[]
-      analyze(snapshot, detected_project) -> AnalysisResult
-      merge(results) -> RepoModel
-
-Evidence model:
-
-| Evidence | Meaning |
-|---|---|
-| `observed` | Directly found in files |
-| `inferred` | Likely based on markers |
-| `unknown` | Not enough evidence |
-| `unsupported` | Known analyzer gap |
-| `error` | Parse/read failure |
-
-Required fixture repos:
-
-    tests/fixtures/python_basic
-    tests/fixtures/node_ts_basic
-    tests/fixtures/dotnet_basic
-    tests/fixtures/rust_basic
-    tests/fixtures/go_basic
-    tests/fixtures/java_basic
-    tests/fixtures/generic_unknown
-    tests/fixtures/mixed_monorepo
-
-Minimum stack support:
-
-| Stack | Required v1 proof |
-|---|---|
-| Python | pyproject/requirements/package/test/script detection; stdlib AST basics |
-| Node/TypeScript | package.json/scripts/deps/tsconfig/entrypoint hints |
-| .NET | sln/csproj/framework/project/package refs |
-| Rust | Cargo/workspace/crate hints |
-| Go | go.mod/module/package/main hints |
-| Java | Maven/Gradle/source-root/package hints |
-| Generic | honest fallback |
-
-### v0.5.5 — Parser Upgrade Spike
-
-Goal: prepare deeper parsing without rewrite.
-
-| Task | Acceptance criteria |
-|---|---|
-| Add parser abstraction | Analyzer code does not depend on one parser implementation |
-| Evaluate Tree-sitter optional extra | At least two non-Python languages tested if dependency story is clean |
-| Keep Python AST where better | Do not replace useful stdlib AST unnecessarily |
-| Add parser support matrix | README/docs distinguish metadata vs syntax-aware support |
-| Keep parsers optional if heavy | Core install remains simple |
-
-Do not make Tree-sitter mandatory before v1 unless it stays clean and stable.
-
-### v0.6.0 — Generated Output Contract
-
-Goal: make generated docs useful, deterministic, and auditable.
-
-Required generated files:
-
-    AI_CONTEXT_INDEX.md
-    PROJECT_OVERVIEW.md
-    REPO_MAP.md
-    DEPENDENCY_GRAPH.md
-    ARCHITECTURE_SUMMARY.md
-    AGENT_BRIEF.md
-    VALIDATION_REPORT.md
-    SCAN_REPORT.md
-
-Required metadata in generated docs:
-
-    Generated by
-    Generated at
-    Source repo
-    Git commit
-    Analysis mode
-    Scanner
-    Confidence / evidence notes
-
-Output rules:
-
-| Rule | Reason |
-|---|---|
-| exact relative paths | actionable |
-| no invented purpose | trust |
-| observed/inferred/unknown labels | honesty |
-| deterministic ordering | tests |
-| profile support | token/detail control |
-| warnings visible | safe automation |
-| compact prose | agent usability |
-
-Profiles:
-
-| Profile | Intended use |
-|---|---|
-| compact | small context for coding agents |
-| standard | default useful docs |
-| deep | more detail for manual review |
-
-### v0.7.0 — Safety and Trust
-
-Goal: make safety claims test-backed.
-
-Required guarantees:
-
-| Guarantee | Proof |
-|---|---|
-| static-only | tests/docs |
-| no target execution | code audit/tests |
-| no network in core generation | tests or clear dependency boundary |
-| no symlink following by default | tests |
-| bounded scanning | tests |
-| binary/large skip | tests |
-| output confinement | tests |
-| no stdout logging in MCP mode | tests |
-| source text treated as untrusted | docs/tests |
-| basic secret warnings | tests if implemented |
-
-`SECURITY.md` must cover:
-
-- threat model
-- safe defaults
-- output confinement
-- prompt-injection/source-text handling
-- secret handling
-- known limitations
-- reporting process
-
-### v0.8.0 — CI and Release Engineering
-
-Goal: make the repo look maintained and reliable.
-
-Required checks:
-
-    uv sync --extra dev
+| Large-repo proof is still too synthetic | Stress fixtures and benchmark scripts are useful, but they are not the same as repeated proof on real 200k+ LOC repos |
+| Truthfulness under severe scan pressure is not yet a finished story | Stable release must prove not just validity, but honest prioritization and clear bounded-scan signaling |
+| Java and .NET confidence are still below the trust bar | They are supported, but still fixture-backed compared with Python / Node / Go / Rust |
+| MCP and JSON contract freeze is not explicitly locked | Stable release must treat downstream consumers as real consumers |
+| Release docs and gate execution still need to be unified around the post-`0.6.0` reality | Avoid drifting back into "docs say stable, code says maybe" territory |
+| Performance budgets are not yet stated as explicit release gates | "Feels fast enough" is not enough for large-repo deployment claims |
+
+## 4. Stable-release definition
+
+The first stable release should be treated as `1.0.0`.
+
+Do not cut `1.0.0` because the project already has many features.
+Cut it only when the following statement is true:
+
+> We have verified that the current scanner, analyzers, renderers, CLI, MCP server, and output contracts remain truthful and operational on large, deeply nested, mixed-stack repositories under realistic bounds, and the remaining gaps are documented rather than hidden.
+
+## 5. Remaining workstreams
+
+The path to `1.0.0` should be organized into six workstreams.
+
+### Workstream A: Large-repo scale proof
+
+Goal:
+
+- prove that the current system is operational on large repositories, not just medium fixtures
+
+Required outcomes:
+
+- benchmark evidence for 200k+ LOC or similarly heavy file counts
+- repeated runs on deep, ugly trees with vendor/generated/test noise
+- explicit timing and memory expectations for stable release
+- documented failure/degradation modes when limits are hit
+
+Concrete tasks:
+
+1. Define a release-scale benchmark matrix
+   - synthetic large tree
+   - deep mixed-stack synthetic tree
+   - at least one large Python repo
+   - at least one large Node/TypeScript monorepo
+   - at least one large polyglot or services-style repo
+2. Extend benchmarking beyond `scripts/bench_scan.py`
+   - record scan time
+   - record full pipeline time
+   - record peak memory if practical
+   - capture whether bounds were exhausted
+3. Add repeatable challenge-repo documentation
+   - exact commands
+   - expected output characteristics
+   - what counts as acceptable bounded degradation
+4. Decide explicit stable-release performance gates
+   - scanner time budget
+   - pipeline time budget
+   - memory ceiling
+   - acceptable bounded-scan warning behavior
+
+Release bar for Workstream A:
+
+- stable release has written, verified evidence that the tool remains usable on repositories much larger and messier than the fixture set
+
+### Workstream B: Truthfulness under bounded scans
+
+Goal:
+
+- ensure that when the tool cannot fully understand a large repo, it says so clearly and still prioritizes the most important surfaces
+
+Required outcomes:
+
+- bounded-scan warnings remain visible in every relevant output surface
+- primary conclusions continue to prioritize product code over vendor/generated/tooling noise
+- unknown/unsupported/error evidence stays conservative rather than optimistic
+
+Concrete tasks:
+
+1. Build more adversarial large-repo tests
+   - deep nesting with multiple plausible roots
+   - monorepo with many low-signal packages and a few critical entrypoints
+   - repos where docs/tooling outnumber product files
+   - generated-output-heavy repos
+2. Audit rendered outputs for truth drift
+   - `PROJECT_OVERVIEW.md`
+   - `ARCHITECTURE_SUMMARY.md`
+   - `AGENT_BRIEF.md`
+   - `SCAN_REPORT.md`
+   - `RUN_STATE.json`
+3. Add assertions for "what must not happen"
+   - vendor tree becomes the main architecture story
+   - generated code becomes the main entrypoint claim
+   - bounded scan is hidden from the brief summary
+   - analyzer parse count is misread as scanner truth
+4. Decide whether more prioritization/ranking work is still needed
+   - only if tests show real failures
+   - not as speculative rewrite work
+
+Release bar for Workstream B:
+
+- challenge-repo and scale tests show honest summaries even when the repo is partially scanned or partially parsed
+
+### Workstream C: Stack confidence hardening
+
+Goal:
+
+- make stable-release support claims line up with actual verified depth per language
+
+Current reality:
+
+- Python / Node / Go / Rust: meaningful real-repo smoke confidence
+- Java / .NET: still lower-confidence and fixture-backed
+
+Concrete tasks:
+
+1. Freeze the public confidence language by stack
+   - what is stable
+   - what is supported but lower-confidence
+   - what is intentionally heuristic
+2. Raise Java / .NET confidence enough for stable-release honesty
+   - manual validation on real repos, or
+   - stronger challenge fixtures plus clearly documented limitations
+3. Re-check parser fallback behavior
+   - parser installed
+   - parser missing
+   - parse failures
+   - mixed parser/fallback evidence
+4. Decide whether any stack claim in README/docs should be narrowed before `1.0.0`
+
+Release bar for Workstream C:
+
+- every supported stack has an explicit trust statement backed by either smoke evidence or clearly documented limitation
+
+### Workstream D: Contract freeze and consumer safety
+
+Goal:
+
+- make the CLI, MCP, validation, and machine-readable outputs safe for downstream automation to depend on
+
+Required outcomes:
+
+- tool names and signatures are treated as intentionally stable
+- `RUN_STATE.json` additive contract is enforced in practice
+- generation/validation JSON result shapes are treated as compatibility surfaces
+
+Concrete tasks:
+
+1. Review CLI contract stability
+   - flags
+   - defaults
+   - JSON output fields
+   - exit-code behavior
+2. Review MCP surface stability
+   - tool names
+   - argument names
+   - response structure
+   - resources URI scheme
+3. Add regression coverage for consumer-facing fields
+   - especially `RUN_STATE.json`
+   - generation JSON
+   - validation JSON
+   - capability descriptions if externally consumed
+4. Decide what remains explicitly non-stable before `1.0.0`
+   - document it
+   - do not leave it implicit
+
+Release bar for Workstream D:
+
+- a downstream maintainer can rely on the machine-readable surfaces without fearing silent shape drift
+
+### Workstream E: Release and docs truth discipline
+
+Goal:
+
+- keep the release line and roadmap truthful while the project moves from hardening into stable release
+
+Concrete tasks:
+
+1. Keep release-state docs synchronized whenever the release state changes
+   - `CHANGELOG.md`
+   - `docs/ROADMAP.md`
+   - `docs/REAL_REPO_SMOKE_MATRIX.md`
+   - `docs/project_state.md`
+   - `IMPLEMENTATION_REPORT.md`
+2. Rewrite roadmap docs so they describe remaining work, not already-finished milestones
+3. Make sure large-repo aspirations are written as verified or planned, never assumed
+4. Keep the canonical smoke, artifact, and release commands exact
+
+Release bar for Workstream E:
+
+- no release-facing doc materially overstates what has been verified
+
+### Workstream F: Execute the stable-release gate
+
+Goal:
+
+- run the real `1.0.0` gate end-to-end on a clean checkout
+
+This workstream should happen after A through E are sufficiently complete.
+
+Concrete tasks:
+
+1. Update `docs/PRE_1_0_GATE.md` if needed to reflect the final release truth
+2. Run the full gate on a clean checkout
+3. Re-run wheel and sdist verification
+4. Re-run real-repo smoke verification
+5. Confirm docs match the actual stable surface
+6. Only then bump version to `1.0.0`
+7. Tag and publish the stable release
+
+Release bar for Workstream F:
+
+- the gate is executed, not assumed
+
+## 6. Execution order
+
+Do the remaining work in this order:
+
+1. Workstream E first where docs are stale enough to mislead current work
+2. Workstream A to establish real scale evidence
+3. Workstream B to harden truthfulness under that evidence
+4. Workstream C to lock honest stack confidence
+5. Workstream D to freeze consumer-facing contracts
+6. Workstream F to execute the stable-release gate
+
+Reason:
+
+- there is no value in freezing contracts or cutting `1.0.0` before the large-repo truthfulness story is proven
+
+## 7. Concrete plan by milestone
+
+### Milestone 1: post-`0.6.0` truth reset
+
+Deliverables:
+
+- all release-state docs reflect that `0.6.0` is already public
+- this roadmap is rewritten around remaining work only
+- `docs/ROADMAP.md` and `docs/PRE_1_0_GATE.md` are aligned with the stable-release direction
+
+Exit criteria:
+
+- no roadmap/release doc still talks as if `0.6.0` is pending
+
+### Milestone 2: scale and challenge-repo evidence
+
+Deliverables:
+
+- repeatable benchmark/challenge suite
+- explicit performance observations
+- documented large-repo expectations
+
+Exit criteria:
+
+- the project has hard evidence, not just intuition, for large-repo behavior
+
+### Milestone 3: truthfulness hardening under pressure
+
+Deliverables:
+
+- new adversarial tests
+- output reviews converted into regression coverage where practical
+- bounded-scan truthfulness accepted as good enough or further targeted fixes identified
+
+Exit criteria:
+
+- large mixed repos do not silently produce overconfident summaries
+
+### Milestone 4: stack confidence freeze
+
+Deliverables:
+
+- final stable-release support wording by language
+- Java / .NET confidence decision documented
+- parser/fallback expectations verified
+
+Exit criteria:
+
+- public stack support claims are explicit, stable, and justified
+
+### Milestone 5: contract freeze
+
+Deliverables:
+
+- stable CLI/MCP/result-surface review
+- additive-only machine-readable contract policy enforced by tests/docs
+
+Exit criteria:
+
+- downstream consumers can safely automate against the current surfaces
+
+### Milestone 6: `1.0.0` gate and release
+
+Deliverables:
+
+- clean checkout gate execution record
+- final docs truth audit
+- `1.0.0` tag
+
+Exit criteria:
+
+- the stable release is a verified event, not just a version bump
+
+## 8. Verification commands that must remain green
+
+These are not the whole stable-release story, but they are the minimum recurring health set:
+
     uv run python -m compileall src tests
     uv run ruff check .
     uv run ruff format --check .
     uv run mypy src
     uv run pytest -q
     uv build
-    uv run context-crafter-mcp self-test .
-    uv run context-crafter-mcp generate . --output .tmp/generated --profile compact --json
-    uv run context-crafter-mcp validate .tmp/generated --json
-
-CI targets:
-
-| Target | Requirement |
-|---|---|
-| Windows | at least latest |
-| Ubuntu | at least latest |
-| Python | 3.11 and 3.12 minimum; 3.13 if dependencies allow |
-| Permissions | minimal workflow permissions |
-| Dependency maintenance | Dependabot if feasible |
-| Security | CodeQL if feasible |
-
-Do not actually publish. Add release workflow as draft/safe config only if appropriate.
-
-### v0.9.0 — Demo and Reviewer Experience
-
-Goal: make quality visible without running the project.
-
-| Task | Acceptance criteria |
-|---|---|
-| Rewrite README | first screen is strong |
-| Add generated examples | real output committed |
-| Add demo repo | output reproducible |
-| Add MCP Inspector instructions | exact command included |
-| Add client config snippets | practical onboarding |
-| Add limitations matrix | honest support levels |
-| Add AICtx comparison | portfolio clarity |
-| Add scanner architecture section | language decision clear |
-| Add badges | CI/license/Python/version where accurate |
-| Add manual screenshot steps | if not generated automatically |
-
-README structure:
-
-    # Context Crafter MCP
-    ## What it generates
-    ## Quick start
-    ## Use with MCP clients
-    ## Example output
-    ## Safety model
-    ## Supported stacks
-    ## Architecture
-    ## Development
-    ## Limitations
-
-### v1.0.0 — Pin-Ready Release
-
-Goal: safe to pin after maintainer verification.
-
-Release blockers:
-
-| Blocker | Required state |
-|---|---|
-| name stable | yes |
-| package install works | yes |
-| CLI works | yes |
-| MCP stdio works | yes |
-| Scanner boundary stable | yes |
-| generated outputs stable | yes |
-| safety tests pass | yes |
-| fixture tests pass | yes |
-| README honest | yes |
-| examples visible | yes |
-| CI green | yes |
-| changelog current | yes |
-| manual steps documented | yes |
-
-## 7. Agent Implementation Strategy
-
-The implementation agent should produce a coherent working v0.9+ style repository state, not just roadmap-shaped documentation.
-
-Priority order:
-
-| Priority | Work |
-|---:|---|
-| 1 | Baseline audit and report |
-| 2 | naming/package/CLI |
-| 3 | MCP stdio server |
-| 4 | scanner boundary |
-| 5 | generated output contract |
-| 6 | validation |
-| 7 | safety tests |
-| 8 | fixture analyzers |
-| 9 | README/docs/examples |
-| 10 | CI and final verification |
-
-## 8. Concrete Acceptance Test
-
-Before calling the repo pin-ready, this should pass:
-
-    git clone https://github.com/0langa/context-crafter-mcp.git
-    cd context-crafter-mcp
-    uv sync --extra dev
-    uv run ruff check .
-    uv run ruff format --check .
-    uv run mypy src
-    uv run pytest -q
     uv run context-crafter-mcp --help
     uv run context-crafter-mcp doctor
     uv run context-crafter-mcp self-test .
     uv run context-crafter-mcp detect . --json
     uv run context-crafter-mcp generate . --output docs/generated --profile standard --json
     uv run context-crafter-mcp validate docs/generated --json
+    uv run context-crafter-mcp validate examples/outputs --repo examples/demo-repo --json
+    uv run python scripts/smoke_repos.py
 
-Expected generated files:
+Additional stable-release verification still to formalize:
 
-    docs/generated/AI_CONTEXT_INDEX.md
-    docs/generated/PROJECT_OVERVIEW.md
-    docs/generated/REPO_MAP.md
-    docs/generated/DEPENDENCY_GRAPH.md
-    docs/generated/ARCHITECTURE_SUMMARY.md
-    docs/generated/AGENT_BRIEF.md
-    docs/generated/VALIDATION_REPORT.md
-    docs/generated/SCAN_REPORT.md
+- challenge-repo benchmark commands
+- large-repo memory/timing evidence
+- final clean-checkout `1.0.0` gate record
 
-Expected MCP proof:
+## 9. What not to do
 
-- MCP Inspector can connect.
-- `tools/list` includes documented tools.
-- `detect_project` works.
-- `generate_context` works.
-- no stdout logging corrupts stdio.
+Avoid these traps while chasing stable release:
 
-## 9. What Not To Do
-
-Avoid:
-
-| Trap | Why |
+| Trap | Why it is a trap |
 |---|---|
-| rewriting in Rust/Go now | slows product progress without solving current UX/docs/test gaps |
-| adding LLM/API features | dilutes deterministic local-first story |
-| claiming deep understanding | static analysis must remain honest |
-| publishing packages | requires maintainer review |
-| remote repo rename by agent | manual GitHub action |
-| Docker-first workflow | unnecessary friction for v1 |
-| too many MCP tools | hurts model tool choice |
-| generated docs without tests | output quality becomes untrustworthy |
-| README claims not backed by code | hurts CV-facing credibility |
-| messy duplicate package trees | creates maintenance debt |
-| placeholder TODO implementations | creates false completion |
+| Rewriting the scanner in Rust/Go before proof demands it | It burns time before the current Python boundary is actually exhausted |
+| Expanding into cloud/API/LLM features | It weakens the deterministic local-first product story |
+| Treating green fixtures as proof of large-repo readiness | Stable release depends on challenge-repo and scale evidence too |
+| Cutting `1.0.0` because the CLI/MCP surface feels complete | Stable release is about trust under pressure, not feature count |
+| Hiding heuristic behavior behind polished prose | It makes the output less safe in the exact codebases this tool targets |
+| Growing the MCP surface without a strong reason | It increases consumer risk and tool-selection noise |
 
-## 10. Final Pin Decision Rule
+## 10. Final release rule
 
-Pin only when:
+Release `1.0.0` only when all of the following are true:
 
-| Requirement | State |
-|---|---|
-| final name | done |
-| README first screen | polished |
-| clean install path | proven |
-| CLI | proven |
-| MCP server | proven |
-| generated examples | visible |
-| scanner boundary | implemented |
-| safety model | tested |
-| fixture language support | tested |
-| CI | green |
-| release | v0.9/v1.0 after maintainer review |
-| AICtx difference | clear |
+- `0.6.0`-style hardening has been extended into verified large-repo proof
+- bounded-scan truthfulness is good enough for ugly real codebases
+- stack confidence claims are honest and frozen
+- CLI, MCP, validation, and `RUN_STATE.json` contracts are intentionally stable
+- release docs match reality
+- the explicit stable-release gate has been executed end-to-end
 
-Until then, keep it public if active, but pin it below the stronger finished projects.
+If any one of those is false, do another hardening release instead of forcing `1.0.0`.

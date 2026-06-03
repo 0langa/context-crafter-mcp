@@ -3,8 +3,8 @@
 ## Current state
 
 - Package version in code is **`0.6.0`**.
-- Latest public git tag on the remote is **`0.5.0`**.
-- Current local `main` contains the **`0.6.0` hardening release**, which is not yet represented by a new public tag.
+- Latest public git tag on the remote is **`0.6.0`**.
+- Current local `main` and the public `0.6.0` tag are aligned on the current hardening baseline.
 
 ### What shipped in `0.6.0`
 
@@ -27,7 +27,7 @@ The project is no longer just proving out the architecture. The current work is 
 
 ## Concrete release plan
 
-### Phase 1: `0.6.0` hardening release (current)
+### Phase 1: `0.6.0` hardening release (complete)
 
 Purpose:
 
@@ -35,7 +35,7 @@ Purpose:
 - realign public tags with the code and docs people will actually read
 - avoid pretending `1.0.0` readiness before the explicit gate is run end-to-end
 
-Status: local `main` is ready to tag as `0.6.0` once the release checklist in `MANUAL_STEPS.md` is executed.
+Status: complete. `0.6.0` is now tagged and published as the verified hardening baseline.
 
 ### Phase 2: Execute the pre-`1.0.0` gate
 
