@@ -40,11 +40,15 @@ Its long-term purpose is to verify:
 4. Mirror only curated summaries back into this repo. Raw run data stays on the D drive.
 5. If the D-drive contracts change, update this handoff note and `docs/project_state.md` in the same change set.
 
+## Important: gitignored paths are not durable truth
+
+`docs/internal/` is listed in `.gitignore`. Do not rely on files under that path as authoritative repo-side anchors. Any durable repo-side summary must live in a tracked path such as `docs/testing/TESTING_STATUS.md` or `docs/testing/TEST_ENVIRONMENT_HANDOFF.md`.
+
 ## Expected future repo-side files
 
 This repo is expected to later gain:
 
-- `docs/TESTING_STATUS.md`
-- `docs/internal/test-env/latest-gate-summary.md`
-- `docs/internal/test-env/run-history/...`
+- `docs/testing/TESTING_STATUS.md` (stable facts only, no volatile "latest run" claims)
 - durable incident reviews derived from brutal test runs
+
+Volatile run data, latest-gate summaries, and run history remain on the D-drive platform.
