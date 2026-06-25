@@ -4,7 +4,7 @@
 
 - Package version in code is **`0.7.0b1`**.
 - Latest public git tag on the remote is **`0.7.0b1`**.
-- Current local `main` is aligned to the **`0.7.0b1` beta** release line.
+- Current `main` is the **post-`0.7.0b1` hardening line** with post-`0.7.0b1` hardening commits after the beta tag.
 
 ### What is landing in `0.7.0b1`
 
@@ -12,6 +12,7 @@ The `0.7.0b1` beta adds:
 
 - local release gate automation for the reset-PC setup
 - public-surface validation for CLI version/help, MCP config snippets, and MCP stdio initialize/tools-list
+- release-doc validation for the pre-`1.0.0` checklist, roadmap state, and CI action baselines
 - generic fallback honesty hardening and regression coverage
 - retired D-drive external testing references rewritten as historical context
 - optional session-completion verifier tests that skip unless a rebuilt external verifier is configured

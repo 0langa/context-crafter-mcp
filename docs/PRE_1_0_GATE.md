@@ -14,7 +14,7 @@ Current beta note: `0.7.0b1` is a prerelease hardening gate. Passing the local g
 - [ ] `context-crafter-mcp version` matches `pyproject.toml`
 - [ ] `context-crafter-mcp doctor` reports healthy on a clean checkout
 - [ ] `context-crafter-mcp detect <repo> --json` returns valid JSON for all fixed smoke repos
-- [ ] `context-crafter-mcp generate <repo> --output <dir> --profile standard --json` produces all 8 Markdown files + `RUN_STATE.json`
+- [ ] `context-crafter-mcp generate <repo> --output <dir> --profile standard --json` produces 8 required Markdown files plus `DEPENDENCY_GRAPH.mmd` and `RUN_STATE.json`
 - [ ] `context-crafter-mcp validate <output_dir> --json` passes with zero errors
 - [ ] `context-crafter-mcp self-test .` passes without dirtying the repository
 - [ ] `context-crafter-mcp mcp-config --client <client>` emits valid JSON for every supported client
@@ -58,6 +58,7 @@ Current beta note: `0.7.0b1` is a prerelease hardening gate. Passing the local g
 
 - The retired D-drive battle-testing platform is not required for the current local gate.
 - `scripts/local_release_gate.ps1` includes public-surface validation for CLI help/version, every supported MCP client config, and MCP stdio initialize/tools-list.
+- `scripts/local_release_gate.ps1` includes release-doc validation so pre-`1.0.0` checklist wording, roadmap state, and workflow action baselines stay aligned with repo reality.
 - `tests/test_session_completion_verifier.py` is optional and skips unless `CONTEXT_CRAFTER_TESTS_TOOL` points to a rebuilt verifier tool.
 - Network-dependent real-repo smoke automation remains a separate release confidence step after the local gate is repeatable.
 

@@ -24,6 +24,7 @@ The checked-in product surface is centered on:
 - `CHANGELOG.md`, `docs/ROADMAP.md`, `docs/REAL_REPO_SMOKE_MATRIX.md`, `MANUAL_STEPS.md`, and `IMPLEMENTATION_REPORT.md` are release-truth docs that must stay aligned with the current version.
 - `src/context_crafter_mcp/cli.py` and `src/context_crafter_mcp/server.py` are the main entrypoints for CLI and MCP use.
 - `scripts/validate_project_state.py` validates this file's contract and core references. It does not write repo truth for you.
+- `scripts/validate_release_docs.py` validates release-truth docs against current tag/HEAD and workflow action baselines.
 - `scripts/local_release_gate.ps1` is the current reset-PC local release gate command bundle.
 - `scripts/validate_public_surface.py` checks CLI help/version, every supported MCP client config, and MCP stdio initialize/tools-list.
 - `scripts/smoke_repos.py` is the real-repo smoke automation for the fixed Python/Node/Go/Rust set.
@@ -54,6 +55,8 @@ Run the checks that match the surface you changed.
 
 - Project-state validation:
   - `python .\scripts\validate_project_state.py`
+- Release-doc validation:
+  - `python .\scripts\validate_release_docs.py`
 - Python/package validation:
   - `python -m py_compile .\scripts\validate_project_state.py`
   - `uv run ruff check .`

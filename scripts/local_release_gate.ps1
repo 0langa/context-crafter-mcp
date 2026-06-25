@@ -23,6 +23,7 @@ function Invoke-GateStep {
 }
 
 Invoke-GateStep "project-state validation" { python .\scripts\validate_project_state.py }
+Invoke-GateStep "release-doc validation" { python .\scripts\validate_release_docs.py }
 Invoke-GateStep "ruff" { uv run ruff check . }
 Invoke-GateStep "mypy" { & $Python -m mypy src }
 Invoke-GateStep "pytest" { & $Python -m pytest -q }
