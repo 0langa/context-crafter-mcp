@@ -38,6 +38,7 @@ Current release note: `0.8.0` is the consumer-value release line. Passing the lo
 - [ ] `README.md` claims match actual CLI/MCP surface
 - [ ] `docs/LIMITATIONS.md` does not understate or overstate gaps
 - [ ] `docs/OUTPUT_CONTRACT.md` describes every generated file and JSON field accurately
+- [ ] `docs/PUBLIC_SURFACE_FREEZE.md` matches the CLI, MCP, resource, generated-file, and machine-readable JSON contracts
 - [ ] `docs/ARCHITECTURE.md` matches the current scanner/analyzer/renderer split
 - [ ] `SECURITY.md` threat model is current and complete
 - [ ] `MANUAL_STEPS.md` release checklist has been executed successfully at least once
@@ -64,6 +65,7 @@ Current release note: `0.8.0` is the consumer-value release line. Passing the lo
 
 ## MCP surface freeze expectations
 
+- [ ] `docs/PUBLIC_SURFACE_FREEZE.md` has been reviewed against CLI help, MCP tools-list, and generated output
 - [ ] Tool names and signatures are stable:
   - `detect_project`
   - `generate_context`

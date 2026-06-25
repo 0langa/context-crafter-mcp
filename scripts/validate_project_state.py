@@ -26,6 +26,7 @@ REQUIRED_PATHS = [
     "README.md",
     "docs/ARCHITECTURE.md",
     "docs/OUTPUT_CONTRACT.md",
+    "docs/PUBLIC_SURFACE_FREEZE.md",
     "docs/MCP_CLIENTS.md",
     "docs/LIMITATIONS.md",
     "SECURITY.md",

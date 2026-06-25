@@ -85,6 +85,7 @@ Focus:
 
 - installed wheel and sdist smoke on clean temporary environments
 - repeatable installed-artifact smoke gate for release candidates
+- public surface freeze evidence in `docs/PUBLIC_SURFACE_FREEZE.md`
 - real-repo smoke refresh and matrix update
 - MCP resource/result-surface compatibility review
 - limitations/security/docs-truth audit

@@ -48,6 +48,7 @@ def validate() -> list[str]:
     pre_gate = _read("docs/PRE_1_0_GATE.md")
     roadmap = _read("docs/ROADMAP.md")
     project_state = _read("docs/project_state.md")
+    public_surface = _read("docs/PUBLIC_SURFACE_FREEZE.md")
     changelog = _read("CHANGELOG.md")
     security = _read("SECURITY.md")
     ci = _read(".github/workflows/ci.yml")
@@ -105,6 +106,30 @@ def validate() -> list[str]:
         issues.append("docs/PRE_1_0_GATE.md must list the installed artifact smoke command.")
     if artifact_smoke_command not in _read("MANUAL_STEPS.md"):
         issues.append("MANUAL_STEPS.md must list the installed artifact smoke command.")
+
+    required_public_surface_phrases = [
+        "detect_project",
+        "generate_context",
+        "generate_project_overview",
+        "generate_repo_map",
+        "generate_dependency_graph",
+        "generate_architecture_summary",
+        "validate_generated_context",
+        "explain_capabilities",
+        "context-crafter://latest/<filename>",
+        "9 required Markdown",
+        "13 file(s)",
+        "EVIDENCE_LEDGER.json",
+        "CONTEXT_MANIFEST.json",
+        "RUN_STATE.json",
+        "additive",
+        "Machine-readable outputs",
+        "Java/.NET support remains fixture-backed",
+        "not a full secret-scanning engine",
+    ]
+    for phrase in required_public_surface_phrases:
+        if phrase not in public_surface:
+            issues.append(f"docs/PUBLIC_SURFACE_FREEZE.md must mention public contract phrase: {phrase}")
 
     return issues
 

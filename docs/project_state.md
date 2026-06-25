@@ -19,7 +19,7 @@ The checked-in product surface is centered on:
 
 ## Active Surfaces
 - `.kimi-code/AGENTS.md` is the Kimi operating guide for this repo.
-- `README.md`, `docs/ARCHITECTURE.md`, `docs/OUTPUT_CONTRACT.md`, `docs/MCP_CLIENTS.md`, and `docs/LIMITATIONS.md` are the main durable docs that can drift.
+- `README.md`, `docs/ARCHITECTURE.md`, `docs/OUTPUT_CONTRACT.md`, `docs/PUBLIC_SURFACE_FREEZE.md`, `docs/MCP_CLIENTS.md`, and `docs/LIMITATIONS.md` are the main durable docs that can drift.
 - `SECURITY.md` is the stable security policy and threat-model summary for the CLI/MCP surfaces.
 - `docs/testing/TEST_ENVIRONMENT_HANDOFF.md` is the tracked repo-side anchor for rebuilding or replacing the retired external `context-crafter-tests` planning and reporting flow.
 - The old D-drive external testing platform no longer exists on the current development machine. Treat previous D-drive references as historical only.
@@ -51,6 +51,7 @@ The checked-in product surface is centered on:
 - `COMMANDS.md` is a static, non-executed command runbook with confidence and evidence for inferred setup/test/build/lint commands.
 - Generated-output writes apply conservative redaction for obvious key/token/password values; this is a last-mile guard, not a full secret-scanning engine.
 - MCP resources under `context-crafter://latest/<filename>` use file-appropriate MIME types for Markdown, Mermaid, JSON, and optional HTML generated files.
+- `docs/PUBLIC_SURFACE_FREEZE.md` records the pre-`1.0.0` CLI, MCP, resource, generated-file, and machine-readable JSON contract.
 - The local release gate is `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1`; network-dependent smoke testing remains separate.
 - The current release is `0.8.0`. It is not the stable `1.0.0` gate.
 - Current hardening is aimed at `0.9.0`, expected to be the release-candidate line before `1.0.0`.
@@ -87,7 +88,7 @@ Run the checks that match the surface you changed.
   - `uv run python scripts/smoke_repos.py`
 
 ## Drift Watchlist
-- `README.md`, `docs/MCP_CLIENTS.md`, and `docs/OUTPUT_CONTRACT.md` can drift when CLI flags, MCP tools, or generated-file expectations change.
+- `README.md`, `docs/MCP_CLIENTS.md`, `docs/OUTPUT_CONTRACT.md`, and `docs/PUBLIC_SURFACE_FREEZE.md` can drift when CLI flags, MCP tools, or generated-file expectations change.
 - `CHANGELOG.md`, `docs/ROADMAP.md`, `docs/REAL_REPO_SMOKE_MATRIX.md`, and `IMPLEMENTATION_REPORT.md` can drift when versions or release scope changes.
 - `docs/testing/TEST_ENVIRONMENT_HANDOFF.md` can drift if a replacement external testing platform is created or if release-evidence rules change.
 - `docs/testing/TESTING_STATUS.md` is a stable-facts summary, not a live latest-run mirror. It describes historical platform context, current availability, and known stable failure patterns. It must NOT claim specific run IDs, timestamps, or pass/fail counts. Update it only when stable facts change or a replacement platform is created.
