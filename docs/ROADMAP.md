@@ -11,6 +11,7 @@
 The `0.7.0b1` beta adds:
 
 - local release gate automation for the reset-PC setup
+- public-surface validation for CLI version/help, MCP config snippets, and MCP stdio initialize/tools-list
 - generic fallback honesty hardening and regression coverage
 - retired D-drive external testing references rewritten as historical context
 - optional session-completion verifier tests that skip unless a rebuilt external verifier is configured
@@ -55,6 +56,7 @@ Use the local gate plus release checklist additions as the beta confidence set.
 Focus:
 
 - local release gate execution via `scripts/local_release_gate.ps1`
+- public-surface gate execution via `scripts/validate_public_surface.py`
 - version, changelog, and tag alignment for `0.7.0b1`
 - wheel and sdist verification
 - GitHub prerelease creation with attached artifacts where practical
@@ -101,6 +103,7 @@ If those are not yet true, continue with another hardening release instead of fo
 ### 3. Stable-release gate
 
 - `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1` passes on the reset-PC setup.
+- `python .\scripts\validate_public_surface.py` passes on the reset-PC setup.
 - All acceptance commands pass on a clean checkout.
 - Remote tags/releases match the version claimed by code and docs.
 - Public docs stay honest about limitations and unreleased work.

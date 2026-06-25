@@ -8,6 +8,8 @@ Current beta note: `0.7.0b1` is a prerelease hardening gate. Passing the local g
 
 - [ ] Local reset-PC release gate passes:
   - `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1`
+- [ ] Public surface validation passes:
+  - `python .\scripts\validate_public_surface.py`
 - [ ] `context-crafter-mcp --help` prints without error
 - [ ] `context-crafter-mcp version` matches `pyproject.toml`
 - [ ] `context-crafter-mcp doctor` reports healthy on a clean checkout
@@ -16,7 +18,7 @@ Current beta note: `0.7.0b1` is a prerelease hardening gate. Passing the local g
 - [ ] `context-crafter-mcp validate <output_dir> --json` passes with zero errors
 - [ ] `context-crafter-mcp self-test .` passes without dirtying the repository
 - [ ] `context-crafter-mcp mcp-config --client <client>` emits valid JSON for every supported client
-- [ ] `context-crafter-mcp serve` starts the MCP stdio server
+- [ ] `context-crafter-mcp serve` starts the MCP stdio server and responds to initialize/tools-list
 
 ## Smoke expectations
 
@@ -55,6 +57,7 @@ Current beta note: `0.7.0b1` is a prerelease hardening gate. Passing the local g
 ## Current local-gate notes
 
 - The retired D-drive battle-testing platform is not required for the current local gate.
+- `scripts/local_release_gate.ps1` includes public-surface validation for CLI help/version, every supported MCP client config, and MCP stdio initialize/tools-list.
 - `tests/test_session_completion_verifier.py` is optional and skips unless `CONTEXT_CRAFTER_TESTS_TOOL` points to a rebuilt verifier tool.
 - Network-dependent real-repo smoke automation remains a separate release confidence step after the local gate is repeatable.
 

@@ -27,6 +27,7 @@ Invoke-GateStep "ruff" { uv run ruff check . }
 Invoke-GateStep "mypy" { & $Python -m mypy src }
 Invoke-GateStep "pytest" { & $Python -m pytest -q }
 Invoke-GateStep "doctor" { uv run context-crafter-mcp doctor }
+Invoke-GateStep "public surface validation" { & $Python .\scripts\validate_public_surface.py }
 Invoke-GateStep "self-test" { uv run context-crafter-mcp self-test . }
 Invoke-GateStep "generate docs/generated" {
     uv run context-crafter-mcp generate . --output docs/generated --profile standard --json

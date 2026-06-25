@@ -25,6 +25,7 @@ The checked-in product surface is centered on:
 - `src/context_crafter_mcp/cli.py` and `src/context_crafter_mcp/server.py` are the main entrypoints for CLI and MCP use.
 - `scripts/validate_project_state.py` validates this file's contract and core references. It does not write repo truth for you.
 - `scripts/local_release_gate.ps1` is the current reset-PC local release gate command bundle.
+- `scripts/validate_public_surface.py` checks CLI help/version, every supported MCP client config, and MCP stdio initialize/tools-list.
 - `scripts/smoke_repos.py` is the real-repo smoke automation for the fixed Python/Node/Go/Rust set.
 
 ## Current Truths
@@ -59,6 +60,7 @@ Run the checks that match the surface you changed.
 - CLI/runtime validation when behavior changes:
   - `uv run context-crafter-mcp --help`
   - `uv run context-crafter-mcp doctor`
+  - `python .\scripts\validate_public_surface.py`
   - `uv run context-crafter-mcp self-test .`
 - Local release gate:
   - `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1`
