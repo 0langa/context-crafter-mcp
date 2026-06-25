@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added docs-truth checks for documented MCP clients, tools, and generated output files to keep public docs aligned with code.
 - Added `scripts/validate_release_docs.py` and wired it into the local release gate so release checklist wording, roadmap state, and workflow action baselines stay aligned.
 - Added `CONTEXT_MANIFEST.json` as an additive machine-readable manifest for generated context bundles.
+- Added file-appropriate MIME types for session-scoped MCP generated resources.
 
 ### Changed
 

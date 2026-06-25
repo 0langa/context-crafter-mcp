@@ -165,6 +165,7 @@ npx @modelcontextprotocol/inspector uv --directory /path/to/this/repo run contex
 ### MCP resources
 
 After `generate_context`, generated files are exposed as `context-crafter://latest/<filename>` resources. Only files from the current session are readable; arbitrary local paths are denied.
+Resources are advertised with file-appropriate MIME types, including `text/markdown`, `text/vnd.mermaid`, `application/json`, and `text/html` for optional HTML output.
 
 Generation results also report `resolved_output_dir`. If the requested `output_dir` would escape the repository root, output is confined to `docs/generated`.
 

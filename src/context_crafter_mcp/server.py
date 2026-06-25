@@ -31,6 +31,18 @@ app = Server("context-crafter", version=__version__)
 _REGISTERED_RESOURCES: dict[str, Path] = {}
 
 
+def _mime_type_for_generated_file(path: Path) -> str:
+    """Return the resource MIME type for generated files."""
+    suffix = path.suffix.lower()
+    if suffix == ".json":
+        return "application/json"
+    if suffix == ".mmd":
+        return "text/vnd.mermaid"
+    if suffix == ".html":
+        return "text/html"
+    return "text/markdown"
+
+
 def _register_written_files(written: list[str]) -> None:
     """Register generated files as safe resources under context-crafter://latest/<filename>."""
     for w in written:
@@ -45,9 +57,11 @@ CAPABILITIES_TEXT = (
     "Languages: Python, Node/TypeScript, .NET, Rust, Go, Java, Generic.\n"
     "Outputs: AI_CONTEXT_INDEX.md, PROJECT_OVERVIEW.md, REPO_MAP.md, "
     "DEPENDENCY_GRAPH.md, ARCHITECTURE_SUMMARY.md, AGENT_BRIEF.md, "
-    "VALIDATION_REPORT.md, SCAN_REPORT.md.\n"
+    "VALIDATION_REPORT.md, SCAN_REPORT.md, CONTEXT_MANIFEST.json, RUN_STATE.json.\n"
     "Safety: static-only, no execution, no network, bounded scans, "
     "no symlinks, output confined to repo root.\n"
+    "Resources: generated Markdown, Mermaid, JSON, and HTML files are session-scoped "
+    "under context-crafter://latest/<filename> with accurate MIME types.\n"
     "Profiles: compact, standard, deep.\n"
     "Limitations: static analysis only; no runtime behavior; "
     "deep semantic call graphs not implemented."
@@ -320,7 +334,7 @@ async def list_resources() -> list:
         Resource(
             uri=AnyUrl(uri),
             name=path.name,
-            mimeType="text/markdown",
+            mimeType=_mime_type_for_generated_file(path),
             description=f"Generated {path.name}",
         )
         for uri, path in _REGISTERED_RESOURCES.items()
@@ -335,9 +349,9 @@ async def list_resource_templates() -> list:
     return [
         ResourceTemplate(
             uriTemplate="context-crafter://latest/{filename}",
-            name="Latest generated doc",
-            mimeType="text/markdown",
-            description="Read a generated context document from the latest generation session.",
+            name="Latest generated resource",
+            mimeType=None,
+            description="Read a generated context document or companion file from the latest generation session.",
         ),
     ]
 
@@ -363,7 +377,7 @@ async def read_resource(uri: str) -> list[ReadResourceContents]:
         text = path.read_text(encoding="utf-8", errors="replace")
     except (OSError, ValueError) as exc:
         return [ReadResourceContents(content=f"Error reading resource: {exc}", mime_type="text/plain")]
-    return [ReadResourceContents(content=text, mime_type="text/markdown")]
+    return [ReadResourceContents(content=text, mime_type=_mime_type_for_generated_file(path))]
 
 
 @app.list_prompts()

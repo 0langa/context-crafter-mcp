@@ -92,6 +92,7 @@ After `generate_context`, generated files are registered as MCP resources:
 
 - URI format: `context-crafter://latest/<filename>`
 - only files from the current server session are readable
+- listed/read resources use file-appropriate MIME types (`text/markdown`, `text/vnd.mermaid`, `application/json`, or `text/html`)
 - arbitrary local paths and traversal are denied
 - `list_resources()` is empty before the first generation
 

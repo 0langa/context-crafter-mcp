@@ -6,6 +6,7 @@ import json
 import queue
 import subprocess
 import sys
+import tempfile
 import threading
 from pathlib import Path
 from typing import Any
@@ -195,6 +196,70 @@ def _check_stdio_server() -> None:
         missing = sorted(EXPECTED_TOOLS - tool_names)
         if missing:
             _fail(f"stdio tools/list missing tools: {', '.join(missing)}")
+
+        with tempfile.TemporaryDirectory() as td:
+            fixture_repo = Path(td)
+            (fixture_repo / "main.py").write_text("print('hello')\n", encoding="utf-8")
+            _send(
+                proc.stdin,
+                {
+                    "jsonrpc": "2.0",
+                    "id": 3,
+                    "method": "tools/call",
+                    "params": {
+                        "name": "generate_context",
+                        "arguments": {
+                            "repo_path": str(fixture_repo),
+                            "output_dir": "out",
+                            "profile": "compact",
+                        },
+                    },
+                },
+            )
+            generate_response = json.loads(_readline(stdout_queue, timeout=30.0))
+            generate_text = generate_response.get("result", {}).get("content", [{}])[0].get("text", "{}")
+            generate_result = json.loads(generate_text)
+            if not generate_result.get("ok"):
+                _fail(f"stdio generate_context failed: {generate_result!r}")
+
+            _send(proc.stdin, {"jsonrpc": "2.0", "id": 4, "method": "resources/list", "params": {}})
+            resources_response = json.loads(_readline(stdout_queue))
+            resources = {
+                resource.get("name"): resource for resource in resources_response.get("result", {}).get("resources", [])
+            }
+            expected_mime_types = {
+                "AI_CONTEXT_INDEX.md": "text/markdown",
+                "DEPENDENCY_GRAPH.mmd": "text/vnd.mermaid",
+                "CONTEXT_MANIFEST.json": "application/json",
+                "RUN_STATE.json": "application/json",
+            }
+            for resource_name, expected_mime in expected_mime_types.items():
+                actual = resources.get(resource_name, {}).get("mimeType")
+                if actual != expected_mime:
+                    _fail(f"{resource_name} resource MIME type drifted: actual={actual!r}, expected={expected_mime!r}")
+
+            _send(
+                proc.stdin,
+                {
+                    "jsonrpc": "2.0",
+                    "id": 5,
+                    "method": "resources/read",
+                    "params": {"uri": "context-crafter://latest/CONTEXT_MANIFEST.json"},
+                },
+            )
+            read_response = json.loads(_readline(stdout_queue))
+            contents = read_response.get("result", {}).get("contents", [])
+            if not contents or contents[0].get("mimeType") != "application/json":
+                _fail(f"manifest resource read did not return application/json: {read_response!r}")
+            manifest = json.loads(contents[0].get("text", "{}"))
+            if manifest.get("schema_mode") != "additive":
+                _fail(f"manifest resource schema_mode drifted: {manifest!r}")
+
+            _send(proc.stdin, {"jsonrpc": "2.0", "id": 6, "method": "resources/templates/list", "params": {}})
+            templates_response = json.loads(_readline(stdout_queue))
+            templates = templates_response.get("result", {}).get("resourceTemplates", [])
+            if not templates or templates[0].get("mimeType") is not None:
+                _fail(f"resource template must use generic/null MIME type: {templates_response!r}")
     finally:
         proc.terminate()
         try:

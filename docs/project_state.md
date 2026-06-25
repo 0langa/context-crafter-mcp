@@ -44,6 +44,7 @@ The checked-in product surface is centered on:
 - The historical dominant product failure was `L1-GENERIC-001` generic fallback honesty. Local regression coverage now lives in `tests/test_generic_fallback_honesty.py`.
 - Stack detection promotes marker/extension evidence only from trusted primary-surface paths; low-trust docs/tests/examples/tooling hints stay non-promoting and keep ambiguous repos generic.
 - `CONTEXT_MANIFEST.json` is the machine-readable generated-bundle manifest; `RUN_STATE.json` remains execution metadata. Both JSON surfaces are additive contracts.
+- MCP resources under `context-crafter://latest/<filename>` use file-appropriate MIME types for Markdown, Mermaid, JSON, and optional HTML generated files.
 - The local release gate is `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1`; network-dependent smoke testing remains separate.
 - The current release is the `0.7.0b1` beta prerelease. It is not the stable `1.0.0` gate.
 - Current feature sprint is aimed at `0.8.0`; `0.9.0` is expected to be the release-candidate hardening line before `1.0.0`.

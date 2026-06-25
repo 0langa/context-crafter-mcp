@@ -11,6 +11,7 @@ import pytest
 from mcp.types import (
     CallToolRequest,
     GetPromptRequest,
+    ListResourceTemplatesRequest,
     ListPromptsRequest,
     ListResourcesRequest,
     ListToolsRequest,
@@ -18,7 +19,7 @@ from mcp.types import (
 )
 
 from context_crafter_mcp import __version__
-from context_crafter_mcp.server import _REGISTERED_RESOURCES, app
+from context_crafter_mcp.server import _REGISTERED_RESOURCES, _mime_type_for_generated_file, app
 
 
 @pytest.fixture(autouse=True)
@@ -109,6 +110,15 @@ async def test_explain_capabilities_tool() -> None:
     result = server_result.root
     assert len(result.content) == 1
     assert "Context Crafter MCP" in result.content[0].text
+    assert "CONTEXT_MANIFEST.json" in result.content[0].text
+    assert "accurate MIME types" in result.content[0].text
+
+
+def test_generated_resource_mime_types() -> None:
+    assert _mime_type_for_generated_file(Path("PROJECT_OVERVIEW.md")) == "text/markdown"
+    assert _mime_type_for_generated_file(Path("DEPENDENCY_GRAPH.mmd")) == "text/vnd.mermaid"
+    assert _mime_type_for_generated_file(Path("CONTEXT_MANIFEST.json")) == "application/json"
+    assert _mime_type_for_generated_file(Path("PROJECT_OVERVIEW.html")) == "text/html"
 
 
 @pytest.mark.anyio
@@ -139,8 +149,13 @@ async def test_read_resource_allows_registered_generated_files() -> None:
         # Should be listed
         list_req = ListResourcesRequest(method="resources/list", params=None)
         list_result = await app.request_handlers[ListResourcesRequest](list_req)
-        uris = [str(r.uri) for r in list_result.root.resources]
+        resources = {r.name: r for r in list_result.root.resources}
+        uris = [str(r.uri) for r in resources.values()]
         assert any("AI_CONTEXT_INDEX.md" in u for u in uris)
+        assert resources["AI_CONTEXT_INDEX.md"].mimeType == "text/markdown"
+        assert resources["DEPENDENCY_GRAPH.mmd"].mimeType == "text/vnd.mermaid"
+        assert resources["CONTEXT_MANIFEST.json"].mimeType == "application/json"
+        assert resources["RUN_STATE.json"].mimeType == "application/json"
 
         # Should be readable
         uri = "context-crafter://latest/AI_CONTEXT_INDEX.md"
@@ -151,6 +166,16 @@ async def test_read_resource_allows_registered_generated_files() -> None:
         read_result = await app.request_handlers[ReadResourceRequest](read_req)
         assert len(read_result.root.contents) == 1
         assert "AI Context Index" in read_result.root.contents[0].text
+        assert read_result.root.contents[0].mimeType == "text/markdown"
+
+        manifest_req = ReadResourceRequest(
+            method="resources/read",
+            params={"uri": "context-crafter://latest/CONTEXT_MANIFEST.json"},
+        )
+        manifest_result = await app.request_handlers[ReadResourceRequest](manifest_req)
+        assert len(manifest_result.root.contents) == 1
+        assert manifest_result.root.contents[0].mimeType == "application/json"
+        assert json.loads(manifest_result.root.contents[0].text)["schema_mode"] == "additive"
 
         # Unknown file should be denied
         bad_req = ReadResourceRequest(
@@ -179,6 +204,16 @@ async def test_list_resources_empty_before_generation() -> None:
     list_req = ListResourcesRequest(method="resources/list", params=None)
     list_result = await app.request_handlers[ListResourcesRequest](list_req)
     assert list_result.root.resources == []
+
+
+@pytest.mark.anyio
+async def test_list_resource_templates_uses_generic_mime() -> None:
+    req = ListResourceTemplatesRequest(method="resources/templates/list", params=None)
+    server_result = await app.request_handlers[ListResourceTemplatesRequest](req)
+    templates = server_result.root.resourceTemplates
+    assert len(templates) == 1
+    assert templates[0].uriTemplate == "context-crafter://latest/{filename}"
+    assert templates[0].mimeType is None
 
 
 @pytest.mark.anyio

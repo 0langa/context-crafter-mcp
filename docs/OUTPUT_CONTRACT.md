@@ -63,6 +63,15 @@ Legacy `files_scanned` and `analyzers_run` fields remain for backward compatibil
 
 The manifest describes output purpose and routing. `RUN_STATE.json` remains the execution metadata surface.
 
+## MCP resource MIME types
+
+After `generate_context`, generated files are registered as session-scoped MCP resources under `context-crafter://latest/<filename>`. Listed and read resources use file-appropriate MIME types:
+
+- `.md` -> `text/markdown`
+- `.mmd` -> `text/vnd.mermaid`
+- `.json` -> `application/json`
+- `.html` -> `text/html`
+
 ## Output confinement
 
 Requested `output_dir` values are resolved against the target repository root.
