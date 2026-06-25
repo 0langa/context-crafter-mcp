@@ -17,6 +17,7 @@ examples/demo-repo/docs/generated/
 # Local agent / maintainer artifacts
 .agents/
 .codex/
+.codex_memory/
 .kimi/
 .kimi-code/
 .github/agents/

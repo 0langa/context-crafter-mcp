@@ -48,6 +48,8 @@ def node_detect_project(state: RepoState) -> dict[str, object]:
     if not state.detect_result.exists:
         state.ok = False
         state.errors.append(state.detect_result.error or "Repository does not exist")
+    if state.analysis is not None and state.detect_result.evidence_set:
+        state.analysis.evidence_set.items.extend(state.detect_result.evidence_set.items)
     return {"detect_result": state.detect_result, "ok": state.ok}
 
 

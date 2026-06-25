@@ -13,7 +13,7 @@ from context_crafter_mcp.filesystem import (
 from context_crafter_mcp.detectors import _is_fixture_path
 from context_crafter_mcp.analyzers.snapshot_utils import build_analysis_snapshot
 from context_crafter_mcp.models import AnalysisResult, AnalyzerSpec, EvidenceKind, ScanConfig, get_profile_limit
-from context_crafter_mcp.ranking import is_vendor_path, score_path
+from context_crafter_mcp.ranking import is_primary_surface_path, is_vendor_path, score_path
 from context_crafter_mcp.scanner import RepoSnapshot
 
 
@@ -177,7 +177,7 @@ def analyze_generic_snapshot(
     result.config_files = sorted(set(config_files))[: get_profile_limit(cfg.profile, "config_files")]
 
     # Rank and filter entry points / source dirs by importance
-    filtered_eps = [ep for ep in set(likely_entry_points) if not is_vendor_path(ep)]
+    filtered_eps = [ep for ep in set(likely_entry_points) if is_primary_surface_path(ep)]
     result.likely_entry_points = sorted(filtered_eps, key=lambda p: score_path(p, is_entrypoint=True), reverse=True)[
         : get_profile_limit(cfg.profile, "entry_points")
     ]

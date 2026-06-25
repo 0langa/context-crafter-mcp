@@ -6,7 +6,7 @@ from pathlib import Path
 
 from context_crafter_mcp.filesystem import validate_repo_path
 from context_crafter_mcp.models import Confidence, DetectResult, EvidenceKind, EvidenceSet
-from context_crafter_mcp.ranking import is_vendor_path
+from context_crafter_mcp.ranking import is_primary_surface_path
 from context_crafter_mcp.scanner import RepoSnapshot, Scanner, ScannerOptions
 
 
@@ -18,6 +18,11 @@ def _is_fixture_path(rel_path: str) -> bool:
     """Return True if rel_path is inside a fixture/example/generated directory."""
     lower = rel_path.lower()
     return any(ind in lower for ind in FIXTURE_PATH_INDICATORS)
+
+
+def _is_trusted_detection_path(rel_path: str) -> bool:
+    """Return True when rel_path belongs to primary repo surface for stack detection."""
+    return not _is_fixture_path(rel_path) and is_primary_surface_path(rel_path)
 
 
 MARKERS: dict[str, list[str]] = {
@@ -51,17 +56,22 @@ def _detect_project_from_snapshot(snapshot: RepoSnapshot) -> DetectResult:
         markers[ptype] = []
         marker_hits: list[str] = []
         ext_hits: list[str] = []
+        weak_hits: list[str] = []
 
         for sf in snapshot.files:
-            if _is_fixture_path(sf.rel_path):
-                continue
             name = Path(sf.rel_path).name
+            trusted = _is_trusted_detection_path(sf.rel_path)
             if ptype in MARKERS and name in MARKERS[ptype]:
-                marker_hits.append(sf.rel_path)
+                if trusted:
+                    marker_hits.append(sf.rel_path)
+                else:
+                    weak_hits.append(sf.rel_path)
             for ext in exts:
                 if name.endswith(ext):
-                    if not is_vendor_path(sf.rel_path):
+                    if trusted:
                         ext_hits.append(sf.rel_path)
+                    else:
+                        weak_hits.append(sf.rel_path)
                     break
 
         hits = marker_hits + ext_hits
@@ -90,6 +100,14 @@ def _detect_project_from_snapshot(snapshot: RepoSnapshot) -> DetectResult:
                     analyzer="detectors",
                     confidence=Confidence.LOW,
                 )
+        elif weak_hits:
+            ev.add(
+                EvidenceKind.UNKNOWN,
+                f"{ptype}: only low-trust marker/extension hits found; not promoted to detected stack",
+                source_path=sorted(set(weak_hits))[0],
+                analyzer="detectors",
+                confidence=Confidence.LOW,
+            )
 
     # Also check explicit marker files for types without extensions
     for ptype, names in MARKERS.items():
@@ -99,10 +117,8 @@ def _detect_project_from_snapshot(snapshot: RepoSnapshot) -> DetectResult:
             continue
         marker_hits2: list[str] = []
         for sf in snapshot.files:
-            if _is_fixture_path(sf.rel_path):
-                continue
             name = Path(sf.rel_path).name
-            if name in names:
+            if name in names and _is_trusted_detection_path(sf.rel_path):
                 marker_hits2.append(sf.rel_path)
         if marker_hits2:
             project_types.append(ptype)
@@ -141,7 +157,7 @@ def _detect_project_from_snapshot(snapshot: RepoSnapshot) -> DetectResult:
         if ptype not in project_types:
             ev.add(
                 EvidenceKind.UNKNOWN,
-                f"{ptype}: no marker files or extensions found",
+                f"{ptype}: no trusted primary-surface marker files or extensions found",
                 analyzer="detectors",
             )
 

@@ -24,6 +24,7 @@ The project is no longer just proving out the architecture. The current work is 
 1. Core CLI and MCP surfaces are stable enough to start freezing.
 2. Truthfulness and bounded-scan behavior are now a larger focus than raw feature growth.
 3. Python / Node / Go / Rust have meaningful real-repo smoke confidence; Java / .NET remain supported but lower-confidence, fixture-backed stacks.
+4. Generic fallback honesty is now guarded locally after the retired external D-drive platform became unavailable.
 
 ## Concrete release plan
 
@@ -43,6 +44,7 @@ Use [`docs/PRE_1_0_GATE.md`](PRE_1_0_GATE.md) as the checklist of record.
 
 Focus:
 
+- local release gate execution via `scripts/local_release_gate.ps1`
 - acceptance commands on a clean checkout
 - wheel and sdist verification
 - smoke evidence captured and documented
@@ -71,12 +73,14 @@ If those are not yet true, continue with another hardening release instead of fo
 ### 2. Product hardening
 
 - Preserve truthful output on ugly mixed repos under bounded scans.
+- Keep ambiguous/generic repos honest: low-trust docs/tests/examples/tooling language hints must not promote stack detection.
 - Keep vendor/generated/tooling material de-weighted in primary conclusions.
 - Improve non-Python analyzer signal only where tests and smoke runs verify it.
 - Keep `RUN_STATE.json` and other machine-readable outputs additive and automation-friendly.
 
 ### 3. Stable-release gate
 
+- `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1` passes on the reset-PC setup.
 - All acceptance commands pass on a clean checkout.
 - Remote tags/releases match the version claimed by code and docs.
 - Public docs stay honest about limitations and unreleased work.

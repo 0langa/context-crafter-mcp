@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Local release gate** (`scripts/local_release_gate.ps1`): Windows-friendly command bundle for project-state validation, Ruff, mypy, pytest, doctor, self-test, generate, and validate.
+- **Generic fallback honesty regression tests** (`tests/test_generic_fallback_honesty.py`): prove ambiguous repos stay generic when language-like files only appear in low-trust docs/tests/examples/tooling paths.
+
+### Changed
+
+- **Detection honesty**: stack detection now promotes marker/extension evidence only from trusted primary-surface paths; low-trust hints are recorded as non-promoting unknown evidence.
+- **Generic entry-point filtering**: agent-facing generic entry points now use the same primary-surface trust boundary.
+- **Release docs**: pre-`1.0.0` gate and roadmap now treat the retired D-drive battle-testing platform as historical context and use the local gate for current progress.
+
 ## [0.6.0] - 2026-06-02
 
 ### Fixed

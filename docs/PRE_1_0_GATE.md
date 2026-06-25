@@ -4,6 +4,8 @@ Explicit checklist for the first stable release (`1.0.0`).
 
 ## Required command pass set
 
+- [ ] Local reset-PC release gate passes:
+  - `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1`
 - [ ] `context-crafter-mcp --help` prints without error
 - [ ] `context-crafter-mcp version` matches `pyproject.toml`
 - [ ] `context-crafter-mcp doctor` reports healthy on a clean checkout
@@ -16,6 +18,8 @@ Explicit checklist for the first stable release (`1.0.0`).
 
 ## Smoke expectations
 
+- [ ] Local generic fallback honesty guard passes:
+  - `python -m pytest -q tests/test_generic_fallback_honesty.py`
 - [ ] Fixed smoke set passes automation:
   - `pallets/click`
   - `sindresorhus/ky`
@@ -45,6 +49,12 @@ Explicit checklist for the first stable release (`1.0.0`).
 - [ ] Java: fixture-backed + manual validation; real-repo smoke not required for 1.0 but gap documented
 - [ ] .NET: fixture-backed + manual validation; real-repo smoke not required for 1.0 but gap documented
 - [ ] Generic: always available, no blockers
+
+## Current local-gate notes
+
+- The retired D-drive battle-testing platform is not required for the current local gate.
+- `tests/test_session_completion_verifier.py` is optional and skips unless `CONTEXT_CRAFTER_TESTS_TOOL` points to a rebuilt verifier tool.
+- Network-dependent real-repo smoke automation remains a separate release confidence step after the local gate is repeatable.
 
 ## MCP surface freeze expectations
 
