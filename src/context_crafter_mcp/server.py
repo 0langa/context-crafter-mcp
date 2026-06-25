@@ -57,7 +57,7 @@ CAPABILITIES_TEXT = (
     "Languages: Python, Node/TypeScript, .NET, Rust, Go, Java, Generic.\n"
     "Outputs: AI_CONTEXT_INDEX.md, PROJECT_OVERVIEW.md, REPO_MAP.md, "
     "DEPENDENCY_GRAPH.md, ARCHITECTURE_SUMMARY.md, AGENT_BRIEF.md, "
-    "VALIDATION_REPORT.md, SCAN_REPORT.md, CONTEXT_MANIFEST.json, RUN_STATE.json.\n"
+    "VALIDATION_REPORT.md, SCAN_REPORT.md, EVIDENCE_LEDGER.json, CONTEXT_MANIFEST.json, RUN_STATE.json.\n"
     "Safety: static-only, no execution, no network, bounded scans, "
     "no symlinks, output confined to repo root.\n"
     "Resources: generated Markdown, Mermaid, JSON, and HTML files are session-scoped "

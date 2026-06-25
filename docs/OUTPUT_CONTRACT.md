@@ -13,10 +13,11 @@
 | `AGENT_BRIEF.md` | Concise 1-page agent summary with unknowns/limitations |
 | `VALIDATION_REPORT.md` | Output completeness check |
 | `SCAN_REPORT.md` | Coverage, skipped items, safety notes |
+| `EVIDENCE_LEDGER.json` | Machine-readable observed/inferred/unknown evidence ledger |
 | `CONTEXT_MANIFEST.json` | Machine-readable bundle manifest for agents and automation |
 | `RUN_STATE.json` | Machine-readable run metadata for downstream automation |
 
-Validation treats the 8 Markdown files as the required human-readable set. `DEPENDENCY_GRAPH.mmd`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json` are generated companions and are included in generation results.
+Validation treats the 8 Markdown files as the required human-readable set. `DEPENDENCY_GRAPH.mmd`, `EVIDENCE_LEDGER.json`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json` are generated companions and are included in generation results.
 
 ## Generation result fields
 
@@ -51,6 +52,16 @@ Generation-style JSON results are additive-only and include:
 `schema_mode` currently has the value `additive`, signaling that consumers should expect new keys to be added without assuming removals or positional structure.
 
 Legacy `files_scanned` and `analyzers_run` fields remain for backward compatibility.
+
+## EVIDENCE_LEDGER.json
+
+`EVIDENCE_LEDGER.json` is a machine-readable evidence surface for agents and automation that need to filter generated claims by support level. Its schema evolves additively; consumers should parse defensively. It contains:
+
+- `schema_version`, `schema_mode`, `generated_by`, `generated_at`, `repo_path`, `project_types`, and `profile`
+- `summary.total`, `counts_by_kind`, `counts_by_confidence`, `counts_by_analyzer`, `warnings_count`, and `errors_count`
+- `items` entries with `kind`, `message`, `source_path`, `analyzer`, `confidence`, and `phase`
+
+Evidence kinds are `observed`, `inferred`, `unknown`, `unsupported`, and `error`.
 
 ## CONTEXT_MANIFEST.json
 
@@ -115,6 +126,7 @@ Validation can report these machine-readable codes:
 - `missing_metadata_header`
 - `empty_output_file`
 - `graph_mmd_missing`
+- `evidence_ledger_missing`
 - `context_manifest_missing`
 - `ai_context_index_link_broken`
 - `generated_version_mismatch`

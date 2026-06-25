@@ -43,7 +43,8 @@ The checked-in product surface is centered on:
 - Historical external battle-testing material referenced 17 scenarios, ~4,499 files, and ~196,129 lines, but those artifacts are unavailable after the PC reset.
 - The historical dominant product failure was `L1-GENERIC-001` generic fallback honesty. Local regression coverage now lives in `tests/test_generic_fallback_honesty.py`.
 - Stack detection promotes marker/extension evidence only from trusted primary-surface paths; low-trust docs/tests/examples/tooling hints stay non-promoting and keep ambiguous repos generic.
-- `CONTEXT_MANIFEST.json` is the machine-readable generated-bundle manifest; `RUN_STATE.json` remains execution metadata. Both JSON surfaces are additive contracts.
+- `EVIDENCE_LEDGER.json` is the machine-readable evidence ledger for observed/inferred/unknown/unsupported/error claims.
+- `CONTEXT_MANIFEST.json` is the machine-readable generated-bundle manifest; `RUN_STATE.json` remains execution metadata. Machine-readable JSON surfaces are additive contracts.
 - MCP resources under `context-crafter://latest/<filename>` use file-appropriate MIME types for Markdown, Mermaid, JSON, and optional HTML generated files.
 - The local release gate is `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1`; network-dependent smoke testing remains separate.
 - The current release is the `0.7.0b1` beta prerelease. It is not the stable `1.0.0` gate.

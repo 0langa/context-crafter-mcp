@@ -33,7 +33,12 @@ EXPECTED_TOOLS = {
     "validate_generated_context",
     "explain_capabilities",
 }
-GENERATED_FILES = set(_REQUIRED_FILES) | {"DEPENDENCY_GRAPH.mmd", "CONTEXT_MANIFEST.json", "RUN_STATE.json"}
+GENERATED_FILES = set(_REQUIRED_FILES) | {
+    "DEPENDENCY_GRAPH.mmd",
+    "EVIDENCE_LEDGER.json",
+    "CONTEXT_MANIFEST.json",
+    "RUN_STATE.json",
+}
 
 
 def _run(args: list[str], *, timeout: int = 30) -> subprocess.CompletedProcess[str]:
@@ -230,6 +235,7 @@ def _check_stdio_server() -> None:
             expected_mime_types = {
                 "AI_CONTEXT_INDEX.md": "text/markdown",
                 "DEPENDENCY_GRAPH.mmd": "text/vnd.mermaid",
+                "EVIDENCE_LEDGER.json": "application/json",
                 "CONTEXT_MANIFEST.json": "application/json",
                 "RUN_STATE.json": "application/json",
             }

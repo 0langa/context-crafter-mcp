@@ -10,9 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CURRENT_BETA_TAG = "0.7.0b1"
-EXPECTED_GENERATION_PHRASE = (
-    "8 required Markdown files plus `DEPENDENCY_GRAPH.mmd`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json`"
-)
+EXPECTED_GENERATION_PHRASE = "8 required Markdown files plus `DEPENDENCY_GRAPH.mmd`, `EVIDENCE_LEDGER.json`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json`"
 EXPECTED_ACTION_BASELINES = [
     "actions/checkout@v7",
     "actions/setup-python@v6",

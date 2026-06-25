@@ -14,6 +14,7 @@ from context_crafter_mcp.renderers.markdown import (
     render_agent_brief,
     render_architecture_summary,
     render_context_manifest,
+    render_evidence_ledger,
     render_project_overview,
     render_repo_map,
     render_run_state,
@@ -140,6 +141,18 @@ def node_render_outputs(state: RepoState) -> dict[str, object]:
         written.extend(val_result.written)
     elif val_result.error:
         state.errors.append(val_result.error)
+
+    evidence_result = render_evidence_ledger(
+        state.repo_path,
+        state.detect_result,
+        state.analysis,
+        state.output_dir,
+        generated_at=gen_at,
+    )
+    if evidence_result.ok:
+        written.extend(evidence_result.written)
+    elif evidence_result.error:
+        state.errors.append(evidence_result.error)
 
     # Machine-readable manifest for consumers deciding where to start.
     manifest_result = render_context_manifest(

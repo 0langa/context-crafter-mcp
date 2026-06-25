@@ -20,6 +20,7 @@ Local-first MCP server that turns source repositories into compact AI-agent cont
 | `AGENT_BRIEF.md` | Concise 1-page summary optimized for coding agents |
 | `VALIDATION_REPORT.md` | Output completeness and analysis health |
 | `SCAN_REPORT.md` | Scan coverage, skipped items, and safety notes |
+| `EVIDENCE_LEDGER.json` | Machine-readable observed/inferred/unknown evidence ledger |
 | `CONTEXT_MANIFEST.json` | Machine-readable bundle manifest for agents and automation |
 | `RUN_STATE.json` | Machine-readable run metadata for downstream automation and tracking |
 
@@ -154,7 +155,7 @@ npx @modelcontextprotocol/inspector uv --directory /path/to/this/repo run contex
 ### MCP tools
 
 - `detect_project` — detect stacks for a repo path
-- `generate_context` — generate 8 required Markdown files plus `DEPENDENCY_GRAPH.mmd`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json`
+- `generate_context` — generate 8 required Markdown files plus `DEPENDENCY_GRAPH.mmd`, `EVIDENCE_LEDGER.json`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json`
 - `generate_project_overview`
 - `generate_repo_map`
 - `generate_dependency_graph`

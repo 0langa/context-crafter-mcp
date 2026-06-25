@@ -429,6 +429,16 @@ def validate_output_dir(
             )
         )
 
+    if found and not (out / "EVIDENCE_LEDGER.json").exists():
+        checks.append(
+            ValidationCheck(
+                code="evidence_ledger_missing",
+                level="warning",
+                message="Generated Markdown files exist but EVIDENCE_LEDGER.json is missing.",
+                file=None,
+            )
+        )
+
     # Infer repo path if not provided
     effective_repo = Path(repo_path) if repo_path else None
     if effective_repo is None and out.name == "generated":

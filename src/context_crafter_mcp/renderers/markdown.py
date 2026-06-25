@@ -1504,6 +1504,7 @@ _MANIFEST_FILE_PURPOSES: dict[str, tuple[str, list[str], str]] = {
     "AGENT_BRIEF.md": ("agent-brief", ["agent"], "Concise starting point for AI coding agents."),
     "SCAN_REPORT.md": ("scan-report", ["human", "agent"], "Scan coverage, skipped items, bounds, and safety notes."),
     "VALIDATION_REPORT.md": ("validation", ["human", "automation"], "Generated-output completeness and health report."),
+    "EVIDENCE_LEDGER.json": ("evidence-ledger", ["automation", "agent"], "Machine-readable evidence ledger."),
     "CONTEXT_MANIFEST.json": ("manifest", ["automation", "agent"], "Machine-readable manifest for the output bundle."),
     "RUN_STATE.json": ("run-state", ["automation"], "Machine-readable run metadata and compatibility state."),
 }
@@ -1583,6 +1584,64 @@ def render_context_manifest(
     }
 
     path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    return RenderResult(
+        ok=True,
+        written=[str(path)],
+        files_scanned=ss.files_scanned,
+        project_types=detect.project_types,
+        resolved_output_dir=str(out),
+        scan_summary=ss,
+    )
+
+
+def render_evidence_ledger(
+    repo_path: str,
+    detect: DetectResult,
+    analysis: AnalysisResult,
+    output_dir: str,
+    generated_at: str | None = None,
+) -> RenderResult:
+    """Render machine-readable evidence details for generated claims."""
+    out = safe_output_path(Path(repo_path), output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    path = out / "EVIDENCE_LEDGER.json"
+
+    timestamp = generated_at or datetime.now(timezone.utc).isoformat()
+    analysis_items = analysis.evidence_set.items
+    detect_items = detect.evidence_set.items
+    all_items = analysis_items + detect_items
+    counts_by_kind = {kind.value: len([e for e in all_items if e.kind == kind]) for kind in EvidenceKind}
+    counts_by_confidence = {
+        confidence: len([e for e in all_items if e.confidence.value == confidence])
+        for confidence in ("high", "medium", "low")
+    }
+    analyzer_counts: dict[str, int] = {}
+    for item in all_items:
+        analyzer = item.analyzer or "unknown"
+        analyzer_counts[analyzer] = analyzer_counts.get(analyzer, 0) + 1
+
+    ledger = {
+        "schema_version": "1.0",
+        "schema_mode": "additive",
+        "generated_by": f"context-crafter-mcp v{__version__}",
+        "generated_at": timestamp,
+        "repo_path": repo_path,
+        "project_types": detect.project_types,
+        "profile": analysis.profile,
+        "summary": {
+            "total": len(all_items),
+            "counts_by_kind": counts_by_kind,
+            "counts_by_confidence": counts_by_confidence,
+            "counts_by_analyzer": dict(sorted(analyzer_counts.items())),
+            "warnings_count": len([e for e in all_items if e.kind in (EvidenceKind.UNKNOWN, EvidenceKind.UNSUPPORTED)]),
+            "errors_count": len([e for e in all_items if e.kind == EvidenceKind.ERROR]),
+        },
+        "items": [{**item.to_dict(), "phase": "analysis"} for item in analysis_items]
+        + [{**item.to_dict(), "phase": "detection"} for item in detect_items],
+    }
+
+    path.write_text(json.dumps(ledger, indent=2), encoding="utf-8")
+    ss = analysis.scan_summary
     return RenderResult(
         ok=True,
         written=[str(path)],

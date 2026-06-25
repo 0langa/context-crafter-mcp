@@ -66,6 +66,7 @@ Purpose:
 Focus:
 
 - `CONTEXT_MANIFEST.json` as the generated-bundle manifest
+- `EVIDENCE_LEDGER.json` as a filterable evidence surface for agent trust decisions
 - clearer recommended starting points for agent, human, navigation, and automation consumers
 - docs-truth updates for every generated companion file
 - regression tests proving the manifest is emitted and referenced by `RUN_STATE.json`

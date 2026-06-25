@@ -66,6 +66,7 @@ def test_stress_repo_generates_without_crash() -> None:
         # All required Markdown outputs plus machine-readable companions.
         assert len(state.written) >= 8
         names = [Path(w).name for w in state.written]
+        assert "EVIDENCE_LEDGER.json" in names
         assert "CONTEXT_MANIFEST.json" in names
         assert "RUN_STATE.json" in names
 

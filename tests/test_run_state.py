@@ -158,6 +158,7 @@ def test_run_state_output_files_count_matches_list() -> None:
         data = json.loads(run_state_path.read_text(encoding="utf-8"))
 
         assert data["validation_summary"]["output_files_count"] == len(data["output_files"])
+        assert "EVIDENCE_LEDGER.json" in data["output_files"]
         assert "CONTEXT_MANIFEST.json" in data["output_files"]
         assert "RUN_STATE.json" in data["output_files"]
 
@@ -190,5 +191,32 @@ def test_context_manifest_structure() -> None:
 
         files = {entry["path"]: entry for entry in data["files"]}
         assert files["AGENT_BRIEF.md"]["audience"] == ["agent"]
+        assert files["EVIDENCE_LEDGER.json"]["role"] == "evidence-ledger"
         assert files["CONTEXT_MANIFEST.json"]["role"] == "manifest"
         assert files["RUN_STATE.json"]["role"] == "run-state"
+
+
+def test_evidence_ledger_structure() -> None:
+    """EVIDENCE_LEDGER.json exposes evidence items and counts for automation."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _build_mixed_repo(root)
+        state = run_generate_all(td, "out", ScanConfig(profile="standard", max_depth=4))
+        assert state.ok
+        assert state.analysis is not None
+        assert state.detect_result is not None
+
+        ledger_path = Path(td, "out", "EVIDENCE_LEDGER.json")
+        assert ledger_path.exists()
+        data = json.loads(ledger_path.read_text(encoding="utf-8"))
+
+        expected_total = len(state.analysis.evidence_set.items) + len(state.detect_result.evidence_set.items)
+        assert data["schema_version"] == "1.0"
+        assert data["schema_mode"] == "additive"
+        assert data["project_types"] == state.detect_result.project_types
+        assert data["summary"]["total"] == expected_total
+        assert sum(data["summary"]["counts_by_kind"].values()) == expected_total
+        assert sum(data["summary"]["counts_by_confidence"].values()) == expected_total
+        assert len(data["items"]) == expected_total
+        assert all({"kind", "message", "confidence", "phase"} <= set(item) for item in data["items"])
+        assert {item["phase"] for item in data["items"]} <= {"analysis", "detection"}
