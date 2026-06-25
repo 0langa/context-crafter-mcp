@@ -16,10 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added file-appropriate MIME types for session-scoped MCP generated resources.
 - Added `EVIDENCE_LEDGER.json` as an additive machine-readable evidence ledger for generated claims.
 - Added a conservative generated-output redaction pass for obvious key/token/password values.
+- Added `COMMANDS.md` as a static, evidence-labeled runbook of inferred setup, test, build, and lint commands.
 
 ### Changed
 
-- Clarified that `generate_context` writes 8 required Markdown files plus `DEPENDENCY_GRAPH.mmd`, `EVIDENCE_LEDGER.json`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json`.
+- Clarified that `generate_context` writes 9 required Markdown files plus `DEPENDENCY_GRAPH.mmd`, `EVIDENCE_LEDGER.json`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json`.
 - Updated GitHub Actions workflow dependencies to Node 24-compatible baselines, including `actions/checkout@v7`, `actions/setup-python@v6`, and immutable `astral-sh/setup-uv@v8.2.0`.
 
 ## [0.7.0b1] - 2026-06-25

@@ -61,7 +61,7 @@ def test_cli_generate_and_validate() -> None:
         assert result.returncode == 0
         data = json.loads(result.stdout)
         assert data["ok"] is True
-        assert len(data["written"]) >= 8
+        assert len(data["written"]) >= 13
         assert data["resolved_output_dir"] == str(out.resolve())
         assert "warnings" in data
         assert "errors" in data
@@ -70,7 +70,7 @@ def test_cli_generate_and_validate() -> None:
         assert val.returncode == 0
         vdata = json.loads(val.stdout)
         assert vdata["ok"] is True
-        assert vdata["count"] == 8
+        assert vdata["count"] == 9
 
 
 def test_cli_generate_json_reports_confined_output_dir() -> None:

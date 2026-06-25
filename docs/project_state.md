@@ -45,6 +45,7 @@ The checked-in product surface is centered on:
 - Stack detection promotes marker/extension evidence only from trusted primary-surface paths; low-trust docs/tests/examples/tooling hints stay non-promoting and keep ambiguous repos generic.
 - `EVIDENCE_LEDGER.json` is the machine-readable evidence ledger for observed/inferred/unknown/unsupported/error claims.
 - `CONTEXT_MANIFEST.json` is the machine-readable generated-bundle manifest; `RUN_STATE.json` remains execution metadata. Machine-readable JSON surfaces are additive contracts.
+- `COMMANDS.md` is a static, non-executed command runbook with confidence and evidence for inferred setup/test/build/lint commands.
 - Generated-output writes apply conservative redaction for obvious key/token/password values; this is a last-mile guard, not a full secret-scanning engine.
 - MCP resources under `context-crafter://latest/<filename>` use file-appropriate MIME types for Markdown, Mermaid, JSON, and optional HTML generated files.
 - The local release gate is `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1`; network-dependent smoke testing remains separate.

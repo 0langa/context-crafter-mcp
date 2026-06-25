@@ -18,6 +18,7 @@ REQUIRED_FILES = [
     "DEPENDENCY_GRAPH.md",
     "ARCHITECTURE_SUMMARY.md",
     "AGENT_BRIEF.md",
+    "COMMANDS.md",
     "VALIDATION_REPORT.md",
     "SCAN_REPORT.md",
 ]

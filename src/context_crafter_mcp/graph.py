@@ -13,6 +13,7 @@ from context_crafter_mcp.renderers.markdown import (
     render_ai_context_index,
     render_agent_brief,
     render_architecture_summary,
+    render_commands,
     render_context_manifest,
     render_evidence_ledger,
     render_project_overview,
@@ -115,6 +116,9 @@ def node_render_outputs(state: RepoState) -> dict[str, object]:
     )
     results.append(
         render_agent_brief(state.repo_path, state.detect_result, state.analysis, state.output_dir, generated_at=gen_at)
+    )
+    results.append(
+        render_commands(state.repo_path, state.detect_result, state.analysis, state.output_dir, generated_at=gen_at)
     )
     results.append(
         render_scan_report(state.repo_path, state.detect_result, state.analysis, state.output_dir, generated_at=gen_at)

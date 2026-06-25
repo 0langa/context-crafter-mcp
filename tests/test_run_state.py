@@ -158,6 +158,7 @@ def test_run_state_output_files_count_matches_list() -> None:
         data = json.loads(run_state_path.read_text(encoding="utf-8"))
 
         assert data["validation_summary"]["output_files_count"] == len(data["output_files"])
+        assert "COMMANDS.md" in data["output_files"]
         assert "EVIDENCE_LEDGER.json" in data["output_files"]
         assert "CONTEXT_MANIFEST.json" in data["output_files"]
         assert "RUN_STATE.json" in data["output_files"]
@@ -191,9 +192,38 @@ def test_context_manifest_structure() -> None:
 
         files = {entry["path"]: entry for entry in data["files"]}
         assert files["AGENT_BRIEF.md"]["audience"] == ["agent"]
+        assert files["COMMANDS.md"]["role"] == "commands"
         assert files["EVIDENCE_LEDGER.json"]["role"] == "evidence-ledger"
         assert files["CONTEXT_MANIFEST.json"]["role"] == "manifest"
         assert files["RUN_STATE.json"]["role"] == "run-state"
+
+
+def test_commands_output_static_hints_and_manifest_entry() -> None:
+    """COMMANDS.md reports inferred commands without claiming execution."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _build_mixed_repo(root)
+        (root / "package.json").write_text(
+            '{"name":"mixed-web","scripts":{"test":"vitest","build":"vite build","start":"node src/index.js"},'
+            '"dependencies":{"vite":"latest"},"devDependencies":{"vitest":"latest"}}\n'
+        )
+        state = run_generate_all(td, "out", ScanConfig(profile="standard", max_depth=4))
+        assert state.ok
+
+        commands_path = Path(td, "out", "COMMANDS.md")
+        assert commands_path.exists()
+        text = commands_path.read_text(encoding="utf-8")
+
+        assert "not executed" in text
+        assert "`uv sync --extra dev`" in text
+        assert "`uv run python -m pytest -q`" in text
+        assert "`npm run test`" in text
+        assert "`npm run build`" in text
+        assert "confidence" in text.lower()
+
+        manifest = json.loads(Path(td, "out", "CONTEXT_MANIFEST.json").read_text(encoding="utf-8"))
+        files = {entry["path"]: entry for entry in manifest["files"]}
+        assert files["COMMANDS.md"]["role"] == "commands"
 
 
 def test_evidence_ledger_structure() -> None:

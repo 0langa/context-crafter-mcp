@@ -20,6 +20,7 @@ def test_broken_markdown_link_detected() -> None:
             "DEPENDENCY_GRAPH.md",
             "ARCHITECTURE_SUMMARY.md",
             "AGENT_BRIEF.md",
+            "COMMANDS.md",
             "SCAN_REPORT.md",
             "VALIDATION_REPORT.md",
         ]:
@@ -42,6 +43,7 @@ def test_missing_mermaid_block() -> None:
             "DEPENDENCY_GRAPH.md",
             "ARCHITECTURE_SUMMARY.md",
             "AGENT_BRIEF.md",
+            "COMMANDS.md",
             "SCAN_REPORT.md",
             "VALIDATION_REPORT.md",
         ]:
@@ -62,6 +64,7 @@ def test_fixture_pollution_warning() -> None:
             "DEPENDENCY_GRAPH.md",
             "ARCHITECTURE_SUMMARY.md",
             "AGENT_BRIEF.md",
+            "COMMANDS.md",
             "SCAN_REPORT.md",
             "VALIDATION_REPORT.md",
         ]:
@@ -83,6 +86,7 @@ def test_validation_json_structure() -> None:
             "DEPENDENCY_GRAPH.md",
             "ARCHITECTURE_SUMMARY.md",
             "AGENT_BRIEF.md",
+            "COMMANDS.md",
             "SCAN_REPORT.md",
             "VALIDATION_REPORT.md",
         ]:
@@ -116,6 +120,7 @@ def test_referenced_source_missing() -> None:
             "DEPENDENCY_GRAPH.md",
             "ARCHITECTURE_SUMMARY.md",
             "AGENT_BRIEF.md",
+            "COMMANDS.md",
             "SCAN_REPORT.md",
             "VALIDATION_REPORT.md",
         ]:
@@ -141,6 +146,7 @@ def test_referenced_source_with_line_number() -> None:
             "DEPENDENCY_GRAPH.md",
             "ARCHITECTURE_SUMMARY.md",
             "AGENT_BRIEF.md",
+            "COMMANDS.md",
             "SCAN_REPORT.md",
             "VALIDATION_REPORT.md",
         ]:
@@ -168,6 +174,7 @@ def test_referenced_source_deep_manifest_found() -> None:
             "DEPENDENCY_GRAPH.md",
             "ARCHITECTURE_SUMMARY.md",
             "AGENT_BRIEF.md",
+            "COMMANDS.md",
             "SCAN_REPORT.md",
             "VALIDATION_REPORT.md",
         ]:
@@ -197,6 +204,7 @@ def test_fixture_deep_manifest_does_not_silence_warning() -> None:
             "DEPENDENCY_GRAPH.md",
             "ARCHITECTURE_SUMMARY.md",
             "AGENT_BRIEF.md",
+            "COMMANDS.md",
             "SCAN_REPORT.md",
             "VALIDATION_REPORT.md",
         ]:
@@ -225,6 +233,7 @@ def test_vendor_deep_manifest_does_not_silence_warning() -> None:
             "DEPENDENCY_GRAPH.md",
             "ARCHITECTURE_SUMMARY.md",
             "AGENT_BRIEF.md",
+            "COMMANDS.md",
             "SCAN_REPORT.md",
             "VALIDATION_REPORT.md",
         ]:
@@ -253,6 +262,7 @@ def test_demo_repo_deep_manifest_does_not_silence_warning() -> None:
             "DEPENDENCY_GRAPH.md",
             "ARCHITECTURE_SUMMARY.md",
             "AGENT_BRIEF.md",
+            "COMMANDS.md",
             "SCAN_REPORT.md",
             "VALIDATION_REPORT.md",
         ]:
@@ -281,6 +291,7 @@ def test_product_fixture_manifest_silences_warning() -> None:
             "DEPENDENCY_GRAPH.md",
             "ARCHITECTURE_SUMMARY.md",
             "AGENT_BRIEF.md",
+            "COMMANDS.md",
             "SCAN_REPORT.md",
             "VALIDATION_REPORT.md",
         ]:

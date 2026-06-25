@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -39,6 +40,16 @@ def _safe_inline_code(text: str) -> str:
     return f"`{text}`"
 
 
+@dataclass(frozen=True)
+class CommandHint:
+    """A statically inferred command with evidence and confidence."""
+
+    command: str
+    purpose: str
+    confidence: str
+    evidence: str
+
+
 def _render_metadata_block(repo_path: str, analysis: AnalysisResult, generated_at: str) -> list[str]:
     """Render a consistent metadata block for markdown files."""
     lines: list[str] = [
@@ -55,6 +66,120 @@ def _render_metadata_block(repo_path: str, analysis: AnalysisResult, generated_a
     )
     lines.append("")
     return lines
+
+
+def _has_file(analysis: AnalysisResult, name: str) -> bool:
+    """Return true when a scanned file/root file has the given basename."""
+    target = name.lower()
+    candidates = analysis.root_files + analysis.config_files
+    return any(Path(candidate).name.lower() == target for candidate in candidates)
+
+
+def _append_command(hints: list[CommandHint], seen: set[str], hint: CommandHint) -> None:
+    if hint.command in seen:
+        return
+    seen.add(hint.command)
+    hints.append(hint)
+
+
+def _collect_command_hints(analysis: AnalysisResult) -> list[CommandHint]:
+    """Collect likely project commands from static markers and parsed package metadata."""
+    hints: list[CommandHint] = []
+    seen: set[str] = set()
+
+    if _has_file(analysis, "pyproject.toml"):
+        _append_command(
+            hints,
+            seen,
+            CommandHint(
+                "uv sync --extra dev",
+                "Install Python project and development dependencies",
+                "medium",
+                "pyproject.toml",
+            ),
+        )
+        if analysis.test_directories:
+            _append_command(
+                hints,
+                seen,
+                CommandHint(
+                    "uv run python -m pytest -q",
+                    "Run Python tests",
+                    "medium",
+                    "pyproject.toml and test directory",
+                ),
+            )
+    elif _has_file(analysis, "requirements.txt"):
+        _append_command(
+            hints,
+            seen,
+            CommandHint(
+                "python -m pip install -r requirements.txt",
+                "Install Python dependencies",
+                "medium",
+                "requirements.txt",
+            ),
+        )
+        if analysis.test_directories:
+            _append_command(
+                hints,
+                seen,
+                CommandHint("python -m pytest -q", "Run Python tests", "low", "requirements.txt and test directory"),
+            )
+
+    for pkg in analysis.node_packages:
+        if pkg.dependencies or pkg.dev_dependencies or _has_file(analysis, "package-lock.json"):
+            _append_command(
+                hints,
+                seen,
+                CommandHint("npm install", "Install Node dependencies", "medium", pkg.rel_path or "package.json"),
+            )
+        for script in ("test", "lint", "typecheck", "build", "start", "dev"):
+            if script in pkg.scripts:
+                _append_command(
+                    hints,
+                    seen,
+                    CommandHint(
+                        f"npm run {script}",
+                        f"Run Node `{script}` script",
+                        "high",
+                        f"{pkg.rel_path or 'package.json'} scripts.{script}",
+                    ),
+                )
+
+    if analysis.go_modules:
+        _append_command(hints, seen, CommandHint("go test ./...", "Run Go tests", "medium", "go.mod"))
+        _append_command(hints, seen, CommandHint("go build ./...", "Build Go packages", "medium", "go.mod"))
+
+    if analysis.rust_crates:
+        _append_command(hints, seen, CommandHint("cargo test", "Run Rust tests", "medium", "Cargo.toml"))
+        _append_command(hints, seen, CommandHint("cargo build", "Build Rust crate/workspace", "medium", "Cargo.toml"))
+
+    for java_project in analysis.java_projects:
+        if java_project.build_tool == "maven" or _has_file(analysis, "pom.xml"):
+            _append_command(hints, seen, CommandHint("mvn test", "Run Java tests", "medium", "pom.xml"))
+            _append_command(hints, seen, CommandHint("mvn package", "Build Java package", "medium", "pom.xml"))
+        if (
+            java_project.build_tool == "gradle"
+            or _has_file(analysis, "build.gradle")
+            or _has_file(analysis, "build.gradle.kts")
+        ):
+            gradle = "gradlew.bat" if _has_file(analysis, "gradlew.bat") else "gradle"
+            _append_command(hints, seen, CommandHint(f"{gradle} test", "Run Java tests", "medium", "Gradle build file"))
+            _append_command(
+                hints, seen, CommandHint(f"{gradle} build", "Build Java project", "medium", "Gradle build file")
+            )
+
+    if analysis.dotnet_solutions or analysis.dotnet_projects:
+        _append_command(
+            hints, seen, CommandHint("dotnet restore", "Restore .NET dependencies", "medium", "solution/project file")
+        )
+        _append_command(hints, seen, CommandHint("dotnet test", "Run .NET tests", "low", "solution/project file"))
+        _append_command(
+            hints, seen, CommandHint("dotnet build", "Build .NET solution/project", "medium", "solution/project file")
+        )
+
+    return hints
 
 
 def _is_test_or_temp(rel_path: str) -> bool:
@@ -994,6 +1119,7 @@ def render_ai_context_index(
         "| `DEPENDENCY_GRAPH.md` | Mermaid dependency graph |",
         "| `ARCHITECTURE_SUMMARY.md` | Architecture patterns and risks |",
         "| `AGENT_BRIEF.md` | Concise agent-ready summary |",
+        "| `COMMANDS.md` | Statically inferred setup, test, and build commands |",
         "| `VALIDATION_REPORT.md` | Output validation status |",
         "| `SCAN_REPORT.md` | Scan coverage and skipped items |",
         "",
@@ -1004,6 +1130,75 @@ def render_ai_context_index(
         "- [Dependency Graph](DEPENDENCY_GRAPH.md)",
         "- [Architecture Summary](ARCHITECTURE_SUMMARY.md)",
         "- [Agent Brief](AGENT_BRIEF.md)",
+        "- [Commands](COMMANDS.md)",
+        "",
+        "---",
+        "*Generated by context-crafter-mcp.*",
+        "",
+    ]
+
+    write_redacted_text(path, "\n".join(lines))
+    return RenderResult(
+        ok=True,
+        written=[str(path)],
+        files_scanned=analysis.scan_summary.files_scanned,
+        project_types=detect.project_types,
+        resolved_output_dir=str(out),
+        scan_summary=analysis.scan_summary,
+    )
+
+
+def render_commands(
+    repo_path: str,
+    detect: DetectResult,
+    analysis: AnalysisResult,
+    output_dir: str,
+    generated_at: str | None = None,
+) -> RenderResult:
+    """Generate COMMANDS.md with static, non-executed command hints."""
+    out = safe_output_path(Path(repo_path), output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    path = out / "COMMANDS.md"
+
+    timestamp = generated_at or datetime.now(timezone.utc).isoformat()
+    hints = _collect_command_hints(analysis)
+
+    lines: list[str] = [
+        GENERATED_HEADER,
+    ]
+    lines += _render_metadata_block(repo_path, analysis, timestamp)
+    lines += [
+        f"# Commands: {Path(repo_path).resolve().name}",
+        "",
+        f"- **Detected types**: {', '.join(detect.project_types)}",
+        "- **Execution status**: not executed; commands are inferred from static repository files.",
+        "- **Confidence**: high means the command comes from an explicit script; medium/low means it is inferred from markers and should be verified locally.",
+        "",
+        "## Command Hints",
+        "",
+    ]
+    if hints:
+        lines += [
+            "| Purpose | Command | Confidence | Evidence |",
+            "|---------|---------|------------|----------|",
+        ]
+        for hint in hints:
+            lines.append(
+                f"| {hint.purpose} | {_safe_inline_code(hint.command)} | {hint.confidence} | {hint.evidence} |"
+            )
+        lines.append("")
+    else:
+        lines += [
+            "_No setup, test, build, or lint commands could be inferred from supported project markers._",
+            "",
+        ]
+
+    lines += [
+        "## Safety Notes",
+        "",
+        "- Static analysis only; no command in this file was executed during generation.",
+        "- Treat inferred commands as a starting point, especially in repositories with custom tooling.",
+        "- Review commands before running them in shells, CI, or production environments.",
         "",
         "---",
         "*Generated by context-crafter-mcp.*",
@@ -1199,7 +1394,7 @@ def render_validation_report(
 
     timestamp = generated_at or datetime.now(timezone.utc).isoformat()
 
-    # Validate the other 7 output files (VALIDATION_REPORT.md is implicitly present)
+    # Validate the other required Markdown outputs (VALIDATION_REPORT.md is implicitly present)
     required = [
         "AI_CONTEXT_INDEX.md",
         "PROJECT_OVERVIEW.md",
@@ -1207,6 +1402,7 @@ def render_validation_report(
         "DEPENDENCY_GRAPH.md",
         "ARCHITECTURE_SUMMARY.md",
         "AGENT_BRIEF.md",
+        "COMMANDS.md",
         "SCAN_REPORT.md",
     ]
     found: list[str] = []
@@ -1503,6 +1699,7 @@ _MANIFEST_FILE_PURPOSES: dict[str, tuple[str, list[str], str]] = {
     "DEPENDENCY_GRAPH.md": ("graph", ["human", "agent"], "Rendered dependency graph and dependency summary."),
     "ARCHITECTURE_SUMMARY.md": ("architecture", ["human", "agent"], "Architecture patterns, risks, and unknowns."),
     "AGENT_BRIEF.md": ("agent-brief", ["agent"], "Concise starting point for AI coding agents."),
+    "COMMANDS.md": ("commands", ["human", "agent"], "Static command runbook with evidence and confidence."),
     "SCAN_REPORT.md": ("scan-report", ["human", "agent"], "Scan coverage, skipped items, bounds, and safety notes."),
     "VALIDATION_REPORT.md": ("validation", ["human", "automation"], "Generated-output completeness and health report."),
     "EVIDENCE_LEDGER.json": ("evidence-ledger", ["automation", "agent"], "Machine-readable evidence ledger."),

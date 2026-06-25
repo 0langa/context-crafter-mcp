@@ -11,13 +11,14 @@
 | `DEPENDENCY_GRAPH.mmd` | Raw Mermaid source for the dependency graph |
 | `ARCHITECTURE_SUMMARY.md` | Patterns, abstractions, risks, workspace/monorepo layout, category-tagged source directories |
 | `AGENT_BRIEF.md` | Concise 1-page agent summary with unknowns/limitations |
+| `COMMANDS.md` | Statically inferred setup, test, build, and lint commands with evidence/confidence |
 | `VALIDATION_REPORT.md` | Output completeness check |
 | `SCAN_REPORT.md` | Coverage, skipped items, safety notes |
 | `EVIDENCE_LEDGER.json` | Machine-readable observed/inferred/unknown evidence ledger |
 | `CONTEXT_MANIFEST.json` | Machine-readable bundle manifest for agents and automation |
 | `RUN_STATE.json` | Machine-readable run metadata for downstream automation |
 
-Validation treats the 8 Markdown files as the required human-readable set. `DEPENDENCY_GRAPH.mmd`, `EVIDENCE_LEDGER.json`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json` are generated companions and are included in generation results.
+Validation treats the 9 Markdown files as the required human-readable set. `DEPENDENCY_GRAPH.mmd`, `EVIDENCE_LEDGER.json`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json` are generated companions and are included in generation results.
 
 ## Generation result fields
 
@@ -36,6 +37,10 @@ Generation-style JSON results are additive-only and include:
 - `resolved_output_dir`
 
 `resolved_output_dir` is the actual directory used after output confinement is applied.
+
+## COMMANDS.md
+
+`COMMANDS.md` is a static runbook of likely setup, test, build, and lint commands. Commands are inferred from repository markers such as `pyproject.toml`, `package.json` scripts, `go.mod`, `Cargo.toml`, Gradle/Maven files, or .NET project files. They are not executed during generation and include confidence plus evidence so users can verify them locally.
 
 ## RUN_STATE.json
 

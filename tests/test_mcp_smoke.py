@@ -110,6 +110,7 @@ async def test_explain_capabilities_tool() -> None:
     result = server_result.root
     assert len(result.content) == 1
     assert "Context Crafter MCP" in result.content[0].text
+    assert "COMMANDS.md" in result.content[0].text
     assert "EVIDENCE_LEDGER.json" in result.content[0].text
     assert "CONTEXT_MANIFEST.json" in result.content[0].text
     assert "accurate MIME types" in result.content[0].text
@@ -155,6 +156,7 @@ async def test_read_resource_allows_registered_generated_files() -> None:
         uris = [str(r.uri) for r in resources.values()]
         assert any("AI_CONTEXT_INDEX.md" in u for u in uris)
         assert resources["AI_CONTEXT_INDEX.md"].mimeType == "text/markdown"
+        assert resources["COMMANDS.md"].mimeType == "text/markdown"
         assert resources["DEPENDENCY_GRAPH.mmd"].mimeType == "text/vnd.mermaid"
         assert resources["EVIDENCE_LEDGER.json"].mimeType == "application/json"
         assert resources["CONTEXT_MANIFEST.json"].mimeType == "application/json"

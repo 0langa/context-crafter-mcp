@@ -67,6 +67,7 @@ Focus:
 
 - `CONTEXT_MANIFEST.json` as the generated-bundle manifest
 - `EVIDENCE_LEDGER.json` as a filterable evidence surface for agent trust decisions
+- `COMMANDS.md` as a static, evidence-labeled runbook of likely setup/test/build commands
 - clearer recommended starting points for agent, human, navigation, and automation consumers
 - docs-truth updates for every generated companion file
 - regression tests proving the manifest is emitted and referenced by `RUN_STATE.json`
