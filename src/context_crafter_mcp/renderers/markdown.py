@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -1479,6 +1480,109 @@ def render_run_state(
     import json
 
     path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+    return RenderResult(
+        ok=True,
+        written=[str(path)],
+        files_scanned=ss.files_scanned,
+        project_types=detect.project_types,
+        resolved_output_dir=str(out),
+        scan_summary=ss,
+    )
+
+
+_MANIFEST_FILE_PURPOSES: dict[str, tuple[str, list[str], str]] = {
+    "AI_CONTEXT_INDEX.md": ("index", ["human", "agent"], "Master navigation for the generated context bundle."),
+    "PROJECT_OVERVIEW.md": (
+        "overview",
+        ["human", "agent"],
+        "Project metadata, detected stacks, evidence, and dependencies.",
+    ),
+    "REPO_MAP.md": ("map", ["human", "agent"], "Repository tree and important source/config/test locations."),
+    "DEPENDENCY_GRAPH.mmd": ("graph-source", ["automation"], "Raw Mermaid dependency graph source."),
+    "DEPENDENCY_GRAPH.md": ("graph", ["human", "agent"], "Rendered dependency graph and dependency summary."),
+    "ARCHITECTURE_SUMMARY.md": ("architecture", ["human", "agent"], "Architecture patterns, risks, and unknowns."),
+    "AGENT_BRIEF.md": ("agent-brief", ["agent"], "Concise starting point for AI coding agents."),
+    "SCAN_REPORT.md": ("scan-report", ["human", "agent"], "Scan coverage, skipped items, bounds, and safety notes."),
+    "VALIDATION_REPORT.md": ("validation", ["human", "automation"], "Generated-output completeness and health report."),
+    "CONTEXT_MANIFEST.json": ("manifest", ["automation", "agent"], "Machine-readable manifest for the output bundle."),
+    "RUN_STATE.json": ("run-state", ["automation"], "Machine-readable run metadata and compatibility state."),
+}
+
+
+def _manifest_file_entry(name: str) -> dict[str, object]:
+    role, audience, purpose = _MANIFEST_FILE_PURPOSES.get(
+        name, ("generated-output", ["human", "agent"], "Generated context output.")
+    )
+    media_type = "application/json" if name.endswith(".json") else "text/markdown"
+    if name.endswith(".mmd"):
+        media_type = "text/vnd.mermaid"
+    return {
+        "path": name,
+        "role": role,
+        "audience": audience,
+        "media_type": media_type,
+        "purpose": purpose,
+    }
+
+
+def render_context_manifest(
+    repo_path: str,
+    detect: DetectResult,
+    analysis: AnalysisResult,
+    output_dir: str,
+    written_files: list[str],
+    errors: list[str],
+    generated_at: str | None = None,
+) -> RenderResult:
+    """Render a machine-readable manifest describing the generated context bundle."""
+    out = safe_output_path(Path(repo_path), output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    path = out / "CONTEXT_MANIFEST.json"
+
+    timestamp = generated_at or datetime.now(timezone.utc).isoformat()
+    names = [Path(w).name for w in written_files]
+    all_names = names + ["CONTEXT_MANIFEST.json", "RUN_STATE.json"]
+    deduped_names = list(dict.fromkeys(all_names))
+
+    ss = analysis.scan_summary
+    warnings = analysis.evidence_set.warnings()
+    manifest = {
+        "schema_version": "1.0",
+        "schema_mode": "additive",
+        "generated_by": f"context-crafter-mcp v{__version__}",
+        "generated_at": timestamp,
+        "repo_path": repo_path,
+        "project_types": detect.project_types,
+        "profile": analysis.profile,
+        "recommended_start": {
+            "agent": "AGENT_BRIEF.md",
+            "human": "PROJECT_OVERVIEW.md",
+            "navigation": "AI_CONTEXT_INDEX.md",
+            "automation": "RUN_STATE.json",
+        },
+        "files": [_manifest_file_entry(name) for name in deduped_names],
+        "scan_summary": {
+            "files_scanned": ss.files_scanned,
+            "dirs_scanned": ss.dirs_scanned,
+            "files_skipped": ss.files_skipped,
+            "dirs_skipped": ss.dirs_skipped,
+            "budget_exhausted": ss.budget_exhausted,
+            "skipped_reasons": ss.skipped_reasons,
+            "category_counts": ss.category_counts,
+        },
+        "evidence_counts": {
+            "observed": len(analysis.evidence_set.by_kind(EvidenceKind.OBSERVED)),
+            "inferred": len(analysis.evidence_set.by_kind(EvidenceKind.INFERRED)),
+            "unknown": len(analysis.evidence_set.by_kind(EvidenceKind.UNKNOWN)),
+            "unsupported": len(analysis.evidence_set.by_kind(EvidenceKind.UNSUPPORTED)),
+            "error": len(analysis.evidence_set.by_kind(EvidenceKind.ERROR)),
+        },
+        "warnings_count": len(warnings),
+        "errors_count": len(errors),
+        "bounded_scan": ss.budget_exhausted or sum(ss.skipped_reasons.values()) > 0,
+    }
+
+    path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     return RenderResult(
         ok=True,
         written=[str(path)],

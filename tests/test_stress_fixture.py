@@ -63,8 +63,11 @@ def test_stress_repo_generates_without_crash() -> None:
         assert state.ok, f"Generation failed: {state.errors}"
         assert state.analysis is not None
         assert state.analysis.scan_summary.files_scanned > 0
-        # All 8 required outputs plus RUN_STATE.json
+        # All required Markdown outputs plus machine-readable companions.
         assert len(state.written) >= 8
+        names = [Path(w).name for w in state.written]
+        assert "CONTEXT_MANIFEST.json" in names
+        assert "RUN_STATE.json" in names
 
 
 def test_stress_repo_scan_count_bounded_and_stable() -> None:

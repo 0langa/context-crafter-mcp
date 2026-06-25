@@ -2,7 +2,7 @@
 
 Steps that remain intentionally manual for release and repository stewardship.
 
-Roadmap note: the current working milestone is the `0.7.0b1` beta prerelease. This file describes what remains manual for beta releases and the eventual first stable release at `1.0.0`.
+Roadmap note: the current public beta is `0.7.0b1`. The active release train targets `0.8.0`, then `0.9.0`, then the first stable release at `1.0.0`.
 
 ## Repository settings
 

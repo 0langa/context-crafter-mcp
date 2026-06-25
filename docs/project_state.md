@@ -3,6 +3,7 @@
 - Last reviewed: `2026-06-25`
 - Package version: `0.7.0b1`
 - Latest public git tag: `0.7.0b1`
+- Current milestone: post-`0.7.0b1` feature/hardening toward `0.8.0`, then `0.9.0`, then `1.0.0`
 - Memory model: `agent-authored, validator-checked`
 - Critical rule: Update this file directly whenever repo reality changes. For long runs, update it at each meaningful milestone before context compaction risk grows.
 
@@ -42,8 +43,10 @@ The checked-in product surface is centered on:
 - Historical external battle-testing material referenced 17 scenarios, ~4,499 files, and ~196,129 lines, but those artifacts are unavailable after the PC reset.
 - The historical dominant product failure was `L1-GENERIC-001` generic fallback honesty. Local regression coverage now lives in `tests/test_generic_fallback_honesty.py`.
 - Stack detection promotes marker/extension evidence only from trusted primary-surface paths; low-trust docs/tests/examples/tooling hints stay non-promoting and keep ambiguous repos generic.
+- `CONTEXT_MANIFEST.json` is the machine-readable generated-bundle manifest; `RUN_STATE.json` remains execution metadata. Both JSON surfaces are additive contracts.
 - The local release gate is `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1`; network-dependent smoke testing remains separate.
 - The current release is the `0.7.0b1` beta prerelease. It is not the stable `1.0.0` gate.
+- Current feature sprint is aimed at `0.8.0`; `0.9.0` is expected to be the release-candidate hardening line before `1.0.0`.
 - CI and CodeQL should stay free of Node 20 deprecation annotations before any stable-release cut.
 - Fresh fixed real-repo smoke automation passed on `2026-06-25` for `pallets/click`, `sindresorhus/ky`, `spf13/cobra`, and `serde-rs/json`.
 - The historical bounded-scan honesty logic used a three-tier materiality test: hard blocker for `budget_exhausted`, major blocker for material non-budget skips (>=5 files or >=5% ratio), minor finding for benign skips only.

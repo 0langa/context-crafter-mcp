@@ -4,9 +4,9 @@
 
 - Package version in code is **`0.7.0b1`**.
 - Latest public git tag on the remote is **`0.7.0b1`**.
-- Current `main` is the **post-`0.7.0b1` hardening line** with post-`0.7.0b1` hardening commits after the beta tag.
+- Current `main` is the **post-`0.7.0b1` feature and hardening line** with post-`0.7.0b1` hardening commits after the beta tag.
 
-### What is landing in `0.7.0b1`
+### What shipped in `0.7.0b1`
 
 The `0.7.0b1` beta adds:
 
@@ -31,12 +31,13 @@ The `0.6.0` hardening release adds:
 
 ## Where we stand
 
-The project is no longer just proving out the architecture. The current work is a **pre-`1.0.0` hardening line** with three main characteristics:
+The project is no longer just proving out the architecture. The current work is a **pre-`1.0.0` release train** with five main characteristics:
 
 1. Core CLI and MCP surfaces are stable enough to start freezing.
 2. Truthfulness and bounded-scan behavior are now a larger focus than raw feature growth.
 3. Python / Node / Go / Rust have meaningful real-repo smoke confidence; Java / .NET remain supported but lower-confidence, fixture-backed stacks.
 4. Generic fallback honesty is now guarded locally after the retired external D-drive platform became unavailable.
+5. The next value push is better downstream consumption: agents should know which generated file to read first, which files are human-facing, and which JSON surfaces are automation-facing.
 
 ## Concrete release plan
 
@@ -50,19 +51,40 @@ Purpose:
 
 Status: complete. `0.6.0` is now tagged and published as the verified hardening baseline.
 
-### Phase 2: Cut the `0.7.0b1` beta
+### Phase 2: `0.7.0b1` beta (complete)
 
-Use the local gate plus release checklist additions as the beta confidence set.
+Status: complete. `0.7.0b1` is tagged as the reset-PC/local-gate beta baseline.
+
+### Phase 3: `0.8.0` consumer-value feature sprint
+
+Purpose:
+
+- make generated context bundles easier for agents, humans, and automation to consume
+- preserve the additive output contract while adding high-value metadata
+- keep the release small enough to validate with the existing local gate
 
 Focus:
 
-- local release gate execution via `scripts/local_release_gate.ps1`
-- public-surface gate execution via `scripts/validate_public_surface.py`
-- version, changelog, and tag alignment for `0.7.0b1`
-- wheel and sdist verification
-- GitHub prerelease creation with attached artifacts where practical
+- `CONTEXT_MANIFEST.json` as the generated-bundle manifest
+- clearer recommended starting points for agent, human, navigation, and automation consumers
+- docs-truth updates for every generated companion file
+- regression tests proving the manifest is emitted and referenced by `RUN_STATE.json`
 
-### Phase 3: Execute the pre-`1.0.0` gate
+### Phase 4: `0.9.0` release-candidate hardening
+
+Purpose:
+
+- freeze the public CLI/MCP/output contract before `1.0.0`
+- expand confidence from local fixtures to maintained real-repo smoke evidence
+
+Focus:
+
+- installed wheel and sdist smoke on clean temporary environments
+- real-repo smoke refresh and matrix update
+- MCP resource/result-surface compatibility review
+- limitations/security/docs-truth audit
+
+### Phase 5: Execute the pre-`1.0.0` gate
 
 Use [`docs/PRE_1_0_GATE.md`](PRE_1_0_GATE.md) as the stable-release checklist of record.
 
@@ -74,7 +96,7 @@ Focus:
 - docs-truth audit across README, architecture, limitations, security, and output contract
 - MCP tool/resource/result-surface stability review
 
-### Phase 4: Decide whether to tag `1.0.0`
+### Phase 6: Decide whether to tag `1.0.0`
 
 Tag `1.0.0` only when all of these are true:
 
@@ -99,7 +121,7 @@ If those are not yet true, continue with another hardening release instead of fo
 - Keep ambiguous/generic repos honest: low-trust docs/tests/examples/tooling language hints must not promote stack detection.
 - Keep vendor/generated/tooling material de-weighted in primary conclusions.
 - Improve non-Python analyzer signal only where tests and smoke runs verify it.
-- Keep `RUN_STATE.json` and other machine-readable outputs additive and automation-friendly.
+- Keep `CONTEXT_MANIFEST.json`, `RUN_STATE.json`, and other machine-readable outputs additive and automation-friendly.
 
 ### 3. Stable-release gate
 

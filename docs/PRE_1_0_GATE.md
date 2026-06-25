@@ -14,7 +14,7 @@ Current beta note: `0.7.0b1` is a prerelease hardening gate. Passing the local g
 - [ ] `context-crafter-mcp version` matches `pyproject.toml`
 - [ ] `context-crafter-mcp doctor` reports healthy on a clean checkout
 - [ ] `context-crafter-mcp detect <repo> --json` returns valid JSON for all fixed smoke repos
-- [ ] `context-crafter-mcp generate <repo> --output <dir> --profile standard --json` produces 8 required Markdown files plus `DEPENDENCY_GRAPH.mmd` and `RUN_STATE.json`
+- [ ] `context-crafter-mcp generate <repo> --output <dir> --profile standard --json` produces 8 required Markdown files plus `DEPENDENCY_GRAPH.mmd`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json`
 - [ ] `context-crafter-mcp validate <output_dir> --json` passes with zero errors
 - [ ] `context-crafter-mcp self-test .` passes without dirtying the repository
 - [ ] `context-crafter-mcp mcp-config --client <client>` emits valid JSON for every supported client
@@ -75,7 +75,7 @@ Current beta note: `0.7.0b1` is a prerelease hardening gate. Passing the local g
   - `explain_capabilities`
 - [ ] Resource URI scheme `context-crafter://latest/<filename>` is stable
 - [ ] JSON result fields are additive-only (no removals without deprecation cycle)
-- [ ] `RUN_STATE.json` fields evolve additively (no removals without deprecation cycle); automation consumers should parse defensively
+- [ ] `CONTEXT_MANIFEST.json` and `RUN_STATE.json` fields evolve additively (no removals without deprecation cycle); automation consumers should parse defensively
 
 ## Release artifacts
 

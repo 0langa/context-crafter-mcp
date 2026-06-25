@@ -419,6 +419,16 @@ def validate_output_dir(
                 )
             )
 
+    if found and not (out / "CONTEXT_MANIFEST.json").exists():
+        checks.append(
+            ValidationCheck(
+                code="context_manifest_missing",
+                level="warning",
+                message="Generated Markdown files exist but CONTEXT_MANIFEST.json is missing.",
+                file=None,
+            )
+        )
+
     # Infer repo path if not provided
     effective_repo = Path(repo_path) if repo_path else None
     if effective_repo is None and out.name == "generated":

@@ -12,10 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `scripts/validate_public_surface.py` and wired it into the local release gate so CLI version/help, MCP client config snippets, and MCP stdio startup are checked before release.
 - Added docs-truth checks for documented MCP clients, tools, and generated output files to keep public docs aligned with code.
 - Added `scripts/validate_release_docs.py` and wired it into the local release gate so release checklist wording, roadmap state, and workflow action baselines stay aligned.
+- Added `CONTEXT_MANIFEST.json` as an additive machine-readable manifest for generated context bundles.
 
 ### Changed
 
-- Clarified that `generate_context` writes 8 required Markdown files plus `DEPENDENCY_GRAPH.mmd` and `RUN_STATE.json`.
+- Clarified that `generate_context` writes 8 required Markdown files plus `DEPENDENCY_GRAPH.mmd`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json`.
 - Updated GitHub Actions workflow dependencies to Node 24-compatible baselines, including `actions/checkout@v7`, `actions/setup-python@v6`, and immutable `astral-sh/setup-uv@v8.2.0`.
 
 ## [0.7.0b1] - 2026-06-25

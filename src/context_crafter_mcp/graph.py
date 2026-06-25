@@ -13,6 +13,7 @@ from context_crafter_mcp.renderers.markdown import (
     render_ai_context_index,
     render_agent_brief,
     render_architecture_summary,
+    render_context_manifest,
     render_project_overview,
     render_repo_map,
     render_run_state,
@@ -139,6 +140,21 @@ def node_render_outputs(state: RepoState) -> dict[str, object]:
         written.extend(val_result.written)
     elif val_result.error:
         state.errors.append(val_result.error)
+
+    # Machine-readable manifest for consumers deciding where to start.
+    manifest_result = render_context_manifest(
+        state.repo_path,
+        state.detect_result,
+        state.analysis,
+        state.output_dir,
+        written_files=written,
+        errors=state.errors,
+        generated_at=gen_at,
+    )
+    if manifest_result.ok:
+        written.extend(manifest_result.written)
+    elif manifest_result.error:
+        state.errors.append(manifest_result.error)
 
     # Machine-readable run-state for downstream automation
     run_state_result = render_run_state(

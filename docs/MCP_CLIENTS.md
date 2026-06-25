@@ -76,7 +76,7 @@ All tools return structured JSON in `TextContent` with `ok`, `summary`, `warning
 | Tool | Purpose |
 |------|---------|
 | `detect_project` | Detect stacks for a repo path |
-| `generate_context` | Generate 8 required Markdown files plus `DEPENDENCY_GRAPH.mmd` and `RUN_STATE.json` |
+| `generate_context` | Generate 8 required Markdown files plus `DEPENDENCY_GRAPH.mmd`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json` |
 | `generate_project_overview` | Generate `PROJECT_OVERVIEW.md` and optional HTML |
 | `generate_repo_map` | Generate `REPO_MAP.md` |
 | `generate_dependency_graph` | Generate `DEPENDENCY_GRAPH.md` and `DEPENDENCY_GRAPH.mmd` |

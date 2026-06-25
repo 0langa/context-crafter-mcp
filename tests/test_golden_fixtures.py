@@ -56,6 +56,7 @@ def test_fixture_golden_generation(name: str) -> None:
     for required in REQUIRED_FILES:
         assert required in written_names, f"Missing {required} in {name}"
 
+    assert "CONTEXT_MANIFEST.json" in written_names, f"Missing CONTEXT_MANIFEST.json in {name}"
     assert "RUN_STATE.json" in written_names, f"Missing RUN_STATE.json in {name}"
 
     run_state_path = Path(state.resolved_output_dir) / "RUN_STATE.json"

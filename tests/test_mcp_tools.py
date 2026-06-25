@@ -61,7 +61,7 @@ def test_run_generate_all() -> None:
         Path(td, "main.py").write_text("import os\nclass A: pass\n")
         state = run_generate_all(td, "out")
         assert state.ok
-        assert len(state.written) == 10
+        assert len(state.written) == 11
         assert state.resolved_output_dir == str((Path(td) / "out").resolve())
         names = [Path(w).name for w in state.written]
         assert "AI_CONTEXT_INDEX.md" in names
@@ -73,6 +73,7 @@ def test_run_generate_all() -> None:
         assert "AGENT_BRIEF.md" in names
         assert "VALIDATION_REPORT.md" in names
         assert "SCAN_REPORT.md" in names
+        assert "CONTEXT_MANIFEST.json" in names
         assert "RUN_STATE.json" in names
 
 

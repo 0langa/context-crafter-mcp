@@ -32,7 +32,7 @@ EXPECTED_TOOLS = {
     "validate_generated_context",
     "explain_capabilities",
 }
-GENERATED_FILES = set(_REQUIRED_FILES) | {"DEPENDENCY_GRAPH.mmd", "RUN_STATE.json"}
+GENERATED_FILES = set(_REQUIRED_FILES) | {"DEPENDENCY_GRAPH.mmd", "CONTEXT_MANIFEST.json", "RUN_STATE.json"}
 
 
 def _run(args: list[str], *, timeout: int = 30) -> subprocess.CompletedProcess[str]:

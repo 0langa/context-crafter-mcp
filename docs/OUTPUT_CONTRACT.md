@@ -13,9 +13,10 @@
 | `AGENT_BRIEF.md` | Concise 1-page agent summary with unknowns/limitations |
 | `VALIDATION_REPORT.md` | Output completeness check |
 | `SCAN_REPORT.md` | Coverage, skipped items, safety notes |
+| `CONTEXT_MANIFEST.json` | Machine-readable bundle manifest for agents and automation |
 | `RUN_STATE.json` | Machine-readable run metadata for downstream automation |
 
-Validation treats the 8 Markdown files as the required human-readable set. `DEPENDENCY_GRAPH.mmd` and `RUN_STATE.json` are generated companions and are included in generation results.
+Validation treats the 8 Markdown files as the required human-readable set. `DEPENDENCY_GRAPH.mmd`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json` are generated companions and are included in generation results.
 
 ## Generation result fields
 
@@ -50,6 +51,17 @@ Generation-style JSON results are additive-only and include:
 `schema_mode` currently has the value `additive`, signaling that consumers should expect new keys to be added without assuming removals or positional structure.
 
 Legacy `files_scanned` and `analyzers_run` fields remain for backward compatibility.
+
+## CONTEXT_MANIFEST.json
+
+`CONTEXT_MANIFEST.json` is a machine-readable manifest for consumers deciding how to read the generated bundle. Its schema evolves additively; automation consumers should parse defensively. It contains:
+
+- `schema_version`, `schema_mode`, `generated_by`, `generated_at`, `repo_path`, `project_types`, and `profile`
+- `recommended_start` paths for agent, human, navigation, and automation consumers
+- `files` entries with `path`, `role`, `audience`, `media_type`, and `purpose`
+- `scan_summary`, `evidence_counts`, `warnings_count`, `errors_count`, and `bounded_scan`
+
+The manifest describes output purpose and routing. `RUN_STATE.json` remains the execution metadata surface.
 
 ## Output confinement
 
@@ -94,6 +106,7 @@ Validation can report these machine-readable codes:
 - `missing_metadata_header`
 - `empty_output_file`
 - `graph_mmd_missing`
+- `context_manifest_missing`
 - `ai_context_index_link_broken`
 - `generated_version_mismatch`
 - `compact_profile_too_large`

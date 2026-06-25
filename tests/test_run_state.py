@@ -146,7 +146,7 @@ def test_run_state_backward_compat_values_match() -> None:
 
 
 def test_run_state_output_files_count_matches_list() -> None:
-    """validation_summary.output_files_count must equal len(output_files), including RUN_STATE.json."""
+    """validation_summary.output_files_count must equal len(output_files), including JSON companions."""
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
         _build_mixed_repo(root)
@@ -158,4 +158,37 @@ def test_run_state_output_files_count_matches_list() -> None:
         data = json.loads(run_state_path.read_text(encoding="utf-8"))
 
         assert data["validation_summary"]["output_files_count"] == len(data["output_files"])
+        assert "CONTEXT_MANIFEST.json" in data["output_files"]
         assert "RUN_STATE.json" in data["output_files"]
+
+
+def test_context_manifest_structure() -> None:
+    """CONTEXT_MANIFEST.json describes the generated bundle for downstream consumers."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _build_mixed_repo(root)
+        state = run_generate_all(td, "out", ScanConfig(profile="standard", max_depth=4))
+        assert state.ok
+        assert state.analysis is not None
+
+        manifest_path = Path(td, "out", "CONTEXT_MANIFEST.json")
+        assert manifest_path.exists()
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        assert data["schema_version"] == "1.0"
+        assert data["schema_mode"] == "additive"
+        assert state.detect_result is not None
+        assert data["project_types"] == state.detect_result.project_types
+        assert data["recommended_start"] == {
+            "agent": "AGENT_BRIEF.md",
+            "human": "PROJECT_OVERVIEW.md",
+            "navigation": "AI_CONTEXT_INDEX.md",
+            "automation": "RUN_STATE.json",
+        }
+        assert data["scan_summary"]["files_scanned"] == state.analysis.scan_summary.files_scanned
+        assert data["evidence_counts"]["unknown"] >= 0
+
+        files = {entry["path"]: entry for entry in data["files"]}
+        assert files["AGENT_BRIEF.md"]["audience"] == ["agent"]
+        assert files["CONTEXT_MANIFEST.json"]["role"] == "manifest"
+        assert files["RUN_STATE.json"]["role"] == "run-state"
