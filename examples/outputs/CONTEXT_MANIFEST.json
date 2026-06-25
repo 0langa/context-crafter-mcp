@@ -1,0 +1,170 @@
+{
+  "schema_version": "1.0",
+  "schema_mode": "additive",
+  "generated_by": "context-crafter-mcp v0.7.0b1",
+  "generated_at": "2026-06-25T14:59:37.234281+00:00",
+  "repo_path": "examples/demo-repo",
+  "project_types": [
+    "generic",
+    "python"
+  ],
+  "profile": "standard",
+  "recommended_start": {
+    "agent": "AGENT_BRIEF.md",
+    "human": "PROJECT_OVERVIEW.md",
+    "navigation": "AI_CONTEXT_INDEX.md",
+    "automation": "RUN_STATE.json"
+  },
+  "files": [
+    {
+      "path": "AI_CONTEXT_INDEX.md",
+      "role": "index",
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "media_type": "text/markdown",
+      "purpose": "Master navigation for the generated context bundle."
+    },
+    {
+      "path": "PROJECT_OVERVIEW.md",
+      "role": "overview",
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "media_type": "text/markdown",
+      "purpose": "Project metadata, detected stacks, evidence, and dependencies."
+    },
+    {
+      "path": "REPO_MAP.md",
+      "role": "map",
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "media_type": "text/markdown",
+      "purpose": "Repository tree and important source/config/test locations."
+    },
+    {
+      "path": "DEPENDENCY_GRAPH.mmd",
+      "role": "graph-source",
+      "audience": [
+        "automation"
+      ],
+      "media_type": "text/vnd.mermaid",
+      "purpose": "Raw Mermaid dependency graph source."
+    },
+    {
+      "path": "DEPENDENCY_GRAPH.md",
+      "role": "graph",
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "media_type": "text/markdown",
+      "purpose": "Rendered dependency graph and dependency summary."
+    },
+    {
+      "path": "ARCHITECTURE_SUMMARY.md",
+      "role": "architecture",
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "media_type": "text/markdown",
+      "purpose": "Architecture patterns, risks, and unknowns."
+    },
+    {
+      "path": "AGENT_BRIEF.md",
+      "role": "agent-brief",
+      "audience": [
+        "agent"
+      ],
+      "media_type": "text/markdown",
+      "purpose": "Concise starting point for AI coding agents."
+    },
+    {
+      "path": "COMMANDS.md",
+      "role": "commands",
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "media_type": "text/markdown",
+      "purpose": "Static command runbook with evidence and confidence."
+    },
+    {
+      "path": "SCAN_REPORT.md",
+      "role": "scan-report",
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "media_type": "text/markdown",
+      "purpose": "Scan coverage, skipped items, bounds, and safety notes."
+    },
+    {
+      "path": "VALIDATION_REPORT.md",
+      "role": "validation",
+      "audience": [
+        "human",
+        "automation"
+      ],
+      "media_type": "text/markdown",
+      "purpose": "Generated-output completeness and health report."
+    },
+    {
+      "path": "EVIDENCE_LEDGER.json",
+      "role": "evidence-ledger",
+      "audience": [
+        "automation",
+        "agent"
+      ],
+      "media_type": "application/json",
+      "purpose": "Machine-readable evidence ledger."
+    },
+    {
+      "path": "CONTEXT_MANIFEST.json",
+      "role": "manifest",
+      "audience": [
+        "automation",
+        "agent"
+      ],
+      "media_type": "application/json",
+      "purpose": "Machine-readable manifest for the output bundle."
+    },
+    {
+      "path": "RUN_STATE.json",
+      "role": "run-state",
+      "audience": [
+        "automation"
+      ],
+      "media_type": "application/json",
+      "purpose": "Machine-readable run metadata and compatibility state."
+    }
+  ],
+  "scan_summary": {
+    "files_scanned": 6,
+    "dirs_scanned": 5,
+    "files_skipped": 0,
+    "dirs_skipped": 0,
+    "budget_exhausted": false,
+    "skipped_reasons": {},
+    "category_counts": {
+      "unknown": 2,
+      "product": 3,
+      "test": 1
+    }
+  },
+  "evidence_counts": {
+    "observed": 13,
+    "inferred": 4,
+    "unknown": 5,
+    "unsupported": 1,
+    "error": 0
+  },
+  "warnings_count": 6,
+  "errors_count": 0,
+  "bounded_scan": false
+}

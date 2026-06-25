@@ -1,0 +1,300 @@
+{
+  "schema_version": "1.0",
+  "schema_mode": "additive",
+  "generated_by": "context-crafter-mcp v0.7.0b1",
+  "generated_at": "2026-06-25T14:59:37.230194+00:00",
+  "repo_path": "examples/demo-repo",
+  "project_types": [
+    "generic",
+    "python"
+  ],
+  "profile": "standard",
+  "summary": {
+    "total": 33,
+    "counts_by_kind": {
+      "observed": 15,
+      "inferred": 7,
+      "unknown": 10,
+      "unsupported": 1,
+      "error": 0
+    },
+    "counts_by_confidence": {
+      "high": 15,
+      "medium": 7,
+      "low": 11
+    },
+    "counts_by_analyzer": {
+      "detectors": 20,
+      "generic": 4,
+      "python": 9
+    },
+    "warnings_count": 11,
+    "errors_count": 0
+  },
+  "items": [
+    {
+      "kind": "observed",
+      "message": "Scanned 6 files, 5 directories",
+      "source_path": null,
+      "analyzer": "generic",
+      "confidence": "high",
+      "phase": "analysis"
+    },
+    {
+      "kind": "inferred",
+      "message": "Likely entry point `src/greeter/cli.py` inferred from filename",
+      "source_path": "src/greeter/cli.py",
+      "analyzer": "generic",
+      "confidence": "medium",
+      "phase": "analysis"
+    },
+    {
+      "kind": "observed",
+      "message": "Config file `README.md` found",
+      "source_path": "README.md",
+      "analyzer": "generic",
+      "confidence": "high",
+      "phase": "analysis"
+    },
+    {
+      "kind": "observed",
+      "message": "Config file `pyproject.toml` found",
+      "source_path": "pyproject.toml",
+      "analyzer": "generic",
+      "confidence": "high",
+      "phase": "analysis"
+    },
+    {
+      "kind": "observed",
+      "message": "python: marker file `pyproject.toml` found at `pyproject.toml`",
+      "source_path": "pyproject.toml",
+      "analyzer": "detectors",
+      "confidence": "high",
+      "phase": "analysis"
+    },
+    {
+      "kind": "inferred",
+      "message": "python: extension `.py` inferred from `src/greeter/__init__.py`",
+      "source_path": "src/greeter/__init__.py",
+      "analyzer": "detectors",
+      "confidence": "medium",
+      "phase": "analysis"
+    },
+    {
+      "kind": "inferred",
+      "message": "python: extension `.py` inferred from `src/greeter/cli.py`",
+      "source_path": "src/greeter/cli.py",
+      "analyzer": "detectors",
+      "confidence": "medium",
+      "phase": "analysis"
+    },
+    {
+      "kind": "inferred",
+      "message": "python: extension `.py` inferred from `src/greeter/core.py`",
+      "source_path": "src/greeter/core.py",
+      "analyzer": "detectors",
+      "confidence": "medium",
+      "phase": "analysis"
+    },
+    {
+      "kind": "observed",
+      "message": "generic: directory exists and was readable",
+      "source_path": null,
+      "analyzer": "detectors",
+      "confidence": "high",
+      "phase": "analysis"
+    },
+    {
+      "kind": "unknown",
+      "message": "node: no trusted primary-surface marker files or extensions found",
+      "source_path": null,
+      "analyzer": "detectors",
+      "confidence": "low",
+      "phase": "analysis"
+    },
+    {
+      "kind": "unknown",
+      "message": "dotnet: no trusted primary-surface marker files or extensions found",
+      "source_path": null,
+      "analyzer": "detectors",
+      "confidence": "low",
+      "phase": "analysis"
+    },
+    {
+      "kind": "unknown",
+      "message": "rust: no trusted primary-surface marker files or extensions found",
+      "source_path": null,
+      "analyzer": "detectors",
+      "confidence": "low",
+      "phase": "analysis"
+    },
+    {
+      "kind": "unknown",
+      "message": "go: no trusted primary-surface marker files or extensions found",
+      "source_path": null,
+      "analyzer": "detectors",
+      "confidence": "low",
+      "phase": "analysis"
+    },
+    {
+      "kind": "unknown",
+      "message": "java: no trusted primary-surface marker files or extensions found",
+      "source_path": null,
+      "analyzer": "detectors",
+      "confidence": "low",
+      "phase": "analysis"
+    },
+    {
+      "kind": "observed",
+      "message": "Python module `src/greeter/__init__.py`: 0 class(es), 0 function(s), 1 import(s)",
+      "source_path": "src/greeter/__init__.py",
+      "analyzer": "python",
+      "confidence": "high",
+      "phase": "analysis"
+    },
+    {
+      "kind": "observed",
+      "message": "Python module `src/greeter/cli.py`: 0 class(es), 1 function(s), 2 import(s)",
+      "source_path": "src/greeter/cli.py",
+      "analyzer": "python",
+      "confidence": "high",
+      "phase": "analysis"
+    },
+    {
+      "kind": "observed",
+      "message": "Python module `src/greeter/core.py`: 0 class(es), 1 function(s), 0 import(s)",
+      "source_path": "src/greeter/core.py",
+      "analyzer": "python",
+      "confidence": "high",
+      "phase": "analysis"
+    },
+    {
+      "kind": "observed",
+      "message": "Python module `tests/test_greeter.py`: 0 class(es), 2 function(s), 1 import(s)",
+      "source_path": "tests/test_greeter.py",
+      "analyzer": "python",
+      "confidence": "high",
+      "phase": "analysis"
+    },
+    {
+      "kind": "observed",
+      "message": "Console script `greet` declared in `pyproject.toml`",
+      "source_path": "pyproject.toml",
+      "analyzer": "python",
+      "confidence": "high",
+      "phase": "analysis"
+    },
+    {
+      "kind": "observed",
+      "message": "Project name `demo-greeter` from `pyproject.toml`",
+      "source_path": "pyproject.toml",
+      "analyzer": "python",
+      "confidence": "high",
+      "phase": "analysis"
+    },
+    {
+      "kind": "observed",
+      "message": "Project description `A tiny demo Python project for context-crafter-mcp.` from `pyproject.toml`",
+      "source_path": "pyproject.toml",
+      "analyzer": "python",
+      "confidence": "high",
+      "phase": "analysis"
+    },
+    {
+      "kind": "observed",
+      "message": "Project version `0.1.0` from `pyproject.toml`",
+      "source_path": "pyproject.toml",
+      "analyzer": "python",
+      "confidence": "high",
+      "phase": "analysis"
+    },
+    {
+      "kind": "unsupported",
+      "message": "Deep semantic call graph and dynamic import analysis are not implemented.",
+      "source_path": null,
+      "analyzer": "python",
+      "confidence": "low",
+      "phase": "analysis"
+    },
+    {
+      "kind": "observed",
+      "message": "python: marker file `pyproject.toml` found at `pyproject.toml`",
+      "source_path": "pyproject.toml",
+      "analyzer": "detectors",
+      "confidence": "high",
+      "phase": "detection"
+    },
+    {
+      "kind": "inferred",
+      "message": "python: extension `.py` inferred from `src/greeter/__init__.py`",
+      "source_path": "src/greeter/__init__.py",
+      "analyzer": "detectors",
+      "confidence": "medium",
+      "phase": "detection"
+    },
+    {
+      "kind": "inferred",
+      "message": "python: extension `.py` inferred from `src/greeter/cli.py`",
+      "source_path": "src/greeter/cli.py",
+      "analyzer": "detectors",
+      "confidence": "medium",
+      "phase": "detection"
+    },
+    {
+      "kind": "inferred",
+      "message": "python: extension `.py` inferred from `src/greeter/core.py`",
+      "source_path": "src/greeter/core.py",
+      "analyzer": "detectors",
+      "confidence": "medium",
+      "phase": "detection"
+    },
+    {
+      "kind": "observed",
+      "message": "generic: directory exists and was readable",
+      "source_path": null,
+      "analyzer": "detectors",
+      "confidence": "high",
+      "phase": "detection"
+    },
+    {
+      "kind": "unknown",
+      "message": "node: no trusted primary-surface marker files or extensions found",
+      "source_path": null,
+      "analyzer": "detectors",
+      "confidence": "low",
+      "phase": "detection"
+    },
+    {
+      "kind": "unknown",
+      "message": "dotnet: no trusted primary-surface marker files or extensions found",
+      "source_path": null,
+      "analyzer": "detectors",
+      "confidence": "low",
+      "phase": "detection"
+    },
+    {
+      "kind": "unknown",
+      "message": "rust: no trusted primary-surface marker files or extensions found",
+      "source_path": null,
+      "analyzer": "detectors",
+      "confidence": "low",
+      "phase": "detection"
+    },
+    {
+      "kind": "unknown",
+      "message": "go: no trusted primary-surface marker files or extensions found",
+      "source_path": null,
+      "analyzer": "detectors",
+      "confidence": "low",
+      "phase": "detection"
+    },
+    {
+      "kind": "unknown",
+      "message": "java: no trusted primary-surface marker files or extensions found",
+      "source_path": null,
+      "analyzer": "detectors",
+      "confidence": "low",
+      "phase": "detection"
+    }
+  ]
+}
