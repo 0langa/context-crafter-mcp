@@ -1,6 +1,6 @@
 # Project State
 
-- Last reviewed: `2026-06-03`
+- Last reviewed: `2026-06-25`
 - Package version: `0.7.0b1`
 - Latest public git tag: `0.7.0b1`
 - Memory model: `agent-authored, validator-checked`
@@ -27,6 +27,7 @@ The checked-in product surface is centered on:
 - `scripts/local_release_gate.ps1` is the current reset-PC local release gate command bundle.
 - `scripts/validate_public_surface.py` checks CLI help/version, every supported MCP client config, and MCP stdio initialize/tools-list.
 - `scripts/smoke_repos.py` is the real-repo smoke automation for the fixed Python/Node/Go/Rust set.
+- GitHub Actions workflows use Node 24-compatible actions: `actions/checkout@v7`, `actions/setup-python@v6`, and immutable `astral-sh/setup-uv@v8.2.0`.
 
 ## Current Truths
 - Source code, tests, and packaging config beat prose docs when they disagree.
@@ -42,6 +43,7 @@ The checked-in product surface is centered on:
 - Stack detection promotes marker/extension evidence only from trusted primary-surface paths; low-trust docs/tests/examples/tooling hints stay non-promoting and keep ambiguous repos generic.
 - The local release gate is `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1`; network-dependent smoke testing remains separate.
 - The current release is the `0.7.0b1` beta prerelease. It is not the stable `1.0.0` gate.
+- CI and CodeQL should stay free of Node 20 deprecation annotations before any stable-release cut.
 - Fresh fixed real-repo smoke automation passed on `2026-06-25` for `pallets/click`, `sindresorhus/ky`, `spf13/cobra`, and `serde-rs/json`.
 - The historical bounded-scan honesty logic used a three-tier materiality test: hard blocker for `budget_exhausted`, major blocker for material non-budget skips (>=5 files or >=5% ratio), minor finding for benign skips only.
 - Repo-side mirror docs (`docs/testing/TESTING_STATUS.md`) describe stable/historical facts only; volatile latest-run state is currently unavailable.

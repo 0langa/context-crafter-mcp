@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Clarified that `generate_context` writes 8 required Markdown files plus `DEPENDENCY_GRAPH.mmd` and `RUN_STATE.json`.
+- Updated GitHub Actions workflow dependencies to Node 24-compatible baselines, including `actions/checkout@v7`, `actions/setup-python@v6`, and immutable `astral-sh/setup-uv@v8.2.0`.
 
 ## [0.7.0b1] - 2026-06-25
 
