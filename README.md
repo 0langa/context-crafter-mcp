@@ -256,7 +256,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 | Static analysis only | No runtime behavior, dynamic imports, or conditional architecture |
 | Non-Python depth | Real AST parsers with regex fallback, not full semantic analysis |
 | HTML rendering | Uses `markdown` library when available; stdlib fallback otherwise |
-| Secret redaction | Not implemented; review generated output before sharing |
+| Secret redaction | Conservative generated-output redaction for obvious key/token/password values; review generated output before sharing |
 | Gitignore nesting | Supported via `pathspec` with deepest-matching-wins semantics |
 | Determinism | Timestamps vary between runs; content and ordering are stable |
 | Compact profile | Intentionally omits sections even when a small repo could fit more |

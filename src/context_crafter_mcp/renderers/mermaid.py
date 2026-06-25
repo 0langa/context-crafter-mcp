@@ -10,6 +10,7 @@ from pathlib import Path
 from context_crafter_mcp import __version__
 from context_crafter_mcp.filesystem import safe_output_path
 from context_crafter_mcp.models import AnalysisResult, DetectResult, RenderResult, get_profile_limit
+from context_crafter_mcp.redaction import write_redacted_text
 from context_crafter_mcp.renderers.markdown import _render_metadata_block
 
 GENERATED_HEADER = (
@@ -362,8 +363,8 @@ def render_dependency_graph(
         "",
     ]
 
-    mmd_path.write_text(GENERATED_HEADER + mmd_content + "\n", encoding="utf-8")
-    md_path.write_text("\n".join(md_lines) + "\n", encoding="utf-8")
+    write_redacted_text(mmd_path, GENERATED_HEADER + mmd_content + "\n")
+    write_redacted_text(md_path, "\n".join(md_lines) + "\n")
 
     written = [str(mmd_path), str(md_path)]
 

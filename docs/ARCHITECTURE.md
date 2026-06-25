@@ -98,4 +98,4 @@ Tree-sitter support is optional. Install with `uv sync --extra parsers`. Without
 - Output confined to repo root
 - MCP stdio protected from stdout pollution
 - Resource registry blocks arbitrary local path reads
-- Basic secret awareness flags potential secret files in scan reports
+- Basic secret awareness flags potential secret files in scan reports, and generated-output writes apply conservative key/token/password redaction

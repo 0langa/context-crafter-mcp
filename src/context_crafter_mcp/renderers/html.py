@@ -7,6 +7,7 @@ from pathlib import Path
 
 from context_crafter_mcp.filesystem import safe_output_path
 from context_crafter_mcp.models import AnalysisResult, DetectResult, RenderResult
+from context_crafter_mcp.redaction import write_redacted_text
 
 
 _CODE_FENCE_RE = re.compile(r"(```[\s\S]*?```)")
@@ -234,7 +235,7 @@ th {{ background: #f4f4f4; }}
 
     out = safe_output_path(Path(repo_path), output_dir)
     html_path = out / "PROJECT_OVERVIEW.html"
-    html_path.write_text(html, encoding="utf-8")
+    write_redacted_text(html_path, html)
     return RenderResult(
         ok=True,
         written=[str(html_path)],

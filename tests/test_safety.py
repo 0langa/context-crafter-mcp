@@ -208,7 +208,7 @@ class TestGenerationSafety:
 
 
 class TestSecretAwareness:
-    """Basic secret file detection."""
+    """Basic secret file detection and generated-output redaction."""
 
     def test_secret_file_warns(self) -> None:
         with tempfile.TemporaryDirectory() as td:

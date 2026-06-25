@@ -35,7 +35,7 @@ Non-Python analyzers are intended to degrade gracefully when parser support is u
 
 ## Known gaps
 
-- Basic secret awareness flags potential secret files (`.env`, `secrets.json`, `credentials.json`) in scan reports, but secret redaction is not implemented; review generated output before sharing.
+- Basic secret awareness flags potential secret files (`.env`, `secrets.json`, `credentials.json`) in scan reports. Generated outputs apply conservative redaction for obvious key/token/password values, but this is not a full secret-scanning engine; review generated output before sharing.
 - No deep semantic call graph construction.
 - No runtime dependency resolution.
 - HTML rendering uses the `markdown` package when available, with stdlib fallback otherwise.

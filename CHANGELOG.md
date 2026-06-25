@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `CONTEXT_MANIFEST.json` as an additive machine-readable manifest for generated context bundles.
 - Added file-appropriate MIME types for session-scoped MCP generated resources.
 - Added `EVIDENCE_LEDGER.json` as an additive machine-readable evidence ledger for generated claims.
+- Added a conservative generated-output redaction pass for obvious key/token/password values.
 
 ### Changed
 
