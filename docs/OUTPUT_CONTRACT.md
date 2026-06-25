@@ -8,12 +8,14 @@
 | `PROJECT_OVERVIEW.md` | Metadata, stacks, entry points, dependencies, evidence |
 | `REPO_MAP.md` | Directory tree, config files, entry points, tests |
 | `DEPENDENCY_GRAPH.md` | Mermaid graph and external dependencies |
+| `DEPENDENCY_GRAPH.mmd` | Raw Mermaid source for the dependency graph |
 | `ARCHITECTURE_SUMMARY.md` | Patterns, abstractions, risks, workspace/monorepo layout, category-tagged source directories |
 | `AGENT_BRIEF.md` | Concise 1-page agent summary with unknowns/limitations |
 | `VALIDATION_REPORT.md` | Output completeness check |
 | `SCAN_REPORT.md` | Coverage, skipped items, safety notes |
+| `RUN_STATE.json` | Machine-readable run metadata for downstream automation |
 
-`DEPENDENCY_GRAPH.mmd` is also written as the raw Mermaid source.
+Validation treats the 8 Markdown files as the required human-readable set. `DEPENDENCY_GRAPH.mmd` and `RUN_STATE.json` are generated companions and are included in generation results.
 
 ## Generation result fields
 

@@ -17,6 +17,7 @@ except ModuleNotFoundError:  # pragma: no cover - Python < 3.11 fallback
 
 from context_crafter_mcp import __version__
 from context_crafter_mcp.cli import MCP_CONFIG_TEMPLATES
+from context_crafter_mcp.validation import _REQUIRED_FILES
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,6 +32,7 @@ EXPECTED_TOOLS = {
     "validate_generated_context",
     "explain_capabilities",
 }
+GENERATED_FILES = set(_REQUIRED_FILES) | {"DEPENDENCY_GRAPH.mmd", "RUN_STATE.json"}
 
 
 def _run(args: list[str], *, timeout: int = 30) -> subprocess.CompletedProcess[str]:
@@ -206,12 +208,46 @@ def _check_stdio_server() -> None:
         _fail(f"stdio server wrote to stderr: {stderr}")
 
 
+def _read_doc(relative_path: str) -> str:
+    return (ROOT / relative_path).read_text(encoding="utf-8")
+
+
+def _check_docs_truth() -> None:
+    docs = {
+        "README.md": _read_doc("README.md"),
+        "docs/MCP_CLIENTS.md": _read_doc("docs/MCP_CLIENTS.md"),
+        "docs/OUTPUT_CONTRACT.md": _read_doc("docs/OUTPUT_CONTRACT.md"),
+    }
+
+    stale_phrases = ["full 8-file suite"]
+    for path, content in docs.items():
+        for phrase in stale_phrases:
+            if phrase in content:
+                _fail(f"{path} contains stale phrase {phrase!r}")
+
+    for client in sorted(MCP_CONFIG_TEMPLATES):
+        for path in ("README.md", "docs/MCP_CLIENTS.md"):
+            if f"`{client}`" not in docs[path] and f"| {client} " not in docs[path]:
+                _fail(f"{path} does not document supported MCP client {client!r}")
+
+    for tool in sorted(EXPECTED_TOOLS):
+        for path in ("README.md", "docs/MCP_CLIENTS.md"):
+            if f"`{tool}`" not in docs[path]:
+                _fail(f"{path} does not document MCP tool {tool!r}")
+
+    for generated_file in sorted(GENERATED_FILES):
+        for path in ("README.md", "docs/OUTPUT_CONTRACT.md"):
+            if f"`{generated_file}`" not in docs[path]:
+                _fail(f"{path} does not document generated file {generated_file!r}")
+
+
 def main() -> int:
     checks = [
         ("version", _check_version),
         ("help", _check_help),
         ("mcp-config", _check_mcp_config),
         ("stdio server", _check_stdio_server),
+        ("docs truth", _check_docs_truth),
     ]
     for name, check in checks:
         print(f"==> public surface: {name}")

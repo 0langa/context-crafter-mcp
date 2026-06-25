@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `scripts/validate_public_surface.py` and wired it into the local release gate so CLI version/help, MCP client config snippets, and MCP stdio startup are checked before release.
+- Added docs-truth checks for documented MCP clients, tools, and generated output files to keep public docs aligned with code.
+
+### Changed
+
+- Clarified that `generate_context` writes 8 required Markdown files plus `DEPENDENCY_GRAPH.mmd` and `RUN_STATE.json`.
 
 ## [0.7.0b1] - 2026-06-25
 

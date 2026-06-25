@@ -15,6 +15,7 @@ Local-first MCP server that turns source repositories into compact AI-agent cont
 | `PROJECT_OVERVIEW.md` | Detected stacks, root files, source layout, entry points |
 | `REPO_MAP.md` | Compact directory tree with config and test directories |
 | `DEPENDENCY_GRAPH.md` | Mermaid dependency graph + external dependency list |
+| `DEPENDENCY_GRAPH.mmd` | Raw Mermaid dependency graph source |
 | `ARCHITECTURE_SUMMARY.md` | Architecture patterns, risks, and unknowns |
 | `AGENT_BRIEF.md` | Concise 1-page summary optimized for coding agents |
 | `VALIDATION_REPORT.md` | Output completeness and analysis health |
@@ -152,7 +153,7 @@ npx @modelcontextprotocol/inspector uv --directory /path/to/this/repo run contex
 ### MCP tools
 
 - `detect_project` — detect stacks for a repo path
-- `generate_context` — generate the full 8-file suite
+- `generate_context` — generate 8 required Markdown files plus `DEPENDENCY_GRAPH.mmd` and `RUN_STATE.json`
 - `generate_project_overview`
 - `generate_repo_map`
 - `generate_dependency_graph`
