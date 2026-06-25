@@ -33,6 +33,7 @@ REQUIRED_PATHS = [
     "src/context_crafter_mcp/server.py",
     "tests",
     ".github/workflows/ci.yml",
+    "scripts/installed_artifact_smoke.ps1",
 ]
 
 REQUIRED_PHRASES = [

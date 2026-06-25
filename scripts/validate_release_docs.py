@@ -100,6 +100,12 @@ def validate() -> list[str]:
         if phrase not in security:
             issues.append(f"SECURITY.md must mention current security posture: {phrase}")
 
+    artifact_smoke_command = "powershell -ExecutionPolicy Bypass -File .\\scripts\\installed_artifact_smoke.ps1"
+    if artifact_smoke_command not in pre_gate:
+        issues.append("docs/PRE_1_0_GATE.md must list the installed artifact smoke command.")
+    if artifact_smoke_command not in _read("MANUAL_STEPS.md"):
+        issues.append("MANUAL_STEPS.md must list the installed artifact smoke command.")
+
     return issues
 
 

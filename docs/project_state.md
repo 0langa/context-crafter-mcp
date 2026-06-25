@@ -29,6 +29,7 @@ The checked-in product surface is centered on:
 - `scripts/validate_release_docs.py` validates release-truth docs against current tag/HEAD and workflow action baselines.
 - `scripts/validate_release_docs.py` also validates that `SECURITY.md` reflects current redaction, MCP resource, and local static-analysis posture.
 - `scripts/local_release_gate.ps1` is the current reset-PC local release gate command bundle.
+- `scripts/installed_artifact_smoke.ps1` is the repeatable wheel/sdist install smoke gate for release candidates.
 - `scripts/validate_public_surface.py` checks CLI help/version, every supported MCP client config, and MCP stdio initialize/tools-list.
 - `scripts/smoke_repos.py` is the real-repo smoke automation for the fixed Python/Node/Go/Rust set.
 - GitHub Actions workflows use Node 24-compatible actions: `actions/checkout@v7`, `actions/setup-python@v6`, and immutable `astral-sh/setup-uv@v8.2.0`.
@@ -78,6 +79,8 @@ Run the checks that match the surface you changed.
   - `uv run context-crafter-mcp self-test .`
 - Local release gate:
   - `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1`
+- Installed artifact smoke:
+  - `powershell -ExecutionPolicy Bypass -File .\scripts\installed_artifact_smoke.ps1`
 - Release validation:
   - `uv run context-crafter-mcp generate . --output docs/generated --profile standard --json`
   - `uv run context-crafter-mcp validate docs/generated --json`

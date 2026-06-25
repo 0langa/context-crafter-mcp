@@ -82,6 +82,8 @@ Current release note: `0.8.0` is the consumer-value release line. Passing the lo
 - [ ] `pyproject.toml` version is `1.0.0`
 - [ ] `src/context_crafter_mcp/__init__.py` version is `1.0.0`
 - [ ] Wheel and sdist build cleanly
+- [ ] Installed artifact smoke passes:
+  - `powershell -ExecutionPolicy Bypass -File .\scripts\installed_artifact_smoke.ps1`
 - [ ] Installed wheel passes `doctor`, `self-test`, and `generate`/`validate`
 - [ ] Installed sdist passes the same checks
 - [ ] Git tag `1.0.0` exists and points to the release commit

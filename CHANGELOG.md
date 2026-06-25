@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `scripts/installed_artifact_smoke.ps1` as a repeatable wheel/sdist install smoke gate for release candidates.
+
 ### Changed
 
 - Clarified `SECURITY.md` threat-model coverage for MCP resources, output confinement, static-only behavior, and generated-output redaction.

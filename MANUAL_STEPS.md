@@ -31,15 +31,8 @@ Run this checklist before cutting any release tag.
    - `uv run context-crafter-mcp validate docs/generated --json`
    - `uv run context-crafter-mcp validate examples/outputs --repo examples/demo-repo --json`
 4. Smoke installed artifacts:
-   - remove stale ignored artifacts from `dist/` or explicitly select artifacts matching the version being released
-   - install the exact release wheel in a fresh venv
-   - install the exact release sdist in a fresh venv
-   - run `context-crafter-mcp --help`
-   - run `context-crafter-mcp version` and verify it matches the release version
-   - run `context-crafter-mcp doctor`
-   - run `context-crafter-mcp detect . --json`
-   - run `context-crafter-mcp generate . --output docs/generated --profile standard --json`
-   - run `context-crafter-mcp validate docs/generated --json`
+   - `powershell -ExecutionPolicy Bypass -File .\scripts\installed_artifact_smoke.ps1`
+   - The script builds exact-version artifacts, installs wheel and sdist in fresh venvs, then runs `--help`, `version`, `doctor`, `detect`, `self-test`, `generate`, and `validate` from the installed CLI.
 5. Run real-repo smoke automation and update the public matrix (maintainer/optional if network unavailable):
    - `uv run python scripts/smoke_repos.py`
    - Run that command from the repository root; it is the canonical maintainer invocation.
