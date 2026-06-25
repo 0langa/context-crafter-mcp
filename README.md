@@ -3,7 +3,7 @@
 [![CI](https://github.com/0langa/context-crafter-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/0langa/context-crafter-mcp/actions)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.6.0-blue)]
+[![Version](https://img.shields.io/badge/version-0.7.0b1-blue)]
 
 Local-first MCP server that turns source repositories into compact AI-agent context: project overviews, repo maps, dependency graphs, architecture notes, and validation reports.
 
@@ -36,7 +36,7 @@ uv run context-crafter-mcp --help
 
 ### From an installed artifact
 
-Current git tag is `0.6.0`. Until a package release is published to an installer-friendly index, install from a built wheel:
+Current beta git tag is `0.7.0b1`. Until a package release is published to an installer-friendly index, install from a built wheel:
 
 ```sh
 uv build

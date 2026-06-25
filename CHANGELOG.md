@@ -7,10 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0b1] - 2026-06-25
+
 ### Added
 
 - **Local release gate** (`scripts/local_release_gate.ps1`): Windows-friendly command bundle for project-state validation, Ruff, mypy, pytest, doctor, self-test, generate, and validate.
 - **Generic fallback honesty regression tests** (`tests/test_generic_fallback_honesty.py`): prove ambiguous repos stay generic when language-like files only appear in low-trust docs/tests/examples/tooling paths.
+- **Fresh beta smoke evidence**: fixed real-repo smoke automation passed for `pallets/click`, `sindresorhus/ky`, `spf13/cobra`, and `serde-rs/json`.
 
 ### Changed
 

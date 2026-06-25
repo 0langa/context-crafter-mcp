@@ -2,6 +2,8 @@
 
 Explicit checklist for the first stable release (`1.0.0`).
 
+Current beta note: `0.7.0b1` is a prerelease hardening gate. Passing the local gate is required for the beta, but the full stable `1.0.0` checklist below remains open until wheel/sdist, smoke, docs-truth, and surface-freeze evidence are complete.
+
 ## Required command pass set
 
 - [ ] Local reset-PC release gate passes:

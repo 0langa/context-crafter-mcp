@@ -1,6 +1,6 @@
 # Real Repo Smoke Matrix
 
-Maintainer-facing hardening confidence set for the current `0.6.0` baseline on `main` and the public `0.6.0` tag. These repos are not vendored into this repository.
+Maintainer-facing hardening confidence set for the current `0.7.0b1` beta line on `main`. These repos are not vendored into this repository.
 
 ## Fixed smoke set
 
@@ -48,14 +48,14 @@ uv run context-crafter-mcp validate <tmp-dir>/docs/generated --repo <tmp-dir> --
 
 ## Latest run
 
-Run date: `2026-06-02`
+Run date: `2026-06-25`
 
 | Repository | Detect | Generate | Validate | Files scanned | Warnings | Notes |
 |------------|--------|----------|----------|---------------|----------|-------|
-| `pallets/click` | pass | pass | pass | ~133 | unknown-stack warnings for non-Python stacks | detected `generic, python`; counts vary by scanner config and repo state |
-| `sindresorhus/ky` | pass | pass | pass | ~60 | unknown-stack warnings for non-Node stacks | detected `generic, node`; counts vary by scanner config and repo state |
-| `spf13/cobra` | pass | pass | pass | ~59 | unknown-stack warnings for non-Go stacks | detected `generic, go`; counts vary by scanner config and repo state |
-| `serde-rs/json` | pass | pass | pass | ~88 | unknown-stack warnings for non-Rust stacks | detected `generic, rust`; counts vary by scanner config and repo state |
+| `pallets/click` | pass | pass | pass | 133 | 5 unknown-stack warnings for non-Python stacks | detected `generic, python`; counts vary by scanner config and repo state |
+| `sindresorhus/ky` | pass | pass | pass | 60 | 5 unknown-stack warnings for non-Node stacks | detected `generic, node`; counts vary by scanner config and repo state |
+| `spf13/cobra` | pass | pass | pass | 59 | 5 unknown-stack warnings for non-Go stacks | detected `generic, go`; counts vary by scanner config and repo state |
+| `serde-rs/json` | pass | pass | pass | 88 | 5 unknown-stack warnings for non-Rust stacks | detected `generic, rust`; counts vary by scanner config and repo state |
 
 These warnings came from `detect_project` reporting unsupported/non-matching stacks as `unknown`; they were not generation or validation failures.
 

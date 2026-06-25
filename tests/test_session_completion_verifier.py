@@ -82,12 +82,13 @@ def _make_valid_report(path: Path, run_id: str | None = None) -> None:
         "| Run ID | Target | Classification | Reason |\n"
         "|---|---|---|---|\n"
         f"| {run_id} | L3-GENNOISE-001 | targeted-regression | test |\n\n"
-        if run_id else ""
+        if run_id
+        else ""
     )
     evidence_rows = (
         f"| Targeted issue proof | PASS | {run_id} | path | note |\n"
-        if run_id else
-        "| Contract docs updated | PASS | N/A | path | note |\n"
+        if run_id
+        else "| Contract docs updated | PASS | N/A | path | note |\n"
     )
     path.write_text(
         "# Session summary\n\n"
@@ -130,8 +131,10 @@ class TestExplicitInputRequired:
         """Auto-discovery is disabled; missing --report must fail closed."""
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "targeted-regression",
-            "--run-id", "RUN-20260603-032309-codex-e847",
+            "--profile",
+            "targeted-regression",
+            "--run-id",
+            "RUN-20260603-032309-codex-e847",
         )
         assert code == 1
         assert payload["pass"] is False
@@ -146,8 +149,10 @@ class TestExplicitInputRequired:
         _make_valid_report(report, run_id="RUN-20260603-032309-codex-e847")
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "targeted-regression",
-            "--report", str(report),
+            "--profile",
+            "targeted-regression",
+            "--report",
+            str(report),
         )
         assert code == 1
         assert payload["pass"] is False
@@ -162,8 +167,10 @@ class TestExplicitInputRequired:
         _make_valid_report(report, run_id=None)
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "platform-contract-change",
-            "--report", str(report),
+            "--profile",
+            "platform-contract-change",
+            "--report",
+            str(report),
         )
         # Should pass validate-contract live check and other checks
         assert code == 0, f"Unexpected failure: {json.dumps(payload, indent=2)}"
@@ -186,8 +193,10 @@ class TestStaleEvidenceRejection:
         # Provide a report that references a valid run, but do NOT provide --run-id
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "targeted-regression",
-            "--report", str(report),
+            "--profile",
+            "targeted-regression",
+            "--report",
+            str(report),
         )
         assert code == 1
         assert payload["pass"] is False
@@ -200,7 +209,8 @@ class TestStaleEvidenceRejection:
         """Even if a valid old report exists on disk, missing --report must fail."""
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "platform-contract-change",
+            "--profile",
+            "platform-contract-change",
         )
         assert code == 1
         assert payload["pass"] is False
@@ -220,9 +230,12 @@ class TestReportStructure:
         _make_valid_report(report, run_id="RUN-20260603-032309-codex-e847")
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "targeted-regression",
-            "--run-id", "RUN-20260603-032309-codex-e847",
-            "--report", str(report),
+            "--profile",
+            "targeted-regression",
+            "--run-id",
+            "RUN-20260603-032309-codex-e847",
+            "--report",
+            str(report),
         )
         assert code == 0, f"Expected pass but got: {json.dumps(payload, indent=2)}"
         assert payload["pass"] is True
@@ -240,9 +253,12 @@ class TestReportStructure:
         )
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "targeted-regression",
-            "--run-id", "RUN-20260603-032309-codex-e847",
-            "--report", str(report),
+            "--profile",
+            "targeted-regression",
+            "--run-id",
+            "RUN-20260603-032309-codex-e847",
+            "--report",
+            str(report),
         )
         assert code == 1
         struct_check = next((c for c in payload["checks"] if c["name"] == "report structure"), None)
@@ -268,9 +284,12 @@ class TestReportStructure:
         )
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "targeted-regression",
-            "--run-id", "RUN-20260603-032309-codex-e847",
-            "--report", str(report),
+            "--profile",
+            "targeted-regression",
+            "--run-id",
+            "RUN-20260603-032309-codex-e847",
+            "--report",
+            str(report),
         )
         assert code == 1
         table_check = next((c for c in payload["checks"] if c["name"] == "evidence table completeness"), None)
@@ -304,9 +323,12 @@ class TestReportToRunBinding:
         )
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "targeted-regression",
-            "--run-id", "RUN-20260603-032309-codex-e847",
-            "--report", str(report),
+            "--profile",
+            "targeted-regression",
+            "--run-id",
+            "RUN-20260603-032309-codex-e847",
+            "--report",
+            str(report),
         )
         assert code == 1
         binding_check = next((c for c in payload["checks"] if c["name"] == "report-to-run binding"), None)
@@ -319,9 +341,12 @@ class TestReportToRunBinding:
         _make_valid_report(report, run_id="RUN-20260603-032309-codex-e847")
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "targeted-regression",
-            "--run-id", "RUN-20260603-032309-codex-e847",
-            "--report", str(report),
+            "--profile",
+            "targeted-regression",
+            "--run-id",
+            "RUN-20260603-032309-codex-e847",
+            "--report",
+            str(report),
         )
         assert code == 0
         binding_check = next((c for c in payload["checks"] if c["name"] == "report-to-run binding"), None)
@@ -355,9 +380,12 @@ class TestReleaseGateContradiction:
         )
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "release-gate",
-            "--run-id", "RUN-20260603-032309-codex-e847",
-            "--report", str(report),
+            "--profile",
+            "release-gate",
+            "--run-id",
+            "RUN-20260603-032309-codex-e847",
+            "--report",
+            str(report),
         )
         assert code == 1
         assert payload["pass"] is False
@@ -396,9 +424,12 @@ class TestNonCanonicalProofRejection:
         )
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "targeted-regression",
-            "--run-id", "RUN-SCRATCH-001",
-            "--report", str(report),
+            "--profile",
+            "targeted-regression",
+            "--run-id",
+            "RUN-SCRATCH-001",
+            "--report",
+            str(report),
         )
         assert code == 1
         run_check = next((c for c in payload["checks"] if c["name"] == "required run execution"), None)
@@ -406,7 +437,11 @@ class TestNonCanonicalProofRejection:
         assert run_check["pass"] is False
         # The run check fails because the scratch run ID has no raw dir or ledger.
         # The detail may describe the count failure or the per-run missing artifacts.
-        assert "valid" in run_check["detail"].lower() or "raw run dir" in run_check["detail"].lower() or "ledger" in run_check["detail"].lower()
+        assert (
+            "valid" in run_check["detail"].lower()
+            or "raw run dir" in run_check["detail"].lower()
+            or "ledger" in run_check["detail"].lower()
+        )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -437,15 +472,16 @@ class TestContradictionDetection:
         # Use a fake run ID so run check fails, triggering contradiction with "complete"
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "targeted-regression",
-            "--run-id", "RUN-FAKE-000000000000-0000",
-            "--report", str(report),
+            "--profile",
+            "targeted-regression",
+            "--run-id",
+            "RUN-FAKE-000000000000-0000",
+            "--report",
+            str(report),
         )
         assert code == 1
         assert payload["pass"] is False
-        contradiction_check = next(
-            (c for c in payload["checks"] if "closure claim consistency" in c["name"]), None
-        )
+        contradiction_check = next((c for c in payload["checks"] if "closure claim consistency" in c["name"]), None)
         assert contradiction_check is not None
         assert contradiction_check["pass"] is False
         assert "completion" in contradiction_check["detail"].lower()
@@ -463,13 +499,13 @@ class TestPlatformContractChange:
         _make_valid_report(report, run_id=None)
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "platform-contract-change",
-            "--report", str(report),
+            "--profile",
+            "platform-contract-change",
+            "--report",
+            str(report),
         )
         assert code == 0, f"Unexpected failure: {json.dumps(payload, indent=2)}"
-        contract_check = next(
-            (c for c in payload["checks"] if c["name"] == "platform contract validation"), None
-        )
+        contract_check = next((c for c in payload["checks"] if c["name"] == "platform contract validation"), None)
         assert contract_check is not None
         assert contract_check["pass"] is True
         assert "zero issues" in contract_check["detail"]
@@ -484,7 +520,8 @@ class TestQuietFlag:
     def test_quiet_flag_suppresses_human_block(self) -> None:
         code, payload = _run_tool(
             "verify-session-completion",
-            "--profile", "targeted-regression",
+            "--profile",
+            "targeted-regression",
             "--quiet",
         )
         assert isinstance(payload, dict)

@@ -2,9 +2,19 @@
 
 ## Current state
 
-- Package version in code is **`0.6.0`**.
-- Latest public git tag on the remote is **`0.6.0`**.
-- Current local `main` and the public `0.6.0` tag are aligned on the current hardening baseline.
+- Package version in code is **`0.7.0b1`**.
+- Latest public git tag on the remote is **`0.7.0b1`**.
+- Current local `main` is aligned to the **`0.7.0b1` beta** release line.
+
+### What is landing in `0.7.0b1`
+
+The `0.7.0b1` beta adds:
+
+- local release gate automation for the reset-PC setup
+- generic fallback honesty hardening and regression coverage
+- retired D-drive external testing references rewritten as historical context
+- optional session-completion verifier tests that skip unless a rebuilt external verifier is configured
+- fresh fixed real-repo smoke evidence for Python, Node/TypeScript, Go, and Rust
 
 ### What shipped in `0.6.0`
 
@@ -38,20 +48,30 @@ Purpose:
 
 Status: complete. `0.6.0` is now tagged and published as the verified hardening baseline.
 
-### Phase 2: Execute the pre-`1.0.0` gate
+### Phase 2: Cut the `0.7.0b1` beta
 
-Use [`docs/PRE_1_0_GATE.md`](PRE_1_0_GATE.md) as the checklist of record.
+Use the local gate plus release checklist additions as the beta confidence set.
 
 Focus:
 
 - local release gate execution via `scripts/local_release_gate.ps1`
+- version, changelog, and tag alignment for `0.7.0b1`
+- wheel and sdist verification
+- GitHub prerelease creation with attached artifacts where practical
+
+### Phase 3: Execute the pre-`1.0.0` gate
+
+Use [`docs/PRE_1_0_GATE.md`](PRE_1_0_GATE.md) as the stable-release checklist of record.
+
+Focus:
+
 - acceptance commands on a clean checkout
 - wheel and sdist verification
 - smoke evidence captured and documented
 - docs-truth audit across README, architecture, limitations, security, and output contract
 - MCP tool/resource/result-surface stability review
 
-### Phase 3: Decide whether to tag `1.0.0`
+### Phase 4: Decide whether to tag `1.0.0`
 
 Tag `1.0.0` only when all of these are true:
 
