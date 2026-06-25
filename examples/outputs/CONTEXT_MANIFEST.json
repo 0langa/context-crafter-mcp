@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
   "schema_mode": "additive",
-  "generated_by": "context-crafter-mcp v0.7.0b1",
-  "generated_at": "2026-06-25T14:59:37.234281+00:00",
+  "generated_by": "context-crafter-mcp v0.8.0",
+  "generated_at": "2026-06-25T15:07:42.303182+00:00",
   "repo_path": "examples/demo-repo",
   "project_types": [
     "generic",

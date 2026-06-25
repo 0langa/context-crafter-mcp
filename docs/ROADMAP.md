@@ -2,9 +2,9 @@
 
 ## Current state
 
-- Package version in code is **`0.7.0b1`**.
-- Latest public git tag on the remote is **`0.7.0b1`**.
-- Current `main` is the **post-`0.7.0b1` feature and hardening line** with post-`0.7.0b1` hardening commits after the beta tag.
+- Package version in code is **`0.8.0`**.
+- Latest public git tag on the remote is **`0.8.0`**.
+- Current `main` is the **`0.8.0` consumer-value release line**.
 
 ### What shipped in `0.7.0b1`
 
@@ -37,7 +37,7 @@ The project is no longer just proving out the architecture. The current work is 
 2. Truthfulness and bounded-scan behavior are now a larger focus than raw feature growth.
 3. Python / Node / Go / Rust have meaningful real-repo smoke confidence; Java / .NET remain supported but lower-confidence, fixture-backed stacks.
 4. Generic fallback honesty is now guarded locally after the retired external D-drive platform became unavailable.
-5. The next value push is better downstream consumption: agents should know which generated file to read first, which files are human-facing, and which JSON surfaces are automation-facing.
+5. The `0.8.0` value push improved downstream consumption; the next focus is release-candidate hardening and public contract freeze.
 
 ## Concrete release plan
 
@@ -63,7 +63,9 @@ Purpose:
 - preserve the additive output contract while adding high-value metadata
 - keep the release small enough to validate with the existing local gate
 
-Focus:
+Status: complete. `0.8.0` packages the consumer-value generated-bundle features added after the `0.7.0b1` beta.
+
+Shipped:
 
 - `CONTEXT_MANIFEST.json` as the generated-bundle manifest
 - `EVIDENCE_LEDGER.json` as a filterable evidence surface for agent trust decisions

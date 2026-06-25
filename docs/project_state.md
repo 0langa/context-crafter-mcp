@@ -1,9 +1,9 @@
 # Project State
 
 - Last reviewed: `2026-06-25`
-- Package version: `0.7.0b1`
-- Latest public git tag: `0.7.0b1`
-- Current milestone: post-`0.7.0b1` feature/hardening toward `0.8.0`, then `0.9.0`, then `1.0.0`
+- Package version: `0.8.0`
+- Latest public git tag: `0.8.0`
+- Current milestone: `0.9.0` release-candidate hardening, then `1.0.0`
 - Memory model: `agent-authored, validator-checked`
 - Critical rule: Update this file directly whenever repo reality changes. For long runs, update it at each meaningful milestone before context compaction risk grows.
 
@@ -49,8 +49,8 @@ The checked-in product surface is centered on:
 - Generated-output writes apply conservative redaction for obvious key/token/password values; this is a last-mile guard, not a full secret-scanning engine.
 - MCP resources under `context-crafter://latest/<filename>` use file-appropriate MIME types for Markdown, Mermaid, JSON, and optional HTML generated files.
 - The local release gate is `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1`; network-dependent smoke testing remains separate.
-- The current release is the `0.7.0b1` beta prerelease. It is not the stable `1.0.0` gate.
-- Current feature sprint is aimed at `0.8.0`; `0.9.0` is expected to be the release-candidate hardening line before `1.0.0`.
+- The current release is `0.8.0`. It is not the stable `1.0.0` gate.
+- Current hardening is aimed at `0.9.0`, expected to be the release-candidate line before `1.0.0`.
 - CI and CodeQL should stay free of Node 20 deprecation annotations before any stable-release cut.
 - Fresh fixed real-repo smoke automation passed on `2026-06-25` for `pallets/click`, `sindresorhus/ky`, `spf13/cobra`, and `serde-rs/json`.
 - The historical bounded-scan honesty logic used a three-tier materiality test: hard blocker for `budget_exhausted`, major blocker for material non-budget skips (>=5 files or >=5% ratio), minor finding for benign skips only.

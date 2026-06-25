@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CURRENT_BETA_TAG = "0.7.0b1"
+CURRENT_RELEASE_TAG = "0.8.0"
 EXPECTED_GENERATION_PHRASE = "9 required Markdown files plus `DEPENDENCY_GRAPH.mmd`, `EVIDENCE_LEDGER.json`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json`"
 EXPECTED_ACTION_BASELINES = [
     "actions/checkout@v7",
@@ -58,12 +58,12 @@ def validate() -> list[str]:
     if "all 8 Markdown files + `RUN_STATE.json`" in pre_gate:
         issues.append("docs/PRE_1_0_GATE.md contains stale generated-output wording.")
 
-    if _is_head_ahead_of_tag(CURRENT_BETA_TAG):
-        required_post_beta_phrase = f"post-`{CURRENT_BETA_TAG}` hardening commits"
-        if required_post_beta_phrase not in roadmap:
+    if _is_head_ahead_of_tag(CURRENT_RELEASE_TAG):
+        required_post_release_phrase = f"post-`{CURRENT_RELEASE_TAG}` hardening commits"
+        if required_post_release_phrase not in roadmap:
             issues.append(
-                "docs/ROADMAP.md must say main has post-beta hardening commits "
-                f"when HEAD is ahead of {CURRENT_BETA_TAG}."
+                "docs/ROADMAP.md must say main has post-release hardening commits "
+                f"when HEAD is ahead of {CURRENT_RELEASE_TAG}."
             )
 
     for action in EXPECTED_ACTION_BASELINES:
@@ -85,9 +85,9 @@ def validate() -> list[str]:
     if "cache-suffix: ${{ matrix.os }}-${{ matrix.python-version }}" not in ci:
         issues.append("CI workflow must include matrix-specific setup-uv cache-suffix.")
 
-    beta_tag_pattern = re.compile(r"Latest public git tag(?: on the remote)?: `?0\.7\.0b1`?")
-    if not beta_tag_pattern.search(roadmap) and "Latest public git tag: `0.7.0b1`" not in project_state:
-        issues.append("Release docs must record latest public git tag 0.7.0b1.")
+    release_tag_pattern = re.compile(r"Latest public git tag(?: on the remote)?: `?0\.8\.0`?")
+    if not release_tag_pattern.search(roadmap) and "Latest public git tag: `0.8.0`" not in project_state:
+        issues.append("Release docs must record latest public git tag 0.8.0.")
 
     return issues
 

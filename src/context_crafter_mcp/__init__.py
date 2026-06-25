@@ -9,4 +9,4 @@ warnings.filterwarnings("ignore", category=PendingDeprecationWarning, module="la
 warnings.filterwarnings("ignore", category=PendingDeprecationWarning, module="langchain_core")
 warnings.simplefilter("ignore", LangChainPendingDeprecationWarning)
 
-__version__ = "0.7.0b1"
+__version__ = "0.8.0"
