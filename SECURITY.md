@@ -1,17 +1,31 @@
 # Security Policy
 
+## Scope
+
+`context-crafter-mcp` is a local-first, static-analysis CLI and MCP stdio server. It reads repository files, detects likely project stacks, and writes generated context documentation into an output directory that is confined to the scanned repository root.
+
+The primary runtime surfaces are:
+
+- CLI commands: `detect`, `generate`, `validate`, `doctor`, `self-test`, `mcp-config`, and `serve`.
+- MCP tools: repository detection, context generation, individual document generation, validation, and capability explanation.
+- Session-scoped MCP resources under `context-crafter://latest/<filename>` after generation.
+
 ## Threat Model
 
-`context-crafter-mcp` is a local-first, static-analysis tool. It reads source files and writes generated documentation into a configurable output directory inside the repository.
+Primary threats and current mitigations:
 
-Primary threats we design against:
-
-- **Directory traversal via output_dir** — mitigated by resolving output path and enforcing it stays within the repository root.
-- **Confused-deputy writes to surprising paths** — mitigated by reporting `resolved_output_dir` in generation results so automation can verify the actual write location.
-- **Symlink traversal / infinite loops** — mitigated by not following symlinks during scanning.
-- **Arbitrary code execution in target repo** — mitigated by static analysis only; no execution of target code.
-- **Exfiltration via generated docs** — mitigated by local-only operation; no network calls during generation.
-- **Prompt injection via untrusted source text** — mitigated by treating all source text as untrusted and escaping it in rendered output.
+| Threat | Existing mitigation |
+|--------|---------------------|
+| Directory traversal via `output_dir` | Output paths are resolved under the repository root; escaping paths are confined to `docs/generated`. |
+| Confused-deputy writes to surprising paths | Generation results include `resolved_output_dir` so callers can verify the actual write location. |
+| Arbitrary local file reads through MCP resources | Resource reads are session-scoped to files generated in the current server session; arbitrary local paths and traversal are rejected. |
+| Symlink traversal or recursive filesystem loops | Scans do not follow symlinks. |
+| Unbounded scanning denial of service | Scans are bounded by depth, file count, per-directory caps, and file size limits. |
+| Arbitrary code execution in a target repo | Analysis is static-only; Context Crafter does not execute target repository code. |
+| Network exfiltration during generation | Generation is local-only and does not make network calls. |
+| Secret-like values copied into generated output | Generated writes apply conservative redaction for obvious key/token/password assignments and values. |
+| Prompt injection through untrusted source text | Source text is treated as untrusted input; generated claims should remain evidence-backed and explicit about unknowns. |
+| MCP stdio protocol corruption | Server mode avoids stdout logging outside MCP protocol messages. |
 
 ## Safe Defaults
 
@@ -26,12 +40,17 @@ Primary threats we design against:
 
 ## Secret Handling
 
-The tool does not attempt to redact secrets from source files. Generated documentation may contain hardcoded credentials if they exist in the source. Review generated output before sharing it.
+Generated-output writes apply conservative redaction for obvious key/token/password values, including common assignment and JSON-like forms. This is a last-mile sharing guard, not a full secret-scanning engine.
+
+Do not treat generated documentation as guaranteed secret-free. Review generated output before sharing it outside the trusted environment, especially when scanning private repositories.
 
 ## Known Limitations
 
 - Static analysis cannot detect runtime behavior, dynamic imports, or conditional architecture.
 - Generated docs reflect the state of the repo at scan time.
+- Redaction is heuristic and intentionally conservative; it can miss unusual secret formats and can redact benign examples.
+- The tool does not authenticate MCP clients. Run it only in trusted local MCP client configurations.
+- Generated resources are in-memory/session-scoped; restarting the MCP server clears the resource registry.
 - HTML rendering uses the `markdown` library with stdlib fallback; most common Markdown constructs render correctly.
 
 ## Reporting Process

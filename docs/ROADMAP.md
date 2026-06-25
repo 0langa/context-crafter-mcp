@@ -4,7 +4,7 @@
 
 - Package version in code is **`0.8.0`**.
 - Latest public git tag on the remote is **`0.8.0`**.
-- Current `main` is the **`0.8.0` consumer-value release line**.
+- Current `main` is the **post-`0.8.0` hardening line** with post-`0.8.0` hardening commits after the release tag.
 
 ### What shipped in `0.7.0b1`
 

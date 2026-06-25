@@ -28,6 +28,7 @@ REQUIRED_PATHS = [
     "docs/OUTPUT_CONTRACT.md",
     "docs/MCP_CLIENTS.md",
     "docs/LIMITATIONS.md",
+    "SECURITY.md",
     "src/context_crafter_mcp/cli.py",
     "src/context_crafter_mcp/server.py",
     "tests",

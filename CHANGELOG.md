@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Clarified `SECURITY.md` threat-model coverage for MCP resources, output confinement, static-only behavior, and generated-output redaction.
+
 ### Fixed
 
 ## [0.8.0] - 2026-06-25

@@ -49,6 +49,7 @@ def validate() -> list[str]:
     roadmap = _read("docs/ROADMAP.md")
     project_state = _read("docs/project_state.md")
     changelog = _read("CHANGELOG.md")
+    security = _read("SECURITY.md")
     ci = _read(".github/workflows/ci.yml")
     smoke = _read(".github/workflows/smoke-repos.yml")
     codeql = _read(".github/workflows/codeql.yml")
@@ -88,6 +89,16 @@ def validate() -> list[str]:
     release_tag_pattern = re.compile(r"Latest public git tag(?: on the remote)?: `?0\.8\.0`?")
     if not release_tag_pattern.search(roadmap) and "Latest public git tag: `0.8.0`" not in project_state:
         issues.append("Release docs must record latest public git tag 0.8.0.")
+
+    security_required = [
+        "static-analysis CLI and MCP stdio server",
+        "Resource reads are session-scoped",
+        "conservative redaction for obvious key/token/password values",
+        "not a full secret-scanning engine",
+    ]
+    for phrase in security_required:
+        if phrase not in security:
+            issues.append(f"SECURITY.md must mention current security posture: {phrase}")
 
     return issues
 

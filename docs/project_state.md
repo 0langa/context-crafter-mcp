@@ -20,12 +20,14 @@ The checked-in product surface is centered on:
 ## Active Surfaces
 - `.kimi-code/AGENTS.md` is the Kimi operating guide for this repo.
 - `README.md`, `docs/ARCHITECTURE.md`, `docs/OUTPUT_CONTRACT.md`, `docs/MCP_CLIENTS.md`, and `docs/LIMITATIONS.md` are the main durable docs that can drift.
+- `SECURITY.md` is the stable security policy and threat-model summary for the CLI/MCP surfaces.
 - `docs/testing/TEST_ENVIRONMENT_HANDOFF.md` is the tracked repo-side anchor for rebuilding or replacing the retired external `context-crafter-tests` planning and reporting flow.
 - The old D-drive external testing platform no longer exists on the current development machine. Treat previous D-drive references as historical only.
 - `CHANGELOG.md`, `docs/ROADMAP.md`, `docs/REAL_REPO_SMOKE_MATRIX.md`, `MANUAL_STEPS.md`, and `IMPLEMENTATION_REPORT.md` are release-truth docs that must stay aligned with the current version.
 - `src/context_crafter_mcp/cli.py` and `src/context_crafter_mcp/server.py` are the main entrypoints for CLI and MCP use.
 - `scripts/validate_project_state.py` validates this file's contract and core references. It does not write repo truth for you.
 - `scripts/validate_release_docs.py` validates release-truth docs against current tag/HEAD and workflow action baselines.
+- `scripts/validate_release_docs.py` also validates that `SECURITY.md` reflects current redaction, MCP resource, and local static-analysis posture.
 - `scripts/local_release_gate.ps1` is the current reset-PC local release gate command bundle.
 - `scripts/validate_public_surface.py` checks CLI help/version, every supported MCP client config, and MCP stdio initialize/tools-list.
 - `scripts/smoke_repos.py` is the real-repo smoke automation for the fixed Python/Node/Go/Rust set.
