@@ -2,9 +2,9 @@
 
 ## Current state
 
-- Package version in code is **`0.8.0`**.
-- Latest public git tag on the remote is **`0.8.0`**.
-- Current `main` is the **post-`0.8.0` hardening line** with post-`0.8.0` hardening commits after the release tag.
+- Package version in code is **`0.9.0`**.
+- Latest public git tag on the remote is **`0.9.0`**.
+- Current `main` is the **`0.9.0` release-candidate line** for final `1.0.0` stabilization.
 
 ### What shipped in `0.7.0b1`
 
@@ -37,7 +37,7 @@ The project is no longer just proving out the architecture. The current work is 
 2. Truthfulness and bounded-scan behavior are now a larger focus than raw feature growth.
 3. Python / Node / Go / Rust have meaningful real-repo smoke confidence; Java / .NET remain supported but lower-confidence, fixture-backed stacks.
 4. Generic fallback honesty is now guarded locally after the retired external D-drive platform became unavailable.
-5. The `0.8.0` value push improved downstream consumption; the next focus is release-candidate hardening and public contract freeze.
+5. The `0.9.0` release-candidate line freezes the public contract and proves installed artifacts before the final `1.0.0` push.
 
 ## Concrete release plan
 
@@ -81,7 +81,9 @@ Purpose:
 - freeze the public CLI/MCP/output contract before `1.0.0`
 - expand confidence from local fixtures to maintained real-repo smoke evidence
 
-Focus:
+Status: complete. `0.9.0` is the release-candidate hardening line before `1.0.0`.
+
+Shipped:
 
 - installed wheel and sdist smoke on clean temporary environments
 - repeatable installed-artifact smoke gate for release candidates

@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CURRENT_RELEASE_TAG = "0.8.0"
+CURRENT_RELEASE_TAG = "0.9.0"
 EXPECTED_GENERATION_PHRASE = "9 required Markdown files plus `DEPENDENCY_GRAPH.mmd`, `EVIDENCE_LEDGER.json`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json`"
 EXPECTED_ACTION_BASELINES = [
     "actions/checkout@v7",
@@ -87,9 +87,9 @@ def validate() -> list[str]:
     if "cache-suffix: ${{ matrix.os }}-${{ matrix.python-version }}" not in ci:
         issues.append("CI workflow must include matrix-specific setup-uv cache-suffix.")
 
-    release_tag_pattern = re.compile(r"Latest public git tag(?: on the remote)?: `?0\.8\.0`?")
-    if not release_tag_pattern.search(roadmap) and "Latest public git tag: `0.8.0`" not in project_state:
-        issues.append("Release docs must record latest public git tag 0.8.0.")
+    release_tag_pattern = re.compile(r"Latest public git tag(?: on the remote)?: `?0\.9\.0`?")
+    if not release_tag_pattern.search(roadmap) and "Latest public git tag: `0.9.0`" not in project_state:
+        issues.append("Release docs must record latest public git tag 0.9.0.")
 
     security_required = [
         "static-analysis CLI and MCP stdio server",

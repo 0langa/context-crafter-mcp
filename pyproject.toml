@@ -1,6 +1,6 @@
 [project]
 name = "context-crafter-mcp"
-version = "0.8.0"
+version = "0.9.0"
 description = "Local-first MCP server that turns source repositories into compact AI-agent context: project overviews, repo maps, dependency graphs, architecture notes, and validation reports."
 requires-python = ">=3.11"
 authors = [

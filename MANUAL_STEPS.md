@@ -2,7 +2,7 @@
 
 Steps that remain intentionally manual for release and repository stewardship.
 
-Roadmap note: the current public release is `0.8.0`. The active release train targets `0.9.0`, then the first stable release at `1.0.0`.
+Roadmap note: the current public release is `0.9.0`. The active release train targets the first stable release at `1.0.0`.
 
 ## Repository settings
 

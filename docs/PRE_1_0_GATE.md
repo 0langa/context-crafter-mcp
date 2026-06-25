@@ -2,7 +2,7 @@
 
 Explicit checklist for the first stable release (`1.0.0`).
 
-Current release note: `0.8.0` is the consumer-value release line. Passing the local gate is required for `0.8.0`, but the full stable `1.0.0` checklist below remains open until wheel/sdist, smoke, docs-truth, and surface-freeze evidence are complete.
+Current release note: `0.9.0` is the release-candidate hardening line and beta gate for the final stable push. Passing the local gate is required for `0.9.0`, but the full stable `1.0.0` checklist below remains open until the final version bump, docs audit, and stable tag/release are complete.
 
 ## Required command pass set
 

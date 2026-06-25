@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.9.0] - 2026-06-25
+
+### Added
+
 - Added `scripts/installed_artifact_smoke.ps1` as a repeatable wheel/sdist install smoke gate for release candidates.
 - Added `docs/PUBLIC_SURFACE_FREEZE.md` to record the CLI, MCP, resource, generated-file, and machine-readable JSON contracts before `1.0.0`.
 

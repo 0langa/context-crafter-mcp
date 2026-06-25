@@ -1,6 +1,6 @@
 # Real Repo Smoke Matrix
 
-Maintainer-facing hardening confidence set for the current `0.8.0` line on `main`. These repos are not vendored into this repository.
+Maintainer-facing hardening confidence set for the current `0.9.0` line on `main`. These repos are not vendored into this repository.
 
 ## Fixed smoke set
 
@@ -48,7 +48,7 @@ uv run context-crafter-mcp validate <tmp-dir>/docs/generated --repo <tmp-dir> --
 
 ## Latest run
 
-Run date: `2026-06-25`
+Run date: `2026-06-25` for the `0.9.0` release-candidate line.
 
 | Repository | Detect | Generate | Validate | Files scanned | Warnings | Notes |
 |------------|--------|----------|----------|---------------|----------|-------|
