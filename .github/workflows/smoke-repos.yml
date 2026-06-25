@@ -28,7 +28,7 @@ jobs:
         run: uv run python scripts/smoke_repos.py --output docs/generated/smoke-results.json
 
       - name: Upload smoke results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: smoke-results
           path: docs/generated/smoke-results.json
