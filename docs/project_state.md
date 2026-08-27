@@ -40,7 +40,7 @@ The checked-in product surface is centered on:
   trigger layer. `commands/context-map.md` is the slash command. These can drift from the MCP tool
   surface and should be reviewed whenever tools or generated files change.
 - `.github/workflows/release.yml` builds artifacts on a version tag, publishes to PyPI via trusted publishing, and attaches the wheel and sdist to the GitHub release. It verifies that the tag matches `__version__` before building.
-- GitHub Actions workflows use Node 24-compatible actions: `actions/checkout@v7`, `actions/setup-python@v6`, and immutable `astral-sh/setup-uv@v8.2.0`.
+- GitHub Actions workflows use Node 24-compatible actions: `actions/checkout@v7`, `actions/setup-python@v7`, immutable `astral-sh/setup-uv@v10.0.1`, `actions/upload-artifact@v7`, and `actions/download-artifact@v8`.
 - The package is distributed on PyPI as `context-crafter-mcp`; the documented `uvx context-crafter-mcp serve` MCP client config resolves that published package.
 
 ## Current Truths

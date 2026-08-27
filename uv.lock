@@ -321,7 +321,7 @@ requires-dist = [
     { name = "tree-sitter-javascript", marker = "extra == 'parsers'" },
     { name = "tree-sitter-rust", marker = "extra == 'parsers'" },
     { name = "tree-sitter-typescript", marker = "extra == 'parsers'" },
-    { name = "uuid-utils", specifier = "<0.17" },
+    { name = "uuid-utils", specifier = "<0.18" },
 ]
 provides-extras = ["dev", "parsers"]
 

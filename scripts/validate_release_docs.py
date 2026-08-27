@@ -13,8 +13,8 @@ CURRENT_RELEASE_TAG = "1.0.0"
 EXPECTED_GENERATION_PHRASE = "9 required Markdown files plus `DEPENDENCY_GRAPH.mmd`, `EVIDENCE_LEDGER.json`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json`"
 EXPECTED_ACTION_BASELINES = [
     "actions/checkout@v7",
-    "actions/setup-python@v6",
-    "astral-sh/setup-uv@v8.2.0",
+    "actions/setup-python@v7",
+    "astral-sh/setup-uv@v10.0.1",
 ]
 
 
@@ -78,7 +78,10 @@ def validate() -> list[str]:
     stale_actions = [
         "actions/checkout@v4",
         "actions/setup-python@v5",
+        "actions/setup-python@v6",
         "astral-sh/setup-uv@v5",
+        "astral-sh/setup-uv@v8.2.0",
+        "actions/upload-artifact@v4",
     ]
     for action in stale_actions:
         if action in workflow_text:

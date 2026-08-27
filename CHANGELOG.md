@@ -57,6 +57,14 @@ recorded in `docs/PUBLIC_SURFACE_FREEZE.md` are now frozen under semantic versio
 - `mcp-config --repo <path>` no longer discards the requested client. It previously returned the
   JSON development config regardless of which client was asked for.
 
+### Dependencies
+
+- Advanced the GitHub Actions baseline to `actions/setup-python@v7`, `astral-sh/setup-uv@v10.0.1`,
+  `actions/upload-artifact@v7`, and `actions/download-artifact@v8`. `actions/checkout@v7` is
+  unchanged. `scripts/validate_release_docs.py` now treats the superseded versions as stale so the
+  workflows cannot drift back onto Node 20 actions.
+- Raised the `uuid-utils` constraint from `<0.17` to `<0.18`.
+
 ## [0.9.0] - 2026-06-25
 
 ### Added
