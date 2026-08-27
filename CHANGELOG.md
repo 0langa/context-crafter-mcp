@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The `github-release` job in `.github/workflows/release.yml` now depends on `build` instead of
+  `publish-pypi`. During the `1.0.0` release a missing PyPI trusted publisher failed the publish job
+  and skipped the GitHub release with it, even though the artifacts had built cleanly. The two
+  publish targets are now independent.
+
 ## [1.0.0] - 2026-08-27
 
 First stable release. The public CLI, MCP, generated-file, and machine-readable JSON contracts
