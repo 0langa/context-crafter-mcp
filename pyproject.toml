@@ -25,6 +25,9 @@ dependencies = [
     "mcp[cli]",
     "langgraph",
     "pydantic",
+    # Transitive (via mcp). Capped deliberately: newer releases have shipped without a cp313
+    # wheel, which breaks the Python 3.13 CI leg. Raise the cap only after confirming the target
+    # version publishes cp313 wheels. Do not drop this line just because nothing imports it.
     "uuid-utils<0.18",
     "pathspec",
     "javalang",

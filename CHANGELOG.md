@@ -9,7 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Documented in `pyproject.toml` why the `uuid-utils` cap exists. It is a transitive dependency via
+  `mcp` that nothing imports directly, so it reads as removable; the cap is there because newer
+  releases have shipped without a cp313 wheel and break the Python 3.13 CI leg.
+
 ### Changed
+
+- Rewrote `NEXT_STEPS.md` for the post-`1.0.0` posture and added a maintainer-traps section covering
+  the `uuid-utils` cap, the action-baseline guard in `scripts/validate_release_docs.py`, stale
+  dependabot branches, and the per-client `mcp-config` output format.
 
 ### Fixed
 

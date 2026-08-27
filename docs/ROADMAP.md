@@ -5,6 +5,7 @@
 - Package version in code: **`1.0.0`**.
 - Latest public git tag on the remote: `1.0.0`.
 - `main` is the **stable `1.0.0` line**. The public contract is frozen; changes are additive-only until a major bump.
+- `main` carries post-`1.0.0` hardening commits that are not in the `1.0.0` tag. They ship in the next release.
 
 ### What shipped in `1.0.0`
 
