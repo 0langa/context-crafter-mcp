@@ -108,6 +108,34 @@ uv run context-crafter-mcp validate docs/generated
 | standard | Default balanced detail |
 | deep | Maximum detail for manual review or large repos |
 
+## Use as a plugin
+
+The repository is also a [plugin-forge](https://github.com/0langa/plugin-forge) plugin for Claude
+Code, Codex, and Kimi Code. The plugin bundles the MCP server with two skills and a slash command,
+so the agent knows *when* to reach for the tools instead of only *how*.
+
+| Surface | Name | Purpose |
+|---------|------|---------|
+| Skill | `crafter:using-context-crafter` | When to use the tools, what the outputs mean, evidence discipline, limits |
+| Skill | `crafter:onboard-repo` | Step-by-step workflow for orienting in an unfamiliar repository |
+| Command | `/context-map` | Scan the current repo and report its shape in under 15 lines |
+| MCP | `context-crafter` | All 8 tools |
+
+Install it into every provider with [plugin-forge](https://github.com/0langa/plugin-forge). From a
+plugin-forge checkout:
+
+```sh
+uv run forge install --path /path/to/context-crafter-mcp --provider all
+```
+
+Add `--dry-run` first to see the three target directories without writing anything. Agents with the
+plugin-forge MCP server configured can call its `install` tool instead.
+
+The plugin runs the server from the checkout (`uv run --project <plugin root>`), so it does not
+depend on the published package. `forge.yaml` is the source of truth; the provider manifests
+(`.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`, `kimi.plugin.json`, `.mcp.json`,
+`.codex-mcp.json`) are compiled from it and should not be hand-edited.
+
 ## Use with MCP clients
 
 ### Fastest path

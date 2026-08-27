@@ -32,6 +32,13 @@ The checked-in product surface is centered on:
 - `scripts/installed_artifact_smoke.ps1` is the repeatable wheel/sdist install smoke gate for release candidates.
 - `scripts/validate_public_surface.py` checks CLI help/version, every supported MCP client config, and MCP stdio initialize/tools-list.
 - `scripts/smoke_repos.py` is the real-repo smoke automation for the fixed Python/Node/Go/Rust set.
+- `forge.yaml` is the plugin source of truth for the Claude/Codex/Kimi plugin surfaces. The provider
+  manifests (`.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`, `kimi.plugin.json`,
+  `.mcp.json`, `.codex-mcp.json`, `scripts/kimi-uv-mcp.cmd`) are compiled output. Regenerate them with
+  plugin-forge `compile`; never hand-edit them.
+- `skills/using-context-crafter/SKILL.md` and `skills/onboard-repo/SKILL.md` are the agent-facing
+  trigger layer. `commands/context-map.md` is the slash command. These can drift from the MCP tool
+  surface and should be reviewed whenever tools or generated files change.
 - `.github/workflows/release.yml` builds artifacts on a version tag, publishes to PyPI via trusted publishing, and attaches the wheel and sdist to the GitHub release. It verifies that the tag matches `__version__` before building.
 - GitHub Actions workflows use Node 24-compatible actions: `actions/checkout@v7`, `actions/setup-python@v6`, and immutable `astral-sh/setup-uv@v8.2.0`.
 - The package is distributed on PyPI as `context-crafter-mcp`; the documented `uvx context-crafter-mcp serve` MCP client config resolves that published package.
@@ -95,5 +102,6 @@ Run the checks that match the surface you changed.
 - `docs/testing/TEST_ENVIRONMENT_HANDOFF.md` can drift if a replacement external testing platform is created or if release-evidence rules change.
 - `docs/testing/TESTING_STATUS.md` is a stable-facts summary, not a live latest-run mirror. It describes historical platform context, current availability, and known stable failure patterns. It must NOT claim specific run IDs, timestamps, or pass/fail counts. Update it only when stable facts change or a replacement platform is created.
 - `docs/generated/` can look authoritative even though it is generated output; do not treat it as a design source.
+- `skills/`, `commands/`, and `forge.yaml` can drift when MCP tool names, profiles, or generated files change. The skills name specific tools and files.
 - Optional parser support and confidence notes should stay aligned with `pyproject.toml`, tests, and smoke-matrix docs.
 - If context is getting long, update this file before continuing. Delaying memory writes until the end of a large run is a repo risk.

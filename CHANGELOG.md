@@ -43,6 +43,10 @@ recorded in `docs/PUBLIC_SURFACE_FREEZE.md` are now frozen under semantic versio
 - Documented the `claude mcp add` and `codex mcp add` one-liners in `README.md` and
   `docs/MCP_CLIENTS.md` as the fastest way to register the server.
 - Recorded the per-client `mcp-config` output format in `docs/PUBLIC_SURFACE_FREEZE.md`.
+- Added a plugin-forge plugin surface so the server ships with guidance rather than bare tools:
+  `forge.yaml` plus the `crafter:using-context-crafter` and `crafter:onboard-repo` skills, the
+  `/context-map` command, and compiled Claude, Codex, and Kimi manifests. The plugin runs the server
+  from the checkout, so it does not depend on the published package.
 
 ### Fixed
 

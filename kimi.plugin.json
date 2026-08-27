@@ -1,0 +1,45 @@
+{
+  "name": "context-crafter",
+  "version": "1.0.0",
+  "description": "Turn any repository into compact, truthful AI-agent context: overviews, repo maps, dependency graphs, and architecture notes.",
+  "author": {
+    "name": "0langa"
+  },
+  "homepage": "https://github.com/0langa/context-crafter-mcp",
+  "repository": "https://github.com/0langa/context-crafter-mcp",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "documentation",
+    "static-analysis",
+    "ai-agents",
+    "repository-tools"
+  ],
+  "skills": "./skills/",
+  "commands": "./commands/",
+  "interface": {
+    "displayName": "Context Crafter",
+    "shortDescription": "Compact, truthful repository context for coding agents.",
+    "longDescription": "Context Crafter statically analyses a repository and generates a compact context bundle - project overview, repo map, dependency graph, architecture summary, agent brief, and a machine-readable evidence ledger - so a coding agent can orient in an unfamiliar codebase without reading every file.",
+    "developerName": "0langa",
+    "websiteURL": "https://github.com/0langa/context-crafter-mcp"
+  },
+  "sessionStart": {
+    "skill": "crafter:using-context-crafter"
+  },
+  "skillInstructions": "Use Context Crafter for static repository orientation only. It never executes target-repo code. Treat generated claims at their stated evidence level and never upgrade an inferred claim to an observed one.",
+  "mcpServers": {
+    "context-crafter": {
+      "command": "cmd.exe",
+      "args": [
+        "/d",
+        "/s",
+        "/c",
+        "scripts\\kimi-uv-mcp.cmd",
+        "-m",
+        "context_crafter_mcp.server"
+      ],
+      "cwd": "./"
+    }
+  }
+}

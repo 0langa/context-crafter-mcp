@@ -1,0 +1,36 @@
+{
+  "name": "context-crafter",
+  "version": "1.0.0",
+  "description": "Turn any repository into compact, truthful AI-agent context: overviews, repo maps, dependency graphs, and architecture notes.",
+  "author": {
+    "name": "0langa"
+  },
+  "homepage": "https://github.com/0langa/context-crafter-mcp",
+  "repository": "https://github.com/0langa/context-crafter-mcp",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "documentation",
+    "static-analysis",
+    "ai-agents",
+    "repository-tools"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Context Crafter",
+    "shortDescription": "Compact, truthful repository context for coding agents.",
+    "longDescription": "Context Crafter statically analyses a repository and generates a compact context bundle - project overview, repo map, dependency graph, architecture summary, agent brief, and a machine-readable evidence ledger - so a coding agent can orient in an unfamiliar codebase without reading every file.",
+    "developerName": "0langa",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Local"
+    ],
+    "websiteURL": "https://github.com/0langa/context-crafter-mcp",
+    "defaultPrompt": [
+      "Map this repository so you understand its layout.",
+      "Generate an agent context bundle for this repo."
+    ]
+  },
+  "mcpServers": "./.codex-mcp.json"
+}

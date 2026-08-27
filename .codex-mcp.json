@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "context-crafter": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--project",
+        ".",
+        "python",
+        "-m",
+        "context_crafter_mcp.server"
+      ],
+      "cwd": "./"
+    }
+  }
+}
