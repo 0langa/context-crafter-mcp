@@ -15,6 +15,10 @@ The supported CLI commands are:
 - `context-crafter-mcp mcp-config`
 - `context-crafter-mcp serve`
 
+`mcp-config --client <client>` emits the config in the format that client actually reads. `codex`
+emits a TOML `[mcp_servers.context-crafter]` table for `~/.codex/config.toml`; every other supported
+client emits a JSON `mcpServers` object. The per-client format is part of the frozen contract.
+
 Machine-readable outputs use JSON objects with `ok`, `summary`, `warnings`, and `errors` where applicable. New fields may be added; existing fields should not be renamed or removed before `1.0.0`.
 
 ## MCP

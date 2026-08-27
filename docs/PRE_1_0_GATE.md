@@ -2,58 +2,76 @@
 
 Explicit checklist for the first stable release (`1.0.0`).
 
-Current release note: `0.9.0` is the release-candidate hardening line and beta gate for the final stable push. Passing the local gate is required for `0.9.0`, but the full stable `1.0.0` checklist below remains open until the final version bump, docs audit, and stable tag/release are complete.
+Current release note: this checklist was executed end-to-end on `2026-08-27` for the stable `1.0.0` release. Every item below is satisfied except the git tag, which is created by the release commit that carries this file. Keep the checklist as the standing bar for later releases.
 
 ## Required command pass set
 
-- [ ] Local reset-PC release gate passes:
+- [x] Local reset-PC release gate passes:
   - `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1`
-- [ ] Public surface validation passes:
+- [x] Public surface validation passes:
   - `python .\scripts\validate_public_surface.py`
-- [ ] `context-crafter-mcp --help` prints without error
-- [ ] `context-crafter-mcp version` matches `pyproject.toml`
-- [ ] `context-crafter-mcp doctor` reports healthy on a clean checkout
-- [ ] `context-crafter-mcp detect <repo> --json` returns valid JSON for all fixed smoke repos
-- [ ] `context-crafter-mcp generate <repo> --output <dir> --profile standard --json` produces 9 required Markdown files plus `DEPENDENCY_GRAPH.mmd`, `EVIDENCE_LEDGER.json`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json`
-- [ ] `context-crafter-mcp validate <output_dir> --json` passes with zero errors
-- [ ] `context-crafter-mcp self-test .` passes without dirtying the repository
-- [ ] `context-crafter-mcp mcp-config --client <client>` emits valid JSON for every supported client
-- [ ] `context-crafter-mcp serve` starts the MCP stdio server and responds to initialize/tools-list
+- [x] `context-crafter-mcp --help` prints without error
+- [x] `context-crafter-mcp version` matches `pyproject.toml`
+- [x] `context-crafter-mcp doctor` reports healthy on a clean checkout
+- [x] `context-crafter-mcp detect <repo> --json` returns valid JSON for all fixed smoke repos
+- [x] `context-crafter-mcp generate <repo> --output <dir> --profile standard --json` produces 9 required Markdown files plus `DEPENDENCY_GRAPH.mmd`, `EVIDENCE_LEDGER.json`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json`
+- [x] `context-crafter-mcp validate <output_dir> --json` passes with zero errors
+- [x] `context-crafter-mcp self-test .` passes without dirtying the repository
+- [x] `context-crafter-mcp mcp-config --client <client>` emits valid JSON for every supported client
+- [x] `context-crafter-mcp serve` starts the MCP stdio server and responds to initialize/tools-list
 
 ## Smoke expectations
 
-- [ ] Local generic fallback honesty guard passes:
+- [x] Local generic fallback honesty guard passes:
   - `python -m pytest -q tests/test_generic_fallback_honesty.py`
-- [ ] Fixed smoke set passes automation:
+- [x] Fixed smoke set passes automation:
   - `pallets/click`
   - `sindresorhus/ky`
   - `spf13/cobra`
   - `serde-rs/json`
-- [ ] Smoke results are captured in `docs/REAL_REPO_SMOKE_MATRIX.md`
-- [ ] No command crashes on any smoke repo
-- [ ] Output files are generated and validate cleanly or with documented non-blocking warnings
+- [x] Smoke results are captured in `docs/REAL_REPO_SMOKE_MATRIX.md`
+- [x] No command crashes on any smoke repo
+- [x] Output files are generated and validate cleanly or with documented non-blocking warnings
 
 ## Docs-truth expectations
 
-- [ ] `README.md` claims match actual CLI/MCP surface
-- [ ] `docs/LIMITATIONS.md` does not understate or overstate gaps
-- [ ] `docs/OUTPUT_CONTRACT.md` describes every generated file and JSON field accurately
-- [ ] `docs/PUBLIC_SURFACE_FREEZE.md` matches the CLI, MCP, resource, generated-file, and machine-readable JSON contracts
-- [ ] `docs/ARCHITECTURE.md` matches the current scanner/analyzer/renderer split
-- [ ] `SECURITY.md` threat model is current and complete
-- [ ] `MANUAL_STEPS.md` release checklist has been executed successfully at least once
-- [ ] `CHANGELOG.md` has a dated section for the release
-- [ ] No documentation claims real-repo confidence for stacks that are still fixture-only
+- [x] `README.md` claims match actual CLI/MCP surface
+- [x] `docs/LIMITATIONS.md` does not understate or overstate gaps
+- [x] `docs/OUTPUT_CONTRACT.md` describes every generated file and JSON field accurately
+- [x] `docs/PUBLIC_SURFACE_FREEZE.md` matches the CLI, MCP, resource, generated-file, and machine-readable JSON contracts
+- [x] `docs/ARCHITECTURE.md` matches the current scanner/analyzer/renderer split
+- [x] `SECURITY.md` threat model is current and complete
+- [x] `MANUAL_STEPS.md` release checklist has been executed successfully at least once
+- [x] `CHANGELOG.md` has a dated section for the release
+- [x] No documentation claims real-repo confidence for stacks that are still fixture-only
 
 ## Stack confidence expectations
 
-- [ ] Python: real-repo smoke verified, AST-backed, no known blockers
-- [ ] Node/TypeScript: real-repo smoke verified, tree-sitter + regex fallback
-- [ ] Go: real-repo smoke verified, tree-sitter + regex fallback
-- [ ] Rust: real-repo smoke verified, tree-sitter + regex fallback
-- [ ] Java: fixture-backed + manual validation; real-repo smoke not required for 1.0 but gap documented
-- [ ] .NET: fixture-backed + manual validation; real-repo smoke not required for 1.0 but gap documented
-- [ ] Generic: always available, no blockers
+- [x] Python: real-repo smoke verified, AST-backed, no known blockers
+- [x] Node/TypeScript: real-repo smoke verified, tree-sitter + regex fallback
+- [x] Go: real-repo smoke verified, tree-sitter + regex fallback
+- [x] Rust: real-repo smoke verified, tree-sitter + regex fallback
+- [x] Java: fixture-backed + manual validation; real-repo smoke not required for 1.0 but gap documented
+- [x] .NET: fixture-backed + manual validation; real-repo smoke not required for 1.0 but gap documented
+- [x] Generic: always available, no blockers
+
+## Gate execution evidence
+
+Full local gate executed end-to-end on `2026-08-27` (Windows 11, Python 3.12, `uv`). The command pass set below ran against `main` at `0.9.0`; the gate was re-run after the `1.0.0` version bump and passed again.
+
+| Command | Result |
+|---------|--------|
+| `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1` | pass (project-state, release-doc, ruff, mypy, pytest, doctor, public surface, self-test, generate, validate) |
+| `python .\scripts\validate_public_surface.py` | pass (version, help, all 8 MCP client configs, stdio initialize/tools-list/resources, docs truth) |
+| `powershell -ExecutionPolicy Bypass -File .\scripts\installed_artifact_smoke.ps1` | pass for wheel and sdist, re-run at `1.0.0` |
+| `uv run python scripts/smoke_repos.py` | pass for all 4 fixed smoke repos; 0 errors |
+| `uv run python -m pytest -q` | 258 passed, 1 skipped |
+| `uv run python -m compileall -q src tests` | pass |
+| `uv run ruff format --check .` | 77 files already formatted |
+| `uv run context-crafter-mcp validate examples/outputs --repo examples/demo-repo --json` | pass, 9/9 required files, 0 errors |
+
+The only remaining open item is the `1.0.0` git tag itself, which is created from the release commit that
+carries this file.
 
 ## Current local-gate notes
 
@@ -65,8 +83,8 @@ Current release note: `0.9.0` is the release-candidate hardening line and beta g
 
 ## MCP surface freeze expectations
 
-- [ ] `docs/PUBLIC_SURFACE_FREEZE.md` has been reviewed against CLI help, MCP tools-list, and generated output
-- [ ] Tool names and signatures are stable:
+- [x] `docs/PUBLIC_SURFACE_FREEZE.md` has been reviewed against CLI help, MCP tools-list, and generated output
+- [x] Tool names and signatures are stable:
   - `detect_project`
   - `generate_context`
   - `generate_project_overview`
@@ -75,17 +93,17 @@ Current release note: `0.9.0` is the release-candidate hardening line and beta g
   - `generate_architecture_summary`
   - `validate_generated_context`
   - `explain_capabilities`
-- [ ] Resource URI scheme `context-crafter://latest/<filename>` is stable
-- [ ] JSON result fields are additive-only (no removals without deprecation cycle)
-- [ ] `EVIDENCE_LEDGER.json`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json` fields evolve additively (no removals without deprecation cycle); automation consumers should parse defensively
+- [x] Resource URI scheme `context-crafter://latest/<filename>` is stable
+- [x] JSON result fields are additive-only (no removals without deprecation cycle)
+- [x] `EVIDENCE_LEDGER.json`, `CONTEXT_MANIFEST.json`, and `RUN_STATE.json` fields evolve additively (no removals without deprecation cycle); automation consumers should parse defensively
 
 ## Release artifacts
 
-- [ ] `pyproject.toml` version is `1.0.0`
-- [ ] `src/context_crafter_mcp/__init__.py` version is `1.0.0`
-- [ ] Wheel and sdist build cleanly
-- [ ] Installed artifact smoke passes:
+- [x] `pyproject.toml` version is `1.0.0`
+- [x] `src/context_crafter_mcp/__init__.py` version is `1.0.0`
+- [x] Wheel and sdist build cleanly
+- [x] Installed artifact smoke passes:
   - `powershell -ExecutionPolicy Bypass -File .\scripts\installed_artifact_smoke.ps1`
-- [ ] Installed wheel passes `doctor`, `self-test`, and `generate`/`validate`
-- [ ] Installed sdist passes the same checks
-- [ ] Git tag `1.0.0` exists and points to the release commit
+- [x] Installed wheel passes `doctor`, `self-test`, and `generate`/`validate`
+- [x] Installed sdist passes the same checks
+- [ ] Git tag `1.0.0` exists and points to the release commit (created at tag time; see step 8 of `MANUAL_STEPS.md`)

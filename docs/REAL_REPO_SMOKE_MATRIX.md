@@ -48,16 +48,20 @@ uv run context-crafter-mcp validate <tmp-dir>/docs/generated --repo <tmp-dir> --
 
 ## Latest run
 
-Run date: `2026-06-25` for the `0.9.0` release-candidate line.
+Run date: `2026-08-27` for the `0.9.0` release-candidate line, executed via `uv run python scripts/smoke_repos.py` on Windows with Python 3.12.
 
 | Repository | Detect | Generate | Validate | Files scanned | Warnings | Notes |
 |------------|--------|----------|----------|---------------|----------|-------|
-| `pallets/click` | pass | pass | pass | 133 | 5 unknown-stack warnings for non-Python stacks | detected `generic, python`; counts vary by scanner config and repo state |
-| `sindresorhus/ky` | pass | pass | pass | 60 | 5 unknown-stack warnings for non-Node stacks | detected `generic, node`; counts vary by scanner config and repo state |
+| `pallets/click` | pass | pass | pass | 149 | 5 unknown-stack warnings for non-Python stacks | detected `generic, python`; counts vary by scanner config and repo state |
+| `sindresorhus/ky` | pass | pass | pass | 63 | 5 unknown-stack warnings for non-Node stacks | detected `generic, node`; counts vary by scanner config and repo state |
 | `spf13/cobra` | pass | pass | pass | 59 | 5 unknown-stack warnings for non-Go stacks | detected `generic, go`; counts vary by scanner config and repo state |
 | `serde-rs/json` | pass | pass | pass | 88 | 5 unknown-stack warnings for non-Rust stacks | detected `generic, rust`; counts vary by scanner config and repo state |
 
-These warnings came from `detect_project` reporting unsupported/non-matching stacks as `unknown`; they were not generation or validation failures.
+These warnings came from `detect_project` reporting unsupported/non-matching stacks as `unknown`; they were not generation or validation failures. Zero errors were reported for any repository.
+
+### Previous run
+
+Run date: `2026-06-25`. Same four repositories, same pass result; files scanned were 133 / 60 / 59 / 88 respectively.
 
 ## Acceptance
 

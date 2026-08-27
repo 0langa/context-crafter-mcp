@@ -13,6 +13,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+## [1.0.0] - 2026-08-27
+
+First stable release. The public CLI, MCP, generated-file, and machine-readable JSON contracts
+recorded in `docs/PUBLIC_SURFACE_FREEZE.md` are now frozen under semantic versioning.
+
+### Added
+
+- Added `.github/workflows/release.yml` to build artifacts on a version tag and publish to PyPI via
+  trusted publishing, so the documented `uvx context-crafter-mcp serve` MCP client config resolves a
+  real published package.
+- Added a dated gate execution evidence table to `docs/PRE_1_0_GATE.md` recording the commands run
+  and their results for the stable release.
+
+### Changed
+
+- Executed `docs/PRE_1_0_GATE.md` end-to-end for the first time and checked off every item the
+  `0.9.0` tree could satisfy: local release gate, public surface validation, installed wheel and
+  sdist smoke, fixed real-repo smoke set, generic fallback honesty guard, docs-truth review, stack
+  confidence review, and MCP surface freeze review.
+- Refreshed `docs/REAL_REPO_SMOKE_MATRIX.md` with a dated `2026-08-27` run against `pallets/click`,
+  `sindresorhus/ky`, `spf13/cobra`, and `serde-rs/json`; all four passed detect, generate, and
+  validate with zero errors. The previous `2026-06-25` run is retained as history.
+- Rewrote the `README.md` installation section around the published PyPI package; the wheel-based
+  install is now the documented fallback rather than the primary path.
+- Updated `docs/ROADMAP.md`, `docs/project_state.md`, and `MANUAL_STEPS.md` to the post-`1.0.0`
+  posture.
+- Updated `scripts/validate_release_docs.py` to track `1.0.0` as the current release tag.
+- Documented the `claude mcp add` and `codex mcp add` one-liners in `README.md` and
+  `docs/MCP_CLIENTS.md` as the fastest way to register the server.
+- Recorded the per-client `mcp-config` output format in `docs/PUBLIC_SURFACE_FREEZE.md`.
+
+### Fixed
+
+- `mcp-config --client codex` now emits a TOML `[mcp_servers.context-crafter]` table for
+  `~/.codex/config.toml`. It previously emitted a JSON `mcpServers` object, which Codex does not
+  read, and the docs papered over it with "May require TOML translation". Other clients are
+  unchanged.
+- `mcp-config --repo <path>` no longer discards the requested client. It previously returned the
+  JSON development config regardless of which client was asked for.
+
 ## [0.9.0] - 2026-06-25
 
 ### Added

@@ -17,7 +17,7 @@ except ModuleNotFoundError:  # pragma: no cover - Python < 3.11 fallback
     import tomli as tomllib  # type: ignore[no-redef]
 
 from context_crafter_mcp import __version__
-from context_crafter_mcp.cli import MCP_CONFIG_TEMPLATES
+from context_crafter_mcp.cli import MCP_CONFIG_TEMPLATES, MCP_SERVER_NAME, TOML_CONFIG_CLIENTS
 from context_crafter_mcp.validation import _REQUIRED_FILES
 
 
@@ -84,16 +84,25 @@ def _check_help() -> None:
         _fail(f"--help missing expected commands: {', '.join(missing)}")
 
 
+def _parse_server_spec(client: str, stdout: str) -> dict[str, Any]:
+    """Read the emitted config in whichever format the client actually consumes."""
+    if client in TOML_CONFIG_CLIENTS:
+        table, parsed = "mcp_servers", tomllib.loads(stdout)
+    else:
+        table, parsed = "mcpServers", json.loads(stdout)
+
+    servers = parsed.get(table)
+    if not isinstance(servers, dict) or MCP_SERVER_NAME not in servers:
+        _fail(f"missing {MCP_SERVER_NAME} server under {table!r} for client {client!r}: {parsed!r}")
+    return servers[MCP_SERVER_NAME]
+
+
 def _assert_context_crafter_server(
-    config: dict[str, Any],
+    server: dict[str, Any],
     *,
     expected_command: str,
     expected_args: list[str] | None = None,
 ) -> dict[str, Any]:
-    servers = config.get("mcpServers")
-    if not isinstance(servers, dict) or "context-crafter" not in servers:
-        _fail(f"missing context-crafter MCP server in config: {config!r}")
-    server = servers["context-crafter"]
     if server.get("command") != expected_command:
         _fail(f"unexpected MCP command: {server.get('command')!r}")
     args = server.get("args")
@@ -124,9 +133,8 @@ def _check_mcp_config() -> None:
         result = _run(CLI + ["mcp-config", "--client", client])
         if result.returncode != 0:
             _fail(f"mcp-config failed for {client}: {result.stderr or result.stdout}")
-        config = json.loads(result.stdout)
         _assert_context_crafter_server(
-            config,
+            _parse_server_spec(client, result.stdout),
             expected_command="uvx",
             expected_args=["context-crafter-mcp", "serve"],
         )
@@ -134,8 +142,7 @@ def _check_mcp_config() -> None:
         local_result = _run(CLI + ["mcp-config", "--client", client, "--repo", str(ROOT)])
         if local_result.returncode != 0:
             _fail(f"local mcp-config failed for {client}: {local_result.stderr or local_result.stdout}")
-        local_config = json.loads(local_result.stdout)
-        server = _assert_context_crafter_server(local_config, expected_command="uv")
+        server = _assert_context_crafter_server(_parse_server_spec(client, local_result.stdout), expected_command="uv")
         args = server["args"]
         if args[:2] != ["--directory", str(ROOT)] or args[2:] != ["run", "context-crafter-mcp", "serve"]:
             _fail(f"local mcp-config args drifted for {client}: {args!r}")

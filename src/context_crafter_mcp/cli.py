@@ -80,6 +80,46 @@ MCP_CONFIG_TEMPLATES: dict[str, dict] = {
     },
 }
 
+MCP_SERVER_NAME = "context-crafter"
+
+# Codex reads `~/.codex/config.toml`, not a JSON `mcpServers` object. Every client in this set
+# gets the same server spec rendered as TOML instead.
+TOML_CONFIG_CLIENTS: frozenset[str] = frozenset({"codex"})
+
+
+def _local_server_spec(repo_path: str) -> dict:
+    """Server spec that runs the CLI from a repo checkout instead of the published package."""
+    return {
+        "command": "uv",
+        "args": [
+            "--directory",
+            str(Path(repo_path).resolve()),
+            "run",
+            "context-crafter-mcp",
+            "serve",
+        ],
+    }
+
+
+def _render_json_config(spec: dict) -> str:
+    return json.dumps({"mcpServers": {MCP_SERVER_NAME: spec}}, indent=2)
+
+
+def _render_toml_config(spec: dict) -> str:
+    """Render a server spec as a TOML table.
+
+    `json.dumps` on a string emits exactly the escapes a TOML basic string accepts, so Windows
+    paths and quotes survive without a TOML writer dependency.
+    """
+    args = ", ".join(json.dumps(arg) for arg in spec["args"])
+    return "\n".join(
+        [
+            f"[mcp_servers.{MCP_SERVER_NAME}]",
+            f"command = {json.dumps(spec['command'])}",
+            f"args = [{args}]",
+        ]
+    )
+
 
 def _scan_config_from_args(args: argparse.Namespace) -> ScanConfig:
     max_depth = getattr(args, "scan_depth", None)
@@ -283,26 +323,17 @@ def cmd_mcp_config(args: argparse.Namespace) -> int:
         print(f"Unknown client: {client}")
         print(f"Supported: {', '.join(sorted(MCP_CONFIG_TEMPLATES))}")
         return 1
-    config = MCP_CONFIG_TEMPLATES[client]
+
     repo_path = getattr(args, "repo", None)
     if repo_path:
-        # Local development config using uv run
-        abs_path = str(Path(repo_path).resolve())
-        config = {
-            "mcpServers": {
-                "context-crafter": {
-                    "command": "uv",
-                    "args": [
-                        "--directory",
-                        abs_path,
-                        "run",
-                        "context-crafter-mcp",
-                        "serve",
-                    ],
-                }
-            }
-        }
-    print(json.dumps(config, indent=2))
+        spec = _local_server_spec(repo_path)
+    else:
+        spec = MCP_CONFIG_TEMPLATES[client]["mcpServers"][MCP_SERVER_NAME]
+
+    if client in TOML_CONFIG_CLIENTS:
+        print(_render_toml_config(spec))
+    else:
+        print(_render_json_config(spec))
     return 0
 
 

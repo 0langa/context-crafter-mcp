@@ -6,6 +6,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import tomllib
 from pathlib import Path
 
 from context_crafter_mcp import __version__
@@ -132,3 +133,39 @@ def test_cli_mcp_config_with_repo() -> None:
         assert result.returncode == 0
         data = json.loads(result.stdout)
         assert "context-crafter" in data["mcpServers"]
+
+
+def test_cli_mcp_config_codex_emits_toml() -> None:
+    """Codex reads ~/.codex/config.toml, so its config must be TOML, not a JSON mcpServers object."""
+    result = _run(["mcp-config", "--client", "codex"])
+    assert result.returncode == 0
+    data = tomllib.loads(result.stdout)
+    server = data["mcp_servers"]["context-crafter"]
+    assert server["command"] == "uvx"
+    assert server["args"] == ["context-crafter-mcp", "serve"]
+
+
+def test_cli_mcp_config_codex_local_repo_round_trips_path() -> None:
+    """A local repo path must survive TOML escaping, including Windows backslashes."""
+    with tempfile.TemporaryDirectory() as td:
+        result = _run(["mcp-config", "--client", "codex", "--repo", td])
+        assert result.returncode == 0
+        data = tomllib.loads(result.stdout)
+        server = data["mcp_servers"]["context-crafter"]
+        assert server["command"] == "uv"
+        assert server["args"] == [
+            "--directory",
+            str(Path(td).resolve()),
+            "run",
+            "context-crafter-mcp",
+            "serve",
+        ]
+
+
+def test_cli_mcp_config_json_clients_stay_json() -> None:
+    """Every non-Codex client keeps the frozen JSON mcpServers shape."""
+    for client in ("claude-desktop", "claude-code", "kimi", "cline", "roo", "vscode", "generic-stdio"):
+        result = _run(["mcp-config", "--client", client])
+        assert result.returncode == 0, client
+        data = json.loads(result.stdout)
+        assert data["mcpServers"]["context-crafter"]["command"] == "uvx", client

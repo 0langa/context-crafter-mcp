@@ -2,9 +2,19 @@
 
 ## Quick config
 
+### Fastest path
+
+Claude Code and Codex register the server themselves:
+
+```sh
+claude mcp add context-crafter -- uvx context-crafter-mcp serve
+codex mcp add context-crafter -- uvx context-crafter-mcp serve
+```
+
 ### Published package path
 
-All supported clients use the same stdio config when the package is published:
+`mcp-config` emits the format the requested client actually reads. Clients in the JSON group share
+one stdio config:
 
 ```json
 {
@@ -17,6 +27,18 @@ All supported clients use the same stdio config when the package is published:
 }
 ```
 
+Codex reads `~/.codex/config.toml`, so `--client codex` emits a TOML table instead:
+
+```sh
+uv run context-crafter-mcp mcp-config --client codex
+```
+
+```toml
+[mcp_servers.context-crafter]
+command = "uvx"
+args = ["context-crafter-mcp", "serve"]
+```
+
 ### Local development path
 
 Point to the repo checkout directly during development:
@@ -25,7 +47,7 @@ Point to the repo checkout directly during development:
 uv run context-crafter-mcp mcp-config --client claude-desktop --repo /path/to/this/repo
 ```
 
-This emits a client-specific config with the local directory:
+This emits a client-specific config with the local directory, still in that client's own format:
 
 ```json
 {
@@ -61,12 +83,12 @@ npx @modelcontextprotocol/inspector uv --directory /path/to/this/repo run contex
 | Client | Config placement | Notes |
 |--------|-----------------|-------|
 | claude-desktop | `claude_desktop_config.json` → `mcpServers` | Restart Claude Desktop after editing |
-| claude-code | `.mcp.json` in project root or `~/.claude-code/` | Per-project or global |
+| claude-code | `.mcp.json` in project root or `~/.claude-code/` | Per-project or global; `claude mcp add` writes it for you |
 | kimi | Kimi Code settings → MCP servers | GUI-based entry |
 | cline | Cline settings → MCP servers | Hot reloads without restart |
 | roo | Roo settings → MCP servers | GUI-based entry |
 | vscode | `.vscode/mcp.json` or user settings | Workspace-scoped or global |
-| codex | `codex.toml` or Codex settings | May require TOML translation |
+| codex | `~/.codex/config.toml` → `[mcp_servers.context-crafter]` | TOML, not JSON; `codex mcp add` writes it for you |
 | generic-stdio | Any client accepting stdio JSON | Baseline stdio MCP config |
 
 ## Tools

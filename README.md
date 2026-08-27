@@ -3,7 +3,7 @@
 [![CI](https://github.com/0langa/context-crafter-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/0langa/context-crafter-mcp/actions)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.9.0-blue)]
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)]
 
 Local-first MCP server that turns source repositories into compact AI-agent context: project overviews, repo maps, dependency graphs, architecture notes, and validation reports.
 
@@ -38,9 +38,24 @@ uv sync --extra dev
 uv run context-crafter-mcp --help
 ```
 
-### From an installed artifact
+### From the published package
 
-Current release tag is `0.9.0`. Until a package release is published to an installer-friendly index, install from a built wheel:
+Current release is `1.0.0`, published to PyPI as `context-crafter-mcp`.
+
+```sh
+uv tool install context-crafter-mcp
+context-crafter-mcp --help
+```
+
+Or run it without installing:
+
+```sh
+uvx context-crafter-mcp --help
+```
+
+### From a built wheel
+
+If you need an unpublished revision, build and install locally:
 
 ```sh
 uv build
@@ -95,7 +110,18 @@ uv run context-crafter-mcp validate docs/generated
 
 ## Use with MCP clients
 
-Generate a client-specific snippet:
+### Fastest path
+
+Claude Code and Codex both register the server for you:
+
+```sh
+claude mcp add context-crafter -- uvx context-crafter-mcp serve
+codex mcp add context-crafter -- uvx context-crafter-mcp serve
+```
+
+### Config snippets
+
+For clients without an `mcp add` command, generate a client-specific snippet:
 
 ```sh
 uv run context-crafter-mcp mcp-config --client kimi
@@ -103,9 +129,12 @@ uv run context-crafter-mcp mcp-config --client kimi
 
 Supported clients: `claude-desktop`, `claude-code`, `kimi`, `cline`, `roo`, `vscode`, `codex`, `generic-stdio`.
 
+The snippet is emitted in the format that client actually reads. `codex` gets TOML; every other
+client gets JSON.
+
 ### Published package config
 
-All clients use the same stdio config when installed via `uvx`:
+Clients that read JSON use the same stdio config when installed via `uvx`:
 
 ```json
 {
@@ -118,6 +147,14 @@ All clients use the same stdio config when installed via `uvx`:
 }
 ```
 
+Codex reads `~/.codex/config.toml`, so it gets the same server as a TOML table:
+
+```toml
+[mcp_servers.context-crafter]
+command = "uvx"
+args = ["context-crafter-mcp", "serve"]
+```
+
 ### Local development config
 
 Point to the repo checkout directly:
@@ -128,16 +165,16 @@ uv run context-crafter-mcp mcp-config --client claude-desktop --repo /path/to/th
 
 ### Client placement
 
-| Client | Where to place the config |
-|--------|--------------------------|
-| claude-desktop | `claude_desktop_config.json` → `mcpServers` |
-| claude-code | `.mcp.json` in project root or `~/.claude-code/` |
-| kimi | Kimi Code settings → MCP servers |
-| cline | Cline settings → MCP servers (hot reload) |
-| roo | Roo settings → MCP servers |
-| vscode | `.vscode/mcp.json` or user settings |
-| codex | `codex.toml` or Codex settings |
-| generic-stdio | Any client that accepts stdio JSON |
+| Client | Where to place the config | Format |
+|--------|--------------------------|--------|
+| claude-desktop | `claude_desktop_config.json` → `mcpServers` | JSON |
+| claude-code | `.mcp.json` in project root, or `claude mcp add` | JSON |
+| kimi | Kimi Code settings → MCP servers | JSON |
+| cline | Cline settings → MCP servers (hot reload) | JSON |
+| roo | Roo settings → MCP servers | JSON |
+| vscode | `.vscode/mcp.json` or user settings | JSON |
+| codex | `~/.codex/config.toml`, or `codex mcp add` | TOML |
+| generic-stdio | Any client that accepts stdio JSON | JSON |
 
 ### MCP Inspector
 

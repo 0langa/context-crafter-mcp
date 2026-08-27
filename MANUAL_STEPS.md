@@ -2,7 +2,7 @@
 
 Steps that remain intentionally manual for release and repository stewardship.
 
-Roadmap note: the current public release is `0.9.0`. The active release train targets the first stable release at `1.0.0`.
+Roadmap note: the current public release is `1.0.0`, the first stable release. Later releases stay additive against the frozen public contract in `docs/PUBLIC_SURFACE_FREEZE.md`.
 
 ## Repository settings
 
@@ -10,7 +10,8 @@ Roadmap note: the current public release is `0.9.0`. The active release train ta
   `Local-first MCP server that turns source repositories into compact AI-agent context: project overviews, repo maps, dependency graphs, architecture notes, and validation reports.`
 - Topics:
   `mcp`, `documentation`, `static-analysis`, `ai-agents`, `repository-tools`
-- Do not enable automatic publishing workflows before the first public release at `1.0.0`.
+- Publishing is automated from `1.0.0` onward: pushing a version tag runs `.github/workflows/release.yml`, which verifies the tag matches `__version__`, builds the wheel and sdist, publishes to PyPI via trusted publishing, and attaches the artifacts to the GitHub release.
+- Trusted publishing requires a one-time PyPI setup: a pending publisher for project `context-crafter-mcp` pointing at repository `0langa/context-crafter-mcp`, workflow `release.yml`, environment `pypi`.
 
 ## Release checklist
 
@@ -39,7 +40,12 @@ Run this checklist before cutting any release tag.
    - Update `docs/REAL_REPO_SMOKE_MATRIX.md` with results.
 6. Regenerate any intentionally committed example output and verify it still matches policy.
 7. Review `git status --short` and ensure only intentional tracked changes remain.
-8. Build final artifacts, tag release, then publish manually.
+8. Commit the release preparation, then tag and push:
+   - `git tag <version>`
+   - `git push origin main --tags`
+   - `.github/workflows/release.yml` takes it from there: build, PyPI publish, GitHub release upload.
+9. After the workflow finishes, confirm the published package installs cleanly:
+   - `uvx context-crafter-mcp@<version> version`
 
 ## Output confinement note
 

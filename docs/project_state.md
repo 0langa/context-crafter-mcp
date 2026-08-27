@@ -1,9 +1,9 @@
 # Project State
 
-- Last reviewed: `2026-06-25`
-- Package version: `0.9.0`
-- Latest public git tag: `0.9.0`
-- Current milestone: final `1.0.0` release push/work
+- Last reviewed: `2026-08-27`
+- Package version: `1.0.0`
+- Latest public git tag: `1.0.0`
+- Current milestone: post-`1.0.0` stable maintenance
 - Memory model: `agent-authored, validator-checked`
 - Critical rule: Update this file directly whenever repo reality changes. For long runs, update it at each meaningful milestone before context compaction risk grows.
 
@@ -32,7 +32,9 @@ The checked-in product surface is centered on:
 - `scripts/installed_artifact_smoke.ps1` is the repeatable wheel/sdist install smoke gate for release candidates.
 - `scripts/validate_public_surface.py` checks CLI help/version, every supported MCP client config, and MCP stdio initialize/tools-list.
 - `scripts/smoke_repos.py` is the real-repo smoke automation for the fixed Python/Node/Go/Rust set.
+- `.github/workflows/release.yml` builds artifacts on a version tag, publishes to PyPI via trusted publishing, and attaches the wheel and sdist to the GitHub release. It verifies that the tag matches `__version__` before building.
 - GitHub Actions workflows use Node 24-compatible actions: `actions/checkout@v7`, `actions/setup-python@v6`, and immutable `astral-sh/setup-uv@v8.2.0`.
+- The package is distributed on PyPI as `context-crafter-mcp`; the documented `uvx context-crafter-mcp serve` MCP client config resolves that published package.
 
 ## Current Truths
 - Source code, tests, and packaging config beat prose docs when they disagree.
@@ -53,10 +55,10 @@ The checked-in product surface is centered on:
 - MCP resources under `context-crafter://latest/<filename>` use file-appropriate MIME types for Markdown, Mermaid, JSON, and optional HTML generated files.
 - `docs/PUBLIC_SURFACE_FREEZE.md` records the pre-`1.0.0` CLI, MCP, resource, generated-file, and machine-readable JSON contract.
 - The local release gate is `powershell -ExecutionPolicy Bypass -File .\scripts\local_release_gate.ps1`; network-dependent smoke testing remains separate.
-- The current release is `0.9.0`. It is the release-candidate hardening line, not the stable `1.0.0` gate.
-- Current remaining work is the final `1.0.0` release push/work after rerunning the stable gate.
+- The current release is `1.0.0`, the first stable release. The public contract in `docs/PUBLIC_SURFACE_FREEZE.md` is frozen under semantic versioning; removals require a deprecation cycle.
+- `docs/PRE_1_0_GATE.md` was executed end-to-end on `2026-08-27` and its evidence table records the commands and results. Remaining work is post-`1.0.0`: additive features and stack-confidence promotion for Java/.NET.
 - CI and CodeQL should stay free of Node 20 deprecation annotations before any stable-release cut.
-- Fresh fixed real-repo smoke automation passed on `2026-06-25` for `pallets/click`, `sindresorhus/ky`, `spf13/cobra`, and `serde-rs/json`.
+- Fresh fixed real-repo smoke automation passed on `2026-08-27` for `pallets/click`, `sindresorhus/ky`, `spf13/cobra`, and `serde-rs/json`, with zero errors on all four.
 - The historical bounded-scan honesty logic used a three-tier materiality test: hard blocker for `budget_exhausted`, major blocker for material non-budget skips (>=5 files or >=5% ratio), minor finding for benign skips only.
 - Repo-side mirror docs (`docs/testing/TESTING_STATUS.md`) describe stable/historical facts only; volatile latest-run state is currently unavailable.
 - Durable session-end testing reports should be recreated in a tracked or newly documented location before release-gate claims depend on them.
