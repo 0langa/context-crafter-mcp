@@ -313,7 +313,6 @@ uv run pytest -q
 uv run context-crafter-mcp self-test .
 ```
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Limitations
 
